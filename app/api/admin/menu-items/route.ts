@@ -15,10 +15,10 @@ export async function GET() {
       orderBy: { name: "asc" },
     });
 
-    const formatted = menuItems.map((item) => ({
+    const formatted = menuItems.map((item: any) => ({
       ...item,
       categoryName: item.category.name,
-      prices: item.prices.map((p) => ({
+      prices: item.prices.map((p: any) => ({
         id: p.id,
         tableTypeId: p.tableTypeId,
         tableTypeName: p.tableType.name,
