@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+
+type MenuItemWithRelations = Prisma.MenuItemGetPayload<{
+  include: {
+    category: true;
+    prices: {
+      include: {
+        tableType: true;
+      };
+    };
+  };
+}>;
 
 export async function GET() {
   try {
@@ -15,10 +27,10 @@ export async function GET() {
       orderBy: { name: "asc" },
     });
 
-    const formatted = menuItems.map((item: any) => ({
+    const formatted = menuItems.map((item: MenuItemWithRelations) => ({
       ...item,
       categoryName: item.category.name,
-      prices: item.prices.map((p: any) => ({
+      prices: item.prices.map((p) => ({
         id: p.id,
         tableTypeId: p.tableTypeId,
         tableTypeName: p.tableType.name,
