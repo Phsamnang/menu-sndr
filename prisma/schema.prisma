@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  displayName String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  menuItems   MenuItem[]
+
+  @@index([name])
+}
+
+model TableType {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  displayName String
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  prices      Price[]
+
+  @@index([name])
+  @@index([order])
+}
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  image       String
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  prices      Price[]
+
+  @@index([categoryId])
+}
+
+model Price {
+  id          String    @id @default(cuid())
+  menuItemId  String
+  tableTypeId String
+  amount      Float
+  menuItem    MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  tableType   TableType @relation(fields: [tableTypeId], references: [id], onDelete: Restrict)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([menuItemId, tableTypeId])
+  @@index([menuItemId])
+  @@index([tableTypeId])
+}
