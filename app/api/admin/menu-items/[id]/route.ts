@@ -10,6 +10,21 @@ export async function PUT(
     const body = await request.json();
     const { name, description, image, categoryId, prices } = body;
 
+    const existingItem = await prisma.menuItem.findFirst({
+      where: {
+        name,
+        categoryId,
+        id: { not: id },
+      },
+    });
+
+    if (existingItem) {
+      return NextResponse.json(
+        { error: "Menu item with this name already exists in this category" },
+        { status: 409 }
+      );
+    }
+
     await prisma.price.deleteMany({
       where: { menuItemId: id },
     });
@@ -18,7 +33,7 @@ export async function PUT(
       where: { id },
       data: {
         name,
-        description,
+        description: description || "",
         image,
         categoryId,
         prices: {

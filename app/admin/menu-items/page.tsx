@@ -33,10 +33,26 @@ interface MenuItem {
   prices: Price[];
 }
 
+interface PaginatedResponse {
+  data: MenuItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+const ITEMS_PER_PAGE = 10;
+
 export default function MenuItemsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -48,14 +64,27 @@ export default function MenuItemsPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const { data: menuItems = [], isLoading } = useQuery<MenuItem[]>({
-    queryKey: ["menuItems"],
+  const { data: menuItemsData, isLoading } = useQuery<PaginatedResponse>({
+    queryKey: ["menuItems", currentPage, selectedCategory, searchQuery],
     queryFn: async () => {
-      const res = await fetch("/api/admin/menu-items");
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: ITEMS_PER_PAGE.toString(),
+      });
+      if (selectedCategory) {
+        params.append("categoryId", selectedCategory);
+      }
+      if (searchQuery.trim()) {
+        params.append("search", searchQuery.trim());
+      }
+      const res = await fetch(`/api/admin/menu-items?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
   });
+
+  const menuItems = menuItemsData?.data || [];
+  const pagination = menuItemsData?.pagination;
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["categories"],
@@ -88,6 +117,7 @@ export default function MenuItemsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menuItems"] });
       setIsModalOpen(false);
+      setCurrentPage(1);
       setFormData({
         name: "",
         description: "",
@@ -112,6 +142,7 @@ export default function MenuItemsPage() {
       queryClient.invalidateQueries({ queryKey: ["menuItems"] });
       setIsModalOpen(false);
       setEditingItem(null);
+      setCurrentPage(1);
       setFormData({
         name: "",
         description: "",
@@ -236,77 +267,156 @@ export default function MenuItemsPage() {
           </div>
         </div>
 
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">ចម្រាញ់តាមប្រភេទ</label>
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2 border rounded-lg bg-white"
-          >
-            <option value="">ទាំងអស់</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.displayName}
-              </option>
-            ))}
-          </select>
+        <div className="mb-4 flex gap-4">
+          <div className="flex-1">
+            <label className="block text-sm font-medium mb-2">ស្វែងរក</label>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              placeholder="ស្វែងរកតាមឈ្មោះ, ពិពណ៌នា, ឬប្រភេទ..."
+              className="w-full px-4 py-2 border rounded-lg bg-white"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium mb-2">ចម្រាញ់តាមប្រភេទ</label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full px-4 py-2 border rounded-lg bg-white"
+            >
+              <option value="">ទាំងអស់</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.displayName}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {isLoading ? (
           <div className="text-center py-12">កំពុងផ្ទុក...</div>
         ) : (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-slate-800 text-white">
-                <tr>
-                  <th className="px-6 py-3 text-left">រូបភាព</th>
-                  <th className="px-6 py-3 text-left">ឈ្មោះ</th>
-                  <th className="px-6 py-3 text-left">ពិពណ៌នា</th>
-                  <th className="px-6 py-3 text-left">ប្រភេទ</th>
-                  <th className="px-6 py-3 text-right">សកម្មភាព</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {menuItems
-                  .filter((item) => !selectedCategory || item.categoryId === selectedCategory)
-                  .map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-16 h-16 object-cover rounded"
-                        />
-                      </td>
-                      <td className="px-6 py-4 font-medium">{item.name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600 max-w-md truncate">
-                        {item.description}
-                      </td>
-                      <td className="px-6 py-4">{item.categoryName}</td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="px-3 py-1 bg-blue-500 text-white rounded mr-2 hover:bg-blue-600"
-                        >
-                          កែប្រែ
-                        </button>
-                        <button
-                          onClick={() => deleteMutation.mutate(item.id)}
-                          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                        >
-                          លុប
-                        </button>
+          <>
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-800 text-white">
+                  <tr>
+                    <th className="px-3 py-2 text-left">រូបភាព</th>
+                    <th className="px-3 py-2 text-left">ឈ្មោះ</th>
+                    <th className="px-3 py-2 text-left">ពិពណ៌នា</th>
+                    <th className="px-3 py-2 text-left">ប្រភេទ</th>
+                    <th className="px-3 py-2 text-right">សកម្មភាព</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {menuItems.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="text-center py-8 text-slate-500">
+                        រកមិនឃើញមុខម្ហូបទេ។
                       </td>
                     </tr>
-                  ))}
-              </tbody>
-            </table>
-            {menuItems.filter((item) => !selectedCategory || item.categoryId === selectedCategory).length === 0 && (
-              <div className="text-center py-12 text-slate-500">
-                រកមិនឃើញមុខម្ហូបទេ។
+                  ) : (
+                    menuItems.map((item) => (
+                      <tr key={item.id} className="hover:bg-slate-50">
+                        <td className="px-3 py-2">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                        </td>
+                        <td className="px-3 py-2 font-medium">{item.name}</td>
+                        <td className="px-3 py-2 text-xs text-slate-600 max-w-xs truncate">
+                          {item.description}
+                        </td>
+                        <td className="px-3 py-2">{item.categoryName}</td>
+                        <td className="px-3 py-2 text-right">
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className="px-2 py-1 text-xs bg-blue-500 text-white rounded mr-1 hover:bg-blue-600"
+                          >
+                            កែប្រែ
+                          </button>
+                          <button
+                            onClick={() => deleteMutation.mutate(item.id)}
+                            className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                          >
+                            លុប
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {menuItemsData && pagination && (
+              <div className="mt-4 flex items-center justify-between bg-white rounded-lg shadow-md px-6 py-4">
+                <div className="text-sm text-slate-600">
+                  បង្ហាញ {(pagination.page - 1) * pagination.limit + 1}-
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} នៃ{" "}
+                  {pagination.total}
+                </div>
+                {pagination.totalPages > 1 && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      disabled={!pagination.hasPrevPage}
+                      className="px-3 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      មុន
+                    </button>
+                    {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(
+                      (page) => {
+                        if (
+                          page === 1 ||
+                          page === pagination.totalPages ||
+                          (page >= pagination.page - 1 && page <= pagination.page + 1)
+                        ) {
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => setCurrentPage(page)}
+                              className={`px-3 py-2 rounded-lg ${
+                                pagination.page === page
+                                  ? "bg-slate-800 text-white"
+                                  : "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        } else if (
+                          page === pagination.page - 2 ||
+                          page === pagination.page + 2
+                        ) {
+                          return <span key={page} className="px-2">...</span>;
+                        }
+                        return null;
+                      }
+                    )}
+                    <button
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(pagination.totalPages, prev + 1))
+                      }
+                      disabled={!pagination.hasNextPage}
+                      className="px-3 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      បន្ទាប់
+                    </button>
+                  </div>
+                )}
               </div>
             )}
-          </div>
+          </>
         )}
 
         {isModalOpen && (
@@ -317,7 +427,7 @@ export default function MenuItemsPage() {
               </h2>
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">ឈ្មោះ</label>
+                  <label className="block text-sm font-medium mb-2">ឈ្មោះ <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={formData.name}
@@ -339,12 +449,11 @@ export default function MenuItemsPage() {
                     }
                     className="w-full px-3 py-2 border rounded-lg"
                     rows={3}
-                    required
                   />
                 </div>
                 <div className="mb-4">
                   <label className="block text-sm font-medium mb-2">
-                    រូបភាព
+                    រូបភាព <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="file"
@@ -379,7 +488,7 @@ export default function MenuItemsPage() {
                 </div>
                 <div className="mb-4">
                   <label className="block text-sm font-medium mb-2">
-                    ប្រភេទ
+                    ប្រភេទ <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={formData.categoryId}
