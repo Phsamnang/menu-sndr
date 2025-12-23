@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/utils/api-response";
+import { withAuth, AuthenticatedRequest } from "@/lib/middleware";
 
-export async function GET() {
+async function getHandler(request: NextRequest) {
   try {
     const tableTypes = await prisma.tableType.findMany({
       orderBy: { order: "asc" },
@@ -19,7 +20,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request: NextRequest) {
+async function postHandler(request: AuthenticatedRequest) {
   try {
     const body = await request.json();
     const { name, displayName, order } = body;
@@ -59,4 +60,7 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const GET = getHandler;
+export const POST = withAuth(postHandler, ["admin"]);
 

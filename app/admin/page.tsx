@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   FaFolder,
   FaLayerGroup,
@@ -9,106 +13,140 @@ import {
   FaBook,
   FaFire,
   FaTruck,
+  FaSignOutAlt,
+  FaUsers,
 } from "react-icons/fa";
 
 export default function AdminPage() {
+  const router = useRouter();
+  const { user, logout } = useAuth();
+  const userRole = user?.role.name;
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
+
+  const menuItems = [
+    {
+      href: "/admin/categories",
+      icon: FaFolder,
+      title: "ប្រភេទម្ហូប",
+      description: "គ្រប់គ្រងប្រភេទមីនុយ",
+      allowedRoles: ["admin"],
+    },
+    {
+      href: "/admin/table-types",
+      icon: FaLayerGroup,
+      title: "ប្រភេទតុ",
+      description: "គ្រប់គ្រងប្រភេទតុ និងតម្លៃ",
+      allowedRoles: ["admin"],
+    },
+    {
+      href: "/admin/tables",
+      icon: FaTable,
+      title: "តុ",
+      description: "គ្រប់គ្រងតុក្នុងភោជនីយដ្ឋាន",
+      allowedRoles: ["admin"],
+    },
+    {
+      href: "/admin/menu-items",
+      icon: FaUtensils,
+      title: "មុខម្ហូប",
+      description: "គ្រប់គ្រងមុខម្ហូប",
+      allowedRoles: ["admin"],
+    },
+    {
+      href: "/admin/users",
+      icon: FaUsers,
+      title: "អ្នកប្រើប្រាស់",
+      description: "គ្រប់គ្រងអ្នកប្រើប្រាស់",
+      allowedRoles: ["admin"],
+    },
+    {
+      href: "/admin/orders",
+      icon: FaShoppingCart,
+      title: "ការបញ្ជាទិញ",
+      description: "គ្រប់គ្រងការបញ្ជាទិញ",
+      allowedRoles: ["admin", "order"],
+    },
+    {
+      href: "/admin/table-orders",
+      icon: FaClipboardList,
+      title: "ការបញ្ជាទិញតុ",
+      description: "មើលការបញ្ជាទិញតាមតុ",
+      allowedRoles: ["admin"],
+    },
+    {
+      href: "/admin/chef",
+      icon: FaFire,
+      title: "ចម្អិន",
+      description: "ការបញ្ជាទិញសម្រាប់ចម្អិន",
+      allowedRoles: ["admin", "chef"],
+      iconColor: "text-orange-600",
+    },
+    {
+      href: "/admin/delivery",
+      icon: FaTruck,
+      title: "ការដឹកជញ្ជូន",
+      description: "មុខម្ហូបរួចរាល់សម្រាប់ដឹក",
+      allowedRoles: ["admin", "waiter", "order"],
+      iconColor: "text-blue-600",
+    },
+    {
+      href: "/",
+      icon: FaBook,
+      title: "មើលមីនុយ",
+      description: "មើលមីនុយអតិថិជន",
+      allowedRoles: ["admin", "chef", "waiter", "order"],
+    },
+  ];
+
+  const filteredMenuItems = menuItems.filter((item) =>
+    item.allowedRoles.includes(userRole || "")
+  );
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-8 text-slate-800">
-          ផ្ទាំងគ្រប់គ្រង
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-slate-800">ផ្ទាំងគ្រប់គ្រង</h1>
+          <div className="flex items-center gap-4">
+            {user && (
+              <span className="text-slate-600">
+                {user.username} ({user.role.displayName})
+              </span>
+            )}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-slate-700 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              <FaSignOutAlt />
+              <span>ចេញ</span>
+            </button>
+          </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Link
-            href="/admin/categories"
-            className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
-          >
-            <FaFolder className="text-4xl text-slate-600 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">
-              ប្រភេទម្ហូប
-            </h2>
-            <p className="text-slate-600">គ្រប់គ្រងប្រភេទមីនុយ</p>
-          </Link>
-
-          <Link
-            href="/admin/table-types"
-            className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
-          >
-            <FaLayerGroup className="text-4xl text-slate-600 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">ប្រភេទតុ</h2>
-            <p className="text-slate-600">គ្រប់គ្រងប្រភេទតុ និងតម្លៃ</p>
-          </Link>
-
-          <Link
-            href="/admin/tables"
-            className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
-          >
-            <FaTable className="text-4xl text-slate-600 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">តុ</h2>
-            <p className="text-slate-600">គ្រប់គ្រងតុក្នុងភោជនីយដ្ឋាន</p>
-          </Link>
-
-          <Link
-            href="/admin/menu-items"
-            className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
-          >
-            <FaUtensils className="text-4xl text-slate-600 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">មុខម្ហូប</h2>
-            <p className="text-slate-600">គ្រប់គ្រងមុខម្ហូប</p>
-          </Link>
-
-          <Link
-            href="/admin/orders"
-            className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
-          >
-            <FaShoppingCart className="text-4xl text-slate-600 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">
-              ការបញ្ជាទិញ
-            </h2>
-            <p className="text-slate-600">គ្រប់គ្រងការបញ្ជាទិញ</p>
-          </Link>
-
-          <Link
-            href="/admin/table-orders"
-            className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
-          >
-            <FaClipboardList className="text-4xl text-slate-600 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">
-              ការបញ្ជាទិញតុ
-            </h2>
-            <p className="text-slate-600">មើលការបញ្ជាទិញតាមតុ</p>
-          </Link>
-
-          <Link
-            href="/admin/chef"
-            className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
-          >
-            <FaFire className="text-4xl text-orange-600 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">
-              ចម្អិន
-            </h2>
-            <p className="text-slate-600">ការបញ្ជាទិញសម្រាប់ចម្អិន</p>
-          </Link>
-
-          <Link
-            href="/admin/delivery"
-            className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
-          >
-            <FaTruck className="text-4xl text-blue-600 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">
-              ការដឹកជញ្ជូន
-            </h2>
-            <p className="text-slate-600">មុខម្ហូបរួចរាល់សម្រាប់ដឹក</p>
-          </Link>
-
-          <Link
-            href="/"
-            className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
-          >
-            <FaBook className="text-4xl text-slate-600 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">មើលមីនុយ</h2>
-            <p className="text-slate-600">មើលមីនុយអតិថិជន</p>
-          </Link>
+          {filteredMenuItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
+              >
+                <Icon
+                  className={`text-4xl mb-4 ${
+                    item.iconColor || "text-slate-600"
+                  }`}
+                />
+                <h2 className="text-2xl font-bold text-slate-800 mb-2">
+                  {item.title}
+                </h2>
+                <p className="text-slate-600">{item.description}</p>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </main>

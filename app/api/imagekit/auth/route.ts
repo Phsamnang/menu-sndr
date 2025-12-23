@@ -1,7 +1,8 @@
 import { imagekit } from "@/utils/imagekit";
 import { successResponse, errorResponse } from "@/utils/api-response";
+import { withAuth, AuthenticatedRequest } from "@/lib/middleware";
 
-export async function GET() {
+async function handler(request: AuthenticatedRequest) {
   try {
     const authenticationParameters = imagekit.getAuthenticationParameters();
     return successResponse(authenticationParameters, "Authentication parameters generated successfully");
@@ -15,4 +16,6 @@ export async function GET() {
     );
   }
 }
+
+export const GET = withAuth(handler, ["admin"]);
 

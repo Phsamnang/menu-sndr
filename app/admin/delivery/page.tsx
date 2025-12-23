@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import OptimizedImage from "@/components/OptimizedImage";
+import { apiClientJson } from "@/utils/api-client";
 
 interface OrderItem {
   id: string;
@@ -91,16 +92,14 @@ export default function DeliveryPage() {
       itemId: string;
       status: string;
     }) => {
-      const res = await fetch(
+      const result = await apiClientJson(
         `/api/admin/orders/${orderId}/items/${itemId}/status`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status }),
+          data: { status },
         }
       );
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      if (!result.success || !result.data) {
         throw new Error(
           result.error?.message || "Failed to update item status"
         );

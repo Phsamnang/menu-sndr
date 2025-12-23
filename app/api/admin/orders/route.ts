@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/utils/api-response";
+import { withAuth, AuthenticatedRequest } from "@/lib/middleware";
 
-export async function GET(request: NextRequest) {
+async function getHandler(request: AuthenticatedRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+async function postHandler(request: AuthenticatedRequest) {
   try {
     const body = await request.json();
     const { tableId, customerName, items, discountType, discountValue } = body;
@@ -210,3 +211,6 @@ export async function POST(request: NextRequest) {
     ]);
   }
 }
+
+export const GET = withAuth(getHandler);
+export const POST = withAuth(postHandler);

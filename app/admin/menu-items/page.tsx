@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
 import Table, { TableColumn } from "@/components/Table";
+import { apiClientJson } from "@/utils/api-client";
 
 interface TableType {
   id: string;
@@ -80,9 +81,10 @@ export default function MenuItemsPage() {
       if (searchQuery.trim()) {
         params.append("search", searchQuery.trim());
       }
-      const res = await fetch(`/api/admin/menu-items?${params.toString()}`);
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson<PaginatedResponse>(
+        `/api/admin/menu-items?${params.toString()}`
+      );
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch menu items");
       }
       return result.data;
@@ -95,36 +97,32 @@ export default function MenuItemsPage() {
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/categories");
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson<Category[]>("/api/admin/categories");
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch categories");
       }
-      return result.data || [];
+      return result.data;
     },
   });
 
   const { data: tableTypes = [] } = useQuery<TableType[]>({
     queryKey: ["tableTypes"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/table-types");
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson<TableType[]>("/api/admin/table-types");
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch table types");
       }
-      return result.data || [];
+      return result.data;
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const res = await fetch("/api/admin/menu-items", {
+      const result = await apiClientJson("/api/admin/menu-items", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        data,
       });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to create menu item");
       }
       return result.data;
@@ -146,13 +144,11 @@ export default function MenuItemsPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const res = await fetch(`/api/admin/menu-items/${id}`, {
+      const result = await apiClientJson(`/api/admin/menu-items/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        data,
       });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to update menu item");
       }
       return result.data;
@@ -175,11 +171,10 @@ export default function MenuItemsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/admin/menu-items/${id}`, {
+      const result = await apiClientJson(`/api/admin/menu-items/${id}`, {
         method: "DELETE",
       });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to delete menu item");
       }
       return result.data;
@@ -241,13 +236,15 @@ export default function MenuItemsPage() {
       formData.append("file", file);
       formData.append("folder", "image_menus_sndr");
 
-      const res = await fetch("/api/imagekit/upload", {
+      const result = await apiClientJson("/api/imagekit/upload", {
         method: "POST",
-        body: formData,
+        data: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to upload image");
       }
 
@@ -369,11 +366,13 @@ export default function MenuItemsPage() {
               key: "isCook",
               label: "ត្រូវការចម្អិន",
               render: (item) => (
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  item.isCook 
-                    ? "bg-orange-100 text-orange-800" 
-                    : "bg-slate-100 text-slate-600"
-                }`}>
+                <span
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    item.isCook
+                      ? "bg-orange-100 text-orange-800"
+                      : "bg-slate-100 text-slate-600"
+                  }`}
+                >
                   {item.isCook ? "ត្រូវការ" : "មិនត្រូវការ"}
                 </span>
               ),
@@ -579,9 +578,7 @@ export default function MenuItemsPage() {
                       }
                       className="w-4 h-4 text-slate-800 border-slate-300 rounded focus:ring-slate-500"
                     />
-                    <span className="text-sm font-medium">
-                      ត្រូវការចម្អិន
-                    </span>
+                    <span className="text-sm font-medium">ត្រូវការចម្អិន</span>
                   </label>
                 </div>
                 <div className="mb-4">

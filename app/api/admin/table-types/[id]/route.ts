@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/utils/api-response";
+import { withAuth, AuthenticatedRequest } from "@/lib/middleware";
 
-export async function PUT(
-  request: NextRequest,
+async function putHandler(
+  request: AuthenticatedRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -55,8 +56,8 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
+async function deleteHandler(
+  request: AuthenticatedRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -89,5 +90,19 @@ export async function DELETE(
       [{ message: error?.message || String(error) }]
     );
   }
+}
+
+export async function PUT(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  return withAuth((req) => putHandler(req, context), ["admin"])(request);
+}
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  return withAuth((req) => deleteHandler(req, context), ["admin"])(request);
 }
 

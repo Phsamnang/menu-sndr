@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { successResponse, errorResponse } from "@/utils/api-response";
+import { withAuth, AuthenticatedRequest } from "@/lib/middleware";
 
 type MenuItemWithRelations = Prisma.MenuItemGetPayload<{
   include: {
@@ -14,7 +15,7 @@ type MenuItemWithRelations = Prisma.MenuItemGetPayload<{
   };
 }>;
 
-export async function GET(request: NextRequest) {
+async function getHandler(request: AuthenticatedRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
@@ -102,7 +103,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+async function postHandler(request: AuthenticatedRequest) {
   try {
     const body = await request.json();
     const { name, description, image, categoryId, prices, isCook } = body;

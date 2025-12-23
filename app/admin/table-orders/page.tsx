@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import OptimizedImage from "@/components/OptimizedImage";
+import { apiClientJson } from "@/utils/api-client";
 
 interface TableItem {
   id: string;
@@ -79,12 +80,11 @@ export default function TableOrdersPage() {
     {
       queryKey: ["tables"],
       queryFn: async () => {
-        const res = await fetch("/api/admin/tables");
-        const result = await res.json();
-        if (!res.ok || !result.success) {
+        const result = await apiClientJson<TableItem[]>("/api/admin/tables");
+        if (!result.success || !result.data) {
           throw new Error(result.error?.message || "Failed to fetch tables");
         }
-        return result.data || [];
+        return result.data;
       },
     }
   );
@@ -94,12 +94,13 @@ export default function TableOrdersPage() {
   }>({
     queryKey: ["activeOrders"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/orders?status=new&limit=1000");
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson<{ items: Order[] }>(
+        "/api/admin/orders?status=new&limit=1000"
+      );
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch orders");
       }
-      return result.data || { items: [] };
+      return result.data;
     },
     refetchInterval: 3000, // Refresh every 3 seconds
   });
@@ -108,9 +109,10 @@ export default function TableOrdersPage() {
     queryKey: ["orderDetails", selectedOrder?.id],
     queryFn: async () => {
       if (!selectedOrder?.id) return null;
-      const res = await fetch(`/api/admin/orders/${selectedOrder.id}`);
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson<Order>(
+        `/api/admin/orders/${selectedOrder.id}`
+      );
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch order");
       }
       return result.data;
@@ -126,12 +128,13 @@ export default function TableOrdersPage() {
         return [];
       }
       const url = `/api/menu?tableType=${selectedTable.tableType.name}`;
-      const response = await fetch(url);
-      const result = await response.json();
-      if (!response.ok || !result.success) {
+      const result = await apiClientJson<MenuItem[]>(url, {
+        requireAuth: false,
+      });
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch menu");
       }
-      return result.data || [];
+      return result.data;
     },
     enabled: !!selectedTable?.tableType.name,
   });
@@ -139,12 +142,11 @@ export default function TableOrdersPage() {
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/categories");
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson<Category[]>("/api/admin/categories");
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch categories");
       }
-      return result.data || [];
+      return result.data;
     },
   });
 
@@ -230,16 +232,17 @@ export default function TableOrdersPage() {
       if (!selectedOrder?.id) {
         throw new Error("Order not found");
       }
-      const res = await fetch(`/api/admin/orders/${selectedOrder.id}/items`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          menuItemId,
-          quantity,
-        }),
-      });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson(
+        `/api/admin/orders/${selectedOrder.id}/items`,
+        {
+          method: "POST",
+          data: {
+            menuItemId,
+            quantity,
+          },
+        }
+      );
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to add item");
       }
       return result.data;
@@ -279,16 +282,17 @@ export default function TableOrdersPage() {
       if (!selectedOrder?.id) {
         throw new Error("Order not found");
       }
-      const res = await fetch(`/api/admin/orders/${selectedOrder.id}/items`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          itemId,
-          quantity,
-        }),
-      });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson(
+        `/api/admin/orders/${selectedOrder.id}/items`,
+        {
+          method: "PUT",
+          data: {
+            itemId,
+            quantity,
+          },
+        }
+      );
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to update item");
       }
       return result.data;
@@ -304,14 +308,13 @@ export default function TableOrdersPage() {
       if (!selectedOrder?.id) {
         throw new Error("Order not found");
       }
-      const res = await fetch(
+      const result = await apiClientJson(
         `/api/admin/orders/${selectedOrder.id}/items?itemId=${itemId}`,
         {
           method: "DELETE",
         }
       );
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to delete item");
       }
       return result.data;

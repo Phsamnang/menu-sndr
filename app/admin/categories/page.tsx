@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
 import Table, { TableColumn } from "@/components/Table";
+import { apiClientJson } from "@/utils/api-client";
 
 interface Category {
   id: string;
@@ -20,24 +21,21 @@ export default function CategoriesPage() {
   const { data: categories = [], isLoading } = useQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/categories");
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson<Category[]>("/api/admin/categories");
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch categories");
       }
-      return result.data || [];
+      return result.data;
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: { name: string; displayName: string }) => {
-      const res = await fetch("/api/admin/categories", {
+      const result = await apiClientJson("/api/admin/categories", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        data,
       });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to create category");
       }
       return result.data;
@@ -57,13 +55,11 @@ export default function CategoriesPage() {
       id: string;
       data: { name: string; displayName: string };
     }) => {
-      const res = await fetch(`/api/admin/categories/${id}`, {
+      const result = await apiClientJson(`/api/admin/categories/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        data,
       });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to update category");
       }
       return result.data;
@@ -78,11 +74,10 @@ export default function CategoriesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/admin/categories/${id}`, {
+      const result = await apiClientJson(`/api/admin/categories/${id}`, {
         method: "DELETE",
       });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to delete category");
       }
       return result.data;

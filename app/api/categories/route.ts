@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/utils/api-response";
+import { withAuth, AuthenticatedRequest } from "@/lib/middleware";
 
-export async function GET() {
+async function handler(request: AuthenticatedRequest) {
   try {
     const categories = await prisma.category.findMany({
       orderBy: {
@@ -21,3 +22,4 @@ export async function GET() {
   }
 }
 
+export const GET = withAuth(handler);

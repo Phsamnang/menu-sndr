@@ -1,7 +1,8 @@
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/utils/api-response";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const tableTypes = await prisma.tableType.findMany({
       orderBy: {
@@ -20,4 +21,3 @@ export async function GET() {
     );
   }
 }
-

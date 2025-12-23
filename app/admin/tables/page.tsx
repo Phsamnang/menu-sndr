@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
 import Table, { TableColumn } from "@/components/Table";
+import { apiClientJson } from "@/utils/api-client";
 
 interface TableType {
   id: string;
@@ -37,36 +38,32 @@ export default function TablesPage() {
   const { data: tables = [], isLoading } = useQuery<TableItem[]>({
     queryKey: ["tables"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/tables");
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson<TableItem[]>("/api/admin/tables");
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch tables");
       }
-      return result.data || [];
+      return result.data;
     },
   });
 
   const { data: tableTypes = [] } = useQuery<TableType[]>({
     queryKey: ["tableTypes"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/table-types");
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson<TableType[]>("/api/admin/table-types");
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch table types");
       }
-      return result.data || [];
+      return result.data;
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const res = await fetch("/api/admin/tables", {
+      const result = await apiClientJson("/api/admin/tables", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        data,
       });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to create table");
       }
       return result.data;
@@ -86,13 +83,11 @@ export default function TablesPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const res = await fetch(`/api/admin/tables/${id}`, {
+      const result = await apiClientJson(`/api/admin/tables/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        data,
       });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to update table");
       }
       return result.data;
@@ -113,11 +108,10 @@ export default function TablesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/admin/tables/${id}`, {
+      const result = await apiClientJson(`/api/admin/tables/${id}`, {
         method: "DELETE",
       });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to delete table");
       }
       return result.data;

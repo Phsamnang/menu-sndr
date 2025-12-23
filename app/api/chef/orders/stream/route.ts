@@ -1,5 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withAuth, AuthenticatedRequest } from "@/lib/middleware";
 
 async function fetchChefOrders(status?: string) {
   const where: any = {
@@ -55,7 +56,7 @@ async function fetchChefOrders(status?: string) {
   return filteredOrders;
 }
 
-export async function GET(request: NextRequest) {
+async function handler(request: AuthenticatedRequest) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status") || undefined;
 
@@ -101,7 +102,7 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  return new Response(stream, {
+  return new NextResponse(stream, {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
@@ -109,3 +110,5 @@ export async function GET(request: NextRequest) {
     },
   });
 }
+
+export const GET = withAuth(handler, ["admin", "chef"]);

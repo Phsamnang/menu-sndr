@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server";
 import { uploadToImageKit } from "@/utils/imagekit";
 import { successResponse, errorResponse } from "@/utils/api-response";
+import { withAuth, AuthenticatedRequest } from "@/lib/middleware";
 
-export async function POST(request: NextRequest) {
+async function handler(request: AuthenticatedRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -42,4 +43,6 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withAuth(handler, ["admin"]);
 

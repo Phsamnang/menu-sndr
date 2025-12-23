@@ -119,3 +119,59 @@ model OrderItem {
   @@index([menuItemId])
   @@index([status])
 }
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  displayName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+  adminMenuItems AdminMenuItemRole[]
+
+  @@index([name])
+}
+
+model User {
+  id          String   @id @default(cuid())
+  username    String   @unique
+  password    String
+  roleId      String
+  role        Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([username])
+  @@index([roleId])
+}
+
+model AdminMenuItem {
+  id          String   @id @default(cuid())
+  href        String   @unique
+  iconName    String
+  title       String
+  description String
+  iconColor   String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  roles       AdminMenuItemRole[]
+
+  @@index([href])
+  @@index([order])
+}
+
+model AdminMenuItemRole {
+  id             String        @id @default(cuid())
+  adminMenuItemId String
+  roleId         String
+  adminMenuItem  AdminMenuItem @relation(fields: [adminMenuItemId], references: [id], onDelete: Cascade)
+  role           Role          @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+
+  @@unique([adminMenuItemId, roleId])
+  @@index([adminMenuItemId])
+  @@index([roleId])
+}

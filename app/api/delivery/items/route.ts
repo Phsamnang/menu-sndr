@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/utils/api-response";
+import { withAuth, AuthenticatedRequest } from "@/lib/middleware";
 
-export async function GET(request: NextRequest) {
+async function handler(request: AuthenticatedRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || undefined;
@@ -78,3 +79,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withAuth(handler, ["admin", "order"]);

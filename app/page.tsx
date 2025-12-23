@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { type MenuItem } from "@/utils/menu";
 import OptimizedImage from "@/components/OptimizedImage";
+import { apiClientJson } from "@/utils/api-client";
 
 interface TableType {
   id: string;
@@ -36,16 +37,17 @@ function HomeContent() {
       const url = selectedTableType
         ? `/api/menu?tableType=${selectedTableType}`
         : "/api/menu";
-      const response = await fetch(url);
-      const result = await response.json();
+      const result = await apiClientJson<MenuItem[]>(url, {
+        requireAuth: false,
+      });
 
-      if (!response.ok || !result.success) {
+      if (!result.success || !result.data) {
         const errorMessage =
           result.error?.message || result.error || "Failed to fetch menu";
         throw new Error(errorMessage);
       }
 
-      return result.data || [];
+      return result.data;
     },
     enabled: true,
     retry: 1,
@@ -54,10 +56,11 @@ function HomeContent() {
   const { data: tableTypes = [] } = useQuery<TableType[]>({
     queryKey: ["tableTypes"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/table-types");
-      const result = await res.json();
+      const result = await apiClientJson<TableType[]>("/api/admin/table-types", {
+        requireAuth: false,
+      });
 
-      if (!res.ok || !result.success) {
+      if (!result.success || !result.data) {
         const errorMessage =
           result.error?.message ||
           result.error ||
@@ -65,7 +68,7 @@ function HomeContent() {
         throw new Error(errorMessage);
       }
 
-      return result.data || [];
+      return result.data;
     },
     enabled: true,
     retry: 1,
@@ -91,13 +94,21 @@ function HomeContent() {
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3">
-          <div className="text-center mb-3">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-clip-text text-transparent mb-1">
-              មីនុយភោជនីយដ្ឋាន
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-600">
-              ជ្រើសរើសប្រភេទតុ និងប្រភេទមុខម្ហូបដើម្បីមើលមុខម្ហូប
-            </p>
+          <div className="flex justify-between items-start mb-3">
+            <div className="flex-1 text-center">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-clip-text text-transparent mb-1">
+                មីនុយភោជនីយដ្ឋាន
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-600">
+                ជ្រើសរើសប្រភេទតុ និងប្រភេទមុខម្ហូបដើម្បីមើលមុខម្ហូប
+              </p>
+            </div>
+            <button
+              onClick={() => router.push("/login")}
+              className="ml-4 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors font-medium text-sm sm:text-base shadow-md hover:shadow-lg"
+            >
+              ចូលប្រើប្រាស់
+            </button>
           </div>
 
           <div className="space-y-2">

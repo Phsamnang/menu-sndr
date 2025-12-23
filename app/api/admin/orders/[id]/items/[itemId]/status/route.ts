@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/utils/api-response";
+import { withAuth, AuthenticatedRequest } from "@/lib/middleware";
 
-export async function PUT(
-  request: NextRequest,
+async function putHandler(
+  request: AuthenticatedRequest,
   {
     params,
   }: {
@@ -75,5 +76,14 @@ export async function PUT(
       [{ message: error?.message || String(error) }]
     );
   }
+}
+
+export async function PUT(
+  request: NextRequest,
+  context: {
+    params: Promise<{ id: string; itemId: string }>;
+  }
+) {
+  return withAuth((req) => putHandler(req, context), ["admin", "chef", "order"])(request);
 }
 

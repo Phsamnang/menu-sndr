@@ -5,6 +5,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import OptimizedImage from "@/components/OptimizedImage";
 import InvoicePrint from "@/components/InvoicePrint";
+import { apiClientJson } from "@/utils/api-client";
 
 interface Category {
   id: string;
@@ -99,12 +100,13 @@ export default function OrdersPage() {
         return [];
       }
       const url = `/api/menu?tableType=${selectedTable.tableType.name}`;
-      const response = await fetch(url);
-      const result = await response.json();
-      if (!response.ok || !result.success) {
+      const result = await apiClientJson<MenuItem[]>(url, {
+        requireAuth: false,
+      });
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch menu");
       }
-      return result.data || [];
+      return result.data;
     },
     enabled: !!selectedTable?.tableType.name,
   });
@@ -112,38 +114,36 @@ export default function OrdersPage() {
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/categories");
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson<Category[]>("/api/admin/categories");
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch categories");
       }
-      return result.data || [];
+      return result.data;
     },
   });
 
   const { data: tables = [] } = useQuery<TableItem[]>({
     queryKey: ["tables"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/tables");
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson<TableItem[]>("/api/admin/tables");
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch tables");
       }
-      return result.data || [];
+      return result.data;
     },
   });
 
   const { data: activeOrdersData } = useQuery<{ items: Order[] }>({
     queryKey: ["activeOrders"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/orders?status=new&limit=1000");
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson<{ items: Order[] }>(
+        "/api/admin/orders?status=new&limit=1000"
+      );
+      if (!result.success || !result.data) {
         return { items: [] };
       }
-      return result.data || { items: [] };
+      return result.data;
     },
-    refetchInterval: 3000,
   });
 
   const ordersByTable = useMemo(() => {
@@ -158,6 +158,17 @@ export default function OrdersPage() {
       return acc;
     }, {} as Record<string, Order[]>);
   }, [activeOrdersData]);
+
+  const tablesByType = useMemo(() => {
+    return tables.reduce((acc, table) => {
+      const typeName = table.tableType.displayName;
+      if (!acc[typeName]) {
+        acc[typeName] = [];
+      }
+      acc[typeName].push(table);
+      return acc;
+    }, {} as Record<string, TableItem[]>);
+  }, [tables]);
 
   const getTableStatusColor = (status: string) => {
     switch (status) {
@@ -193,15 +204,15 @@ export default function OrdersPage() {
     queryKey: ["currentOrder", currentOrder?.id],
     queryFn: async () => {
       if (!currentOrder?.id) return null;
-      const res = await fetch(`/api/admin/orders/${currentOrder.id}`);
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson<Order>(
+        `/api/admin/orders/${currentOrder.id}`
+      );
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch order");
       }
       return result.data;
     },
     enabled: !!currentOrder?.id,
-    refetchInterval: 2000,
   });
 
   const orderItems = orderData?.items || [];
@@ -254,19 +265,17 @@ export default function OrdersPage() {
         .substr(2, 9)
         .toUpperCase()}`;
 
-      const res = await fetch("/api/admin/orders", {
+      const result = await apiClientJson("/api/admin/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        data: {
           tableId,
           customerName: null,
           items: [],
           discountType: null,
           discountValue: 0,
-        }),
+        },
       });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to create order");
       }
       return result.data;
@@ -324,16 +333,17 @@ export default function OrdersPage() {
       if (!currentOrder?.id) {
         throw new Error("Order not found");
       }
-      const res = await fetch(`/api/admin/orders/${currentOrder.id}/items`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          menuItemId,
-          quantity,
-        }),
-      });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson(
+        `/api/admin/orders/${currentOrder.id}/items`,
+        {
+          method: "POST",
+          data: {
+            menuItemId,
+            quantity,
+          },
+        }
+      );
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to add item");
       }
       return result.data;
@@ -355,16 +365,17 @@ export default function OrdersPage() {
       if (!currentOrder?.id) {
         throw new Error("Order not found");
       }
-      const res = await fetch(`/api/admin/orders/${currentOrder.id}/items`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          itemId,
-          quantity,
-        }),
-      });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson(
+        `/api/admin/orders/${currentOrder.id}/items`,
+        {
+          method: "PUT",
+          data: {
+            itemId,
+            quantity,
+          },
+        }
+      );
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to update item");
       }
       return result.data;
@@ -470,16 +481,17 @@ export default function OrdersPage() {
       if (!currentOrder?.id) {
         throw new Error("Order not found");
       }
-      const res = await fetch(`/api/admin/orders/${currentOrder.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          discountType: discountValue > 0 ? discountType : null,
-          discountValue: discountValue || 0,
-        }),
-      });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson(
+        `/api/admin/orders/${currentOrder.id}`,
+        {
+          method: "PUT",
+          data: {
+            discountType: discountValue > 0 ? discountType : null,
+            discountValue: discountValue || 0,
+          },
+        }
+      );
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to update discount");
       }
       return result.data;
@@ -495,15 +507,16 @@ export default function OrdersPage() {
       if (!currentOrder?.id) {
         throw new Error("Order not found");
       }
-      const res = await fetch(`/api/admin/orders/${currentOrder.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerName: name || null,
-        }),
-      });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson(
+        `/api/admin/orders/${currentOrder.id}`,
+        {
+          method: "PUT",
+          data: {
+            customerName: name || null,
+          },
+        }
+      );
+      if (!result.success || !result.data) {
         throw new Error(
           result.error?.message || "Failed to update customer name"
         );
@@ -542,15 +555,16 @@ export default function OrdersPage() {
       if (!currentOrder?.id) {
         throw new Error("Order not found");
       }
-      const res = await fetch(`/api/admin/orders/${currentOrder.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: "done",
-        }),
-      });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      const result = await apiClientJson(
+        `/api/admin/orders/${currentOrder.id}`,
+        {
+          method: "PUT",
+          data: {
+            status: "done",
+          },
+        }
+      );
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to complete payment");
       }
       return result.data;
@@ -635,83 +649,73 @@ export default function OrdersPage() {
               <p className="text-slate-500 text-base md:text-lg">មិនមានតុទេ</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-              {tables.map((table) => {
-                const isAvailable = table.status === "available";
-                const tableOrders = ordersByTable[table.id] || [];
-                const hasActiveOrder = tableOrders.some(
-                  (o) => o.status === "new" || o.status === "on_process"
-                );
-                const canSelect = isAvailable || hasActiveOrder;
+            <div className="space-y-6">
+              {Object.entries(tablesByType).map(([typeName, typeTables]) => (
+                <div key={typeName} className="space-y-3">
+                  <div className="flex items-center gap-3 px-2">
+                    <div className="h-1 w-12 bg-gradient-to-r from-slate-800 to-slate-600 rounded-full"></div>
+                    <h2 className="text-lg sm:text-xl font-bold text-slate-800">
+                      {typeName}
+                    </h2>
+                    <div className="flex-1 h-1 bg-gradient-to-r from-slate-300 to-transparent rounded-full"></div>
+                    <span className="text-xs sm:text-sm font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                      {typeTables.length}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+                    {typeTables.map((table) => {
+                      const isAvailable = table.status === "available";
+                      const tableOrders = ordersByTable[table.id] || [];
+                      const hasActiveOrder = tableOrders.some(
+                        (o) => o.status === "new" || o.status === "on_process"
+                      );
+                      const canSelect = isAvailable || hasActiveOrder;
 
-                return (
-                  <button
-                    key={table.id}
-                    onClick={() => handleTableSelect(table)}
-                    disabled={!canSelect && table.status === "maintenance"}
-                    className={`rounded-lg shadow-md p-3 md:p-6 transition-all border-2 ${
-                      canSelect || hasActiveOrder
-                        ? "hover:shadow-xl cursor-pointer active:scale-95 md:hover:scale-105"
-                        : table.status === "maintenance"
-                        ? "opacity-75 cursor-not-allowed"
-                        : "hover:shadow-xl cursor-pointer active:scale-95 md:hover:scale-105"
-                    } ${getTableStatusColor(table.status)}`}
-                  >
-                    <div className="text-center">
-                      <div
-                        className={`w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3 text-lg md:text-2xl font-bold ${
-                          isAvailable
-                            ? "bg-slate-800 text-white"
-                            : "bg-white text-slate-600"
-                        }`}
-                      >
-                        {table.number}
-                      </div>
-                      <h3
-                        className={`font-semibold mb-1 text-sm md:text-base ${
-                          isAvailable ? "text-slate-900" : "text-slate-700"
-                        }`}
-                      >
-                        {table.name || `តុ ${table.number}`}
-                      </h3>
-                      <p
-                        className={`text-xs md:text-sm mb-2 ${
-                          isAvailable ? "text-slate-600" : "text-slate-500"
-                        }`}
-                      >
-                        {table.tableType.displayName}
-                      </p>
-                      {hasActiveOrder && (
-                        <div className="mb-2">
-                          <span className="inline-block px-2 py-0.5 bg-blue-200 text-blue-800 rounded text-xs font-medium">
-                            {
-                              tableOrders.filter(
-                                (o) =>
-                                  o.status === "new" ||
-                                  o.status === "on_process"
-                              ).length
-                            }{" "}
-                            ការបញ្ជាទិញ
-                          </span>
-                        </div>
-                      )}
-                      <span
-                        className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
-                          isAvailable
-                            ? "bg-green-200 text-green-800"
-                            : table.status === "occupied"
-                            ? "bg-red-200 text-red-800"
-                            : table.status === "reserved"
-                            ? "bg-yellow-200 text-yellow-800"
-                            : "bg-gray-200 text-gray-800"
-                        }`}
-                      >
-                        {getTableStatusLabel(table.status)}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
+                      return (
+                        <button
+                          key={table.id}
+                          onClick={() => handleTableSelect(table)}
+                          disabled={
+                            !canSelect && table.status === "maintenance"
+                          }
+                          className={`rounded-lg shadow-md p-3 md:p-6 transition-all border-2 ${
+                            canSelect || hasActiveOrder
+                              ? "hover:shadow-xl cursor-pointer active:scale-95 md:hover:scale-105"
+                              : table.status === "maintenance"
+                              ? "opacity-75 cursor-not-allowed"
+                              : "hover:shadow-xl cursor-pointer active:scale-95 md:hover:scale-105"
+                          } ${getTableStatusColor(table.status)}`}
+                        >
+                          <div className="text-center">
+                            <h3
+                              className={`font-semibold mb-2 text-sm md:text-base ${
+                                isAvailable
+                                  ? "text-slate-900"
+                                  : "text-slate-700"
+                              }`}
+                            >
+                              {table.name || `តុ ${table.number}`}
+                            </h3>
+                            <span
+                              className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
+                                isAvailable
+                                  ? "bg-green-200 text-green-800"
+                                  : table.status === "occupied"
+                                  ? "bg-red-200 text-red-800"
+                                  : table.status === "reserved"
+                                  ? "bg-yellow-200 text-yellow-800"
+                                  : "bg-gray-200 text-gray-800"
+                              }`}
+                            >
+                              {getTableStatusLabel(table.status)}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
