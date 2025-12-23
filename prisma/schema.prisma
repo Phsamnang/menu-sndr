@@ -26,21 +26,41 @@ model TableType {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   prices      Price[]
+  tables      Table[]
 
   @@index([name])
   @@index([order])
 }
 
+model Table {
+  id          String    @id @default(cuid())
+  number      String    @unique
+  name        String?
+  capacity    Int       @default(4)
+  tableTypeId String
+  tableType   TableType @relation(fields: [tableTypeId], references: [id], onDelete: Restrict)
+  status      String    @default("available") // available, occupied, reserved, maintenance
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  orders      Order[]
+
+  @@index([tableTypeId])
+  @@index([number])
+  @@index([status])
+}
+
 model MenuItem {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   name        String
   description String
   image       String
   categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  isCook      Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   prices      Price[]
+  orderItems  OrderItem[]
 
   @@index([categoryId])
 }
@@ -58,4 +78,44 @@ model Price {
   @@unique([menuItemId, tableTypeId])
   @@index([menuItemId])
   @@index([tableTypeId])
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  tableId       String?
+  table         Table?      @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  customerName  String?
+  status        String      @default("new") // new, on_process, done, cancelled
+  discountType  String?     // percentage, amount
+  discountValue Float?       @default(0)
+  subtotal      Float       @default(0)
+  discountAmount Float      @default(0)
+  total         Float       @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  items         OrderItem[]
+
+  @@index([orderNumber])
+  @@index([tableId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId  String
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+  quantity    Int      @default(1)
+  unitPrice   Float
+  totalPrice  Float
+  status      String   @default("pending") // pending, preparing, ready, served, cancelled
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([menuItemId])
+  @@index([status])
 }

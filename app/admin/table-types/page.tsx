@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
+import Table, { TableColumn } from "@/components/Table";
 
 interface TableType {
   id: string;
@@ -25,8 +26,11 @@ export default function TableTypesPage() {
     queryKey: ["tableTypes"],
     queryFn: async () => {
       const res = await fetch("/api/admin/table-types");
-      if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to fetch table types");
+      }
+      return result.data || [];
     },
   });
 
@@ -41,8 +45,11 @@ export default function TableTypesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to create");
-      return res.json();
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to create table type");
+      }
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tableTypes"] });
@@ -64,8 +71,11 @@ export default function TableTypesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to update");
-      return res.json();
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to update table type");
+      }
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tableTypes"] });
@@ -80,8 +90,11 @@ export default function TableTypesPage() {
       const res = await fetch(`/api/admin/table-types/${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to delete");
-      return res.json();
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to delete table type");
+      }
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tableTypes"] });
@@ -132,45 +145,58 @@ export default function TableTypesPage() {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-12">កំពុងផ្ទុក...</div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-slate-800 text-white">
-                <tr>
-                  <th className="px-6 py-3 text-left">ឈ្មោះ</th>
-                  <th className="px-6 py-3 text-left">ឈ្មោះបង្ហាញ</th>
-                  <th className="px-6 py-3 text-left">លំដាប់</th>
-                  <th className="px-6 py-3 text-right">សកម្មភាព</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {tableTypes.map((type) => (
-                  <tr key={type.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 font-medium">{type.name}</td>
-                    <td className="px-6 py-4">{type.displayName}</td>
-                    <td className="px-6 py-4">{type.order}</td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => handleEdit(type)}
-                        className="px-3 py-1 bg-blue-500 text-white rounded mr-2 hover:bg-blue-600"
-                      >
-                        កែប្រែ
-                      </button>
-                      <button
-                        onClick={() => deleteMutation.mutate(type.id)}
-                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                      >
-                        លុប
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <Table
+          columns={[
+            {
+              key: "name",
+              label: "ឈ្មោះ",
+              render: (item) => (
+                <span className="font-medium text-slate-900">{item.name}</span>
+              ),
+            },
+            {
+              key: "displayName",
+              label: "ឈ្មោះបង្ហាញ",
+            },
+            {
+              key: "order",
+              label: "លំដាប់",
+              render: (item) => (
+                <span className="text-slate-700">{item.order}</span>
+              ),
+            },
+            {
+              key: "actions",
+              label: "សកម្មភាព",
+              align: "right",
+              render: (item) => (
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEdit(item);
+                    }}
+                    className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    កែប្រែ
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteMutation.mutate(item.id);
+                    }}
+                    className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors"
+                  >
+                    លុប
+                  </button>
+                </div>
+              ),
+            },
+          ]}
+          data={tableTypes}
+          loading={isLoading}
+          emptyMessage="រកមិនឃើញប្រភេទតុទេ។"
+        />
 
         {isModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -180,7 +206,9 @@ export default function TableTypesPage() {
               </h2>
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">ឈ្មោះ</label>
+                  <label className="block text-sm font-medium mb-2">
+                    ឈ្មោះ
+                  </label>
                   <input
                     type="text"
                     value={formData.name}
@@ -206,7 +234,9 @@ export default function TableTypesPage() {
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">លំដាប់</label>
+                  <label className="block text-sm font-medium mb-2">
+                    លំដាប់
+                  </label>
                   <input
                     type="number"
                     value={formData.order}
@@ -243,4 +273,3 @@ export default function TableTypesPage() {
     </div>
   );
 }
-

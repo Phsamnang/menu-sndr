@@ -17,7 +17,9 @@ function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedTableType, setSelectedTableType] = useState<string | null>(null);
+  const [selectedTableType, setSelectedTableType] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     const tableType = searchParams.get("tableType");
@@ -41,13 +43,16 @@ function HomeContent() {
         : "/api/menu";
       console.log("Fetching menu from:", url);
       const response = await fetch(url);
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to fetch menu");
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        const errorMessage =
+          result.error?.message || result.error || "Failed to fetch menu";
+        throw new Error(errorMessage);
       }
-      const data = await response.json();
-      console.log("Menu data received:", data.length, "items");
-      return data;
+
+      console.log("Menu data received:", result.data?.length || 0, "items");
+      return result.data || [];
     },
     enabled: true,
     retry: 1,
@@ -58,10 +63,18 @@ function HomeContent() {
     queryFn: async () => {
       console.log("Fetching table types...");
       const res = await fetch("/api/admin/table-types");
-      if (!res.ok) throw new Error("Failed to fetch");
-      const data = await res.json();
-      console.log("Table types received:", data.length, "types");
-      return data;
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        const errorMessage =
+          result.error?.message ||
+          result.error ||
+          "Failed to fetch table types";
+        throw new Error(errorMessage);
+      }
+
+      console.log("Table types received:", result.data?.length || 0, "types");
+      return result.data || [];
     },
     enabled: true,
     retry: 1,
@@ -91,19 +104,25 @@ function HomeContent() {
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-clip-text text-transparent mb-1">
               មីនុយភោជនីយដ្ឋាន
             </h1>
-            <p className="text-xs sm:text-sm text-slate-600">ជ្រើសរើសប្រភេទតុ និងប្រភេទមុខម្ហូបដើម្បីមើលមុខម្ហូប</p>
+            <p className="text-xs sm:text-sm text-slate-600">
+              ជ្រើសរើសប្រភេទតុ និងប្រភេទមុខម្ហូបដើម្បីមើលមុខម្ហូប
+            </p>
           </div>
 
           <div className="space-y-2">
             <div>
-              <p className="text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wide">ប្រភេទតុ</p>
+              <p className="text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wide">
+                ប្រភេទតុ
+              </p>
               <div className="flex flex-wrap gap-2">
                 {sortedTableTypes.map((type) => (
                   <button
                     key={type.id}
                     onClick={() => {
                       setSelectedTableType(type.name);
-                      const params = new URLSearchParams(searchParams.toString());
+                      const params = new URLSearchParams(
+                        searchParams.toString()
+                      );
                       params.set("tableType", type.name);
                       router.push(`?${params.toString()}`);
                     }}
@@ -120,7 +139,9 @@ function HomeContent() {
             </div>
 
             <div>
-              <p className="text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wide">ប្រភេទមុខម្ហូប</p>
+              <p className="text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wide">
+                ប្រភេទមុខម្ហូប
+              </p>
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setSelectedCategory(null)}
@@ -155,26 +176,52 @@ function HomeContent() {
         {isLoading ? (
           <div className="text-center py-16">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-slate-800"></div>
-            <p className="text-slate-600 mt-4 text-base font-medium">កំពុងផ្ទុកមីនុយ...</p>
+            <p className="text-slate-600 mt-4 text-base font-medium">
+              កំពុងផ្ទុកមីនុយ...
+            </p>
           </div>
         ) : error ? (
           <div className="text-center py-16 px-4">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-8 h-8 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
-            <p className="text-red-600 text-base font-semibold mb-2">មានកំហុសក្នុងការផ្ទុកមីនុយ</p>
+            <p className="text-red-600 text-base font-semibold mb-2">
+              មានកំហុសក្នុងការផ្ទុកមីនុយ
+            </p>
             <p className="text-red-400 text-sm">{String(error)}</p>
           </div>
         ) : Object.keys(displayCategories).length === 0 ? (
           <div className="text-center py-16">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
-              <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              <svg
+                className="w-8 h-8 text-slate-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                />
               </svg>
             </div>
-            <p className="text-slate-600 text-base font-medium">រកមិនឃើញមុខម្ហូបទេ។</p>
+            <p className="text-slate-600 text-base font-medium">
+              រកមិនឃើញមុខម្ហូបទេ។
+            </p>
           </div>
         ) : (
           <div className="space-y-6 sm:space-y-8">
@@ -210,8 +257,18 @@ function HomeContent() {
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-slate-200">
-                              <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              <svg
+                                className="w-10 h-10 text-slate-300"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
                               </svg>
                             </div>
                           )}
@@ -228,9 +285,13 @@ function HomeContent() {
                           {selectedTableType ? (
                             <div>
                               <span className="text-base sm:text-lg font-extrabold text-slate-900">
-                                {item.prices[selectedTableType]?.toLocaleString('km-KH') || "0"}
+                                {item.prices[selectedTableType]?.toLocaleString(
+                                  "km-KH"
+                                ) || "0"}
                               </span>
-                              <span className="text-xs sm:text-sm font-semibold text-slate-600 ml-1">៛</span>
+                              <span className="text-xs sm:text-sm font-semibold text-slate-600 ml-1">
+                                ៛
+                              </span>
                             </div>
                           ) : (
                             <p className="text-xs font-medium text-slate-400 italic">
@@ -253,19 +314,19 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={
-      <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
-            <p className="text-slate-600 mt-4">កំពុងផ្ទុក...</p>
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
+              <p className="text-slate-600 mt-4">កំពុងផ្ទុក...</p>
+            </div>
           </div>
-        </div>
-      </main>
-    }>
+        </main>
+      }
+    >
       <HomeContent />
     </Suspense>
   );
 }
-
-

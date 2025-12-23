@@ -1,4 +1,15 @@
 import Link from "next/link";
+import {
+  FaFolder,
+  FaLayerGroup,
+  FaTable,
+  FaUtensils,
+  FaShoppingCart,
+  FaClipboardList,
+  FaBook,
+  FaFire,
+  FaTruck,
+} from "react-icons/fa";
 
 export default function AdminPage() {
   return (
@@ -12,6 +23,7 @@ export default function AdminPage() {
             href="/admin/categories"
             className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
           >
+            <FaFolder className="text-4xl text-slate-600 mb-4" />
             <h2 className="text-2xl font-bold text-slate-800 mb-2">
               ប្រភេទម្ហូប
             </h2>
@@ -22,26 +34,78 @@ export default function AdminPage() {
             href="/admin/table-types"
             className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
           >
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">
-              ប្រភេទតុ
-            </h2>
+            <FaLayerGroup className="text-4xl text-slate-600 mb-4" />
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">ប្រភេទតុ</h2>
             <p className="text-slate-600">គ្រប់គ្រងប្រភេទតុ និងតម្លៃ</p>
+          </Link>
+
+          <Link
+            href="/admin/tables"
+            className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
+          >
+            <FaTable className="text-4xl text-slate-600 mb-4" />
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">តុ</h2>
+            <p className="text-slate-600">គ្រប់គ្រងតុក្នុងភោជនីយដ្ឋាន</p>
           </Link>
 
           <Link
             href="/admin/menu-items"
             className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
           >
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">
-              មុខម្ហូប
-            </h2>
+            <FaUtensils className="text-4xl text-slate-600 mb-4" />
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">មុខម្ហូប</h2>
             <p className="text-slate-600">គ្រប់គ្រងមុខម្ហូប</p>
+          </Link>
+
+          <Link
+            href="/admin/orders"
+            className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
+          >
+            <FaShoppingCart className="text-4xl text-slate-600 mb-4" />
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">
+              ការបញ្ជាទិញ
+            </h2>
+            <p className="text-slate-600">គ្រប់គ្រងការបញ្ជាទិញ</p>
+          </Link>
+
+          <Link
+            href="/admin/table-orders"
+            className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
+          >
+            <FaClipboardList className="text-4xl text-slate-600 mb-4" />
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">
+              ការបញ្ជាទិញតុ
+            </h2>
+            <p className="text-slate-600">មើលការបញ្ជាទិញតាមតុ</p>
+          </Link>
+
+          <Link
+            href="/admin/chef"
+            className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
+          >
+            <FaFire className="text-4xl text-orange-600 mb-4" />
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">
+              ចម្អិន
+            </h2>
+            <p className="text-slate-600">ការបញ្ជាទិញសម្រាប់ចម្អិន</p>
+          </Link>
+
+          <Link
+            href="/admin/delivery"
+            className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
+          >
+            <FaTruck className="text-4xl text-blue-600 mb-4" />
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">
+              ការដឹកជញ្ជូន
+            </h2>
+            <p className="text-slate-600">មុខម្ហូបរួចរាល់សម្រាប់ដឹក</p>
           </Link>
 
           <Link
             href="/"
             className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
           >
+            <FaBook className="text-4xl text-slate-600 mb-4" />
             <h2 className="text-2xl font-bold text-slate-800 mb-2">មើលមីនុយ</h2>
             <p className="text-slate-600">មើលមីនុយអតិថិជន</p>
           </Link>
@@ -50,4 +114,3 @@ export default function AdminPage() {
     </main>
   );
 }
-

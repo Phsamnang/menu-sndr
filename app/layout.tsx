@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
+import { Kantumruy_Pro } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+
+const kantumruyPro = Kantumruy_Pro({
+  subsets: ["khmer", "latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-kantumruy-pro",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "មីនុយ - តម្លៃតាមប្រភេទតុ",
@@ -13,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="km">
+    <html lang="km" className={kantumruyPro.variable}>
       <body>
         <Providers>{children}</Providers>
       </body>

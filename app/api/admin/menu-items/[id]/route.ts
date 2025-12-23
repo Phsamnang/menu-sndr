@@ -1,5 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { successResponse, errorResponse } from "@/utils/api-response";
+
+interface Price {
+  tableTypeId: string;
+  amount: number;
+}
 
 export async function PUT(
   request: NextRequest,
@@ -8,7 +14,22 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, description, image, categoryId, prices } = body;
+    const { name, description, image, categoryId, prices, isCook } = body;
+
+    if (!name || !image || !categoryId) {
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "Name, image, and categoryId are required",
+        400,
+        [
+          ...(!name ? [{ field: "name", message: "Name is required" }] : []),
+          ...(!image ? [{ field: "image", message: "Image is required" }] : []),
+          ...(!categoryId
+            ? [{ field: "categoryId", message: "CategoryId is required" }]
+            : []),
+        ]
+      );
+    }
 
     const existingItem = await prisma.menuItem.findFirst({
       where: {
@@ -19,9 +40,16 @@ export async function PUT(
     });
 
     if (existingItem) {
-      return NextResponse.json(
-        { error: "Menu item with this name already exists in this category" },
-        { status: 409 }
+      return errorResponse(
+        "DUPLICATE_ENTRY",
+        "Menu item with this name already exists in this category",
+        409,
+        [
+          {
+            field: "name",
+            message: "Menu item name must be unique within category",
+          },
+        ]
       );
     }
 
@@ -36,9 +64,7 @@ export async function PUT(
         description: description || "",
         image,
         categoryId,
-        prices: {
-          create: prices || [],
-        },
+        isCook: isCook ?? false,
       },
       include: {
         category: true,
@@ -50,12 +76,47 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json(menuItem);
-  } catch (error) {
+    if (prices && prices.length > 0) {
+      await prisma.price.createMany({
+        data: prices.map((price: Price) => ({
+          menuItemId: id,
+          tableTypeId: price.tableTypeId,
+          amount: price.amount,
+        })),
+      });
+    }
+
+    const updatedMenuItem = await prisma.menuItem.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        prices: {
+          include: {
+            tableType: true,
+          },
+        },
+      },
+    });
+
+    return successResponse(updatedMenuItem, "Menu item updated successfully");
+  } catch (error: any) {
     console.error("Error updating menu item:", error);
-    return NextResponse.json(
-      { error: "Failed to update menu item" },
-      { status: 500 }
+    if (error?.code === "P2025") {
+      return errorResponse("NOT_FOUND", "Menu item not found", 404);
+    }
+    if (error?.code === "P2003") {
+      return errorResponse(
+        "INVALID_REFERENCE",
+        "Invalid category reference",
+        400,
+        [{ field: "categoryId", message: "Category does not exist" }]
+      );
+    }
+    return errorResponse(
+      "UPDATE_MENU_ITEM_ERROR",
+      "Failed to update menu item",
+      500,
+      [{ message: error?.message || String(error) }]
     );
   }
 }
@@ -70,13 +131,17 @@ export async function DELETE(
       where: { id },
     });
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
+    return successResponse(null, "Menu item deleted successfully");
+  } catch (error: any) {
     console.error("Error deleting menu item:", error);
-    return NextResponse.json(
-      { error: "Failed to delete menu item" },
-      { status: 500 }
+    if (error?.code === "P2025") {
+      return errorResponse("NOT_FOUND", "Menu item not found", 404);
+    }
+    return errorResponse(
+      "DELETE_MENU_ITEM_ERROR",
+      "Failed to delete menu item",
+      500,
+      [{ message: error?.message || String(error) }]
     );
   }
 }
-

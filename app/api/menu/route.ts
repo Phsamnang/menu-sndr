@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { successResponse, errorResponse } from "@/utils/api-response";
 
 export async function GET(request: NextRequest) {
   try {
@@ -50,12 +51,14 @@ export async function GET(request: NextRequest) {
       ),
     }));
 
-    return NextResponse.json(formattedItems);
-  } catch (error) {
+    return successResponse(formattedItems, "Menu fetched successfully");
+  } catch (error: any) {
     console.error("Error fetching menu:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch menu" },
-      { status: 500 }
+    return errorResponse(
+      "FETCH_MENU_ERROR",
+      "Failed to fetch menu",
+      500,
+      [{ message: error?.message || String(error) }]
     );
   }
 }

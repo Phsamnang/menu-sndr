@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { successResponse, errorResponse } from "@/utils/api-response";
 
 export async function GET() {
   try {
@@ -9,12 +9,14 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json(tableTypes);
-  } catch (error) {
+    return successResponse(tableTypes, "Table types fetched successfully");
+  } catch (error: any) {
     console.error("Error fetching table types:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch table types" },
-      { status: 500 }
+    return errorResponse(
+      "FETCH_TABLE_TYPES_ERROR",
+      "Failed to fetch table types",
+      500,
+      [{ message: error?.message || String(error) }]
     );
   }
 }

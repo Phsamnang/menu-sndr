@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
+import Table, { TableColumn } from "@/components/Table";
 
 interface TableType {
   id: string;
@@ -30,11 +31,12 @@ interface MenuItem {
   image: string;
   categoryId: string;
   categoryName?: string;
+  isCook?: boolean;
   prices: Price[];
 }
 
 interface PaginatedResponse {
-  data: MenuItem[];
+  items: MenuItem[];
   pagination: {
     page: number;
     limit: number;
@@ -58,6 +60,7 @@ export default function MenuItemsPage() {
     description: "",
     image: "",
     categoryId: "",
+    isCook: false,
     prices: [] as Price[],
   });
   const [uploading, setUploading] = useState(false);
@@ -78,20 +81,26 @@ export default function MenuItemsPage() {
         params.append("search", searchQuery.trim());
       }
       const res = await fetch(`/api/admin/menu-items?${params.toString()}`);
-      if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to fetch menu items");
+      }
+      return result.data;
     },
   });
 
-  const menuItems = menuItemsData?.data || [];
+  const menuItems = menuItemsData?.items || [];
   const pagination = menuItemsData?.pagination;
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: async () => {
       const res = await fetch("/api/admin/categories");
-      if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to fetch categories");
+      }
+      return result.data || [];
     },
   });
 
@@ -99,8 +108,11 @@ export default function MenuItemsPage() {
     queryKey: ["tableTypes"],
     queryFn: async () => {
       const res = await fetch("/api/admin/table-types");
-      if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to fetch table types");
+      }
+      return result.data || [];
     },
   });
 
@@ -111,8 +123,11 @@ export default function MenuItemsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to create");
-      return res.json();
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to create menu item");
+      }
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menuItems"] });
@@ -123,6 +138,7 @@ export default function MenuItemsPage() {
         description: "",
         image: "",
         categoryId: "",
+        isCook: false,
         prices: [],
       });
     },
@@ -135,8 +151,11 @@ export default function MenuItemsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to update");
-      return res.json();
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to update menu item");
+      }
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menuItems"] });
@@ -148,6 +167,7 @@ export default function MenuItemsPage() {
         description: "",
         image: "",
         categoryId: "",
+        isCook: false,
         prices: [],
       });
     },
@@ -158,8 +178,11 @@ export default function MenuItemsPage() {
       const res = await fetch(`/api/admin/menu-items/${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to delete");
-      return res.json();
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to delete menu item");
+      }
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menuItems"] });
@@ -173,6 +196,7 @@ export default function MenuItemsPage() {
       description: item.description,
       image: item.image,
       categoryId: item.categoryId,
+      isCook: item.isCook ?? false,
       prices: item.prices.map((p) => ({
         tableTypeId: p.tableTypeId,
         amount: p.amount,
@@ -222,13 +246,12 @@ export default function MenuItemsPage() {
         body: formData,
       });
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to upload image");
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to upload image");
       }
 
-      const data = await res.json();
-      setFormData((prev) => ({ ...prev, image: data.url }));
+      setFormData((prev) => ({ ...prev, image: result.data.url }));
     } catch (error: any) {
       setUploadError(error.message || "Failed to upload image");
     } finally {
@@ -256,6 +279,7 @@ export default function MenuItemsPage() {
                   description: "",
                   image: "",
                   categoryId: "",
+                  isCook: false,
                   prices: [],
                 });
                 setIsModalOpen(true);
@@ -282,7 +306,9 @@ export default function MenuItemsPage() {
             />
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">ចម្រាញ់តាមប្រភេទ</label>
+            <label className="block text-sm font-medium mb-2">
+              ចម្រាញ់តាមប្រភេទ
+            </label>
             <select
               value={selectedCategory}
               onChange={(e) => {
@@ -301,122 +327,155 @@ export default function MenuItemsPage() {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-12">កំពុងផ្ទុក...</div>
-        ) : (
-          <>
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-800 text-white">
-                  <tr>
-                    <th className="px-3 py-2 text-left">រូបភាព</th>
-                    <th className="px-3 py-2 text-left">ឈ្មោះ</th>
-                    <th className="px-3 py-2 text-left">ពិពណ៌នា</th>
-                    <th className="px-3 py-2 text-left">ប្រភេទ</th>
-                    <th className="px-3 py-2 text-right">សកម្មភាព</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {menuItems.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="text-center py-8 text-slate-500">
-                        រកមិនឃើញមុខម្ហូបទេ។
-                      </td>
-                    </tr>
-                  ) : (
-                    menuItems.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-50">
-                        <td className="px-3 py-2">
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-12 h-12 object-cover rounded"
-                          />
-                        </td>
-                        <td className="px-3 py-2 font-medium">{item.name}</td>
-                        <td className="px-3 py-2 text-xs text-slate-600 max-w-xs truncate">
-                          {item.description}
-                        </td>
-                        <td className="px-3 py-2">{item.categoryName}</td>
-                        <td className="px-3 py-2 text-right">
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="px-2 py-1 text-xs bg-blue-500 text-white rounded mr-1 hover:bg-blue-600"
-                          >
-                            កែប្រែ
-                          </button>
-                          <button
-                            onClick={() => deleteMutation.mutate(item.id)}
-                            className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-                          >
-                            លុប
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-            {menuItemsData && pagination && (
-              <div className="mt-4 flex items-center justify-between bg-white rounded-lg shadow-md px-6 py-4">
-                <div className="text-sm text-slate-600">
-                  បង្ហាញ {(pagination.page - 1) * pagination.limit + 1}-
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} នៃ{" "}
-                  {pagination.total}
+        <Table
+          columns={[
+            {
+              key: "image",
+              label: "រូបភាព",
+              render: (item) => (
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="w-14 h-14 object-cover rounded-lg"
+                />
+              ),
+            },
+            {
+              key: "name",
+              label: "ឈ្មោះ",
+              render: (item) => (
+                <span className="font-medium text-slate-900">{item.name}</span>
+              ),
+            },
+            {
+              key: "description",
+              label: "ពិពណ៌នា",
+              render: (item) => (
+                <span className="text-sm text-slate-600 max-w-xs truncate block">
+                  {item.description || "-"}
+                </span>
+              ),
+            },
+            {
+              key: "categoryName",
+              label: "ប្រភេទ",
+              render: (item) => (
+                <span className="text-sm text-slate-700">
+                  {item.categoryName}
+                </span>
+              ),
+            },
+            {
+              key: "isCook",
+              label: "ត្រូវការចម្អិន",
+              render: (item) => (
+                <span className={`text-xs px-2 py-1 rounded-full ${
+                  item.isCook 
+                    ? "bg-orange-100 text-orange-800" 
+                    : "bg-slate-100 text-slate-600"
+                }`}>
+                  {item.isCook ? "ត្រូវការ" : "មិនត្រូវការ"}
+                </span>
+              ),
+            },
+            {
+              key: "actions",
+              label: "សកម្មភាព",
+              align: "right",
+              render: (item) => (
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEdit(item);
+                    }}
+                    className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    កែប្រែ
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteMutation.mutate(item.id);
+                    }}
+                    className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors"
+                  >
+                    លុប
+                  </button>
                 </div>
-                {pagination.totalPages > 1 && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                      disabled={!pagination.hasPrevPage}
-                      className="px-3 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      មុន
-                    </button>
-                    {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(
-                      (page) => {
-                        if (
-                          page === 1 ||
-                          page === pagination.totalPages ||
-                          (page >= pagination.page - 1 && page <= pagination.page + 1)
-                        ) {
-                          return (
-                            <button
-                              key={page}
-                              onClick={() => setCurrentPage(page)}
-                              className={`px-3 py-2 rounded-lg ${
-                                pagination.page === page
-                                  ? "bg-slate-800 text-white"
-                                  : "bg-slate-200 text-slate-700 hover:bg-slate-300"
-                              }`}
-                            >
-                              {page}
-                            </button>
-                          );
-                        } else if (
-                          page === pagination.page - 2 ||
-                          page === pagination.page + 2
-                        ) {
-                          return <span key={page} className="px-2">...</span>;
-                        }
-                        return null;
-                      }
-                    )}
-                    <button
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(pagination.totalPages, prev + 1))
-                      }
-                      disabled={!pagination.hasNextPage}
-                      className="px-3 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      បន្ទាប់
-                    </button>
-                  </div>
-                )}
+              ),
+            },
+          ]}
+          data={menuItems}
+          loading={isLoading}
+          emptyMessage="រកមិនឃើញមុខម្ហូបទេ។"
+        />
+        {!isLoading && menuItemsData && pagination && (
+          <div className="mt-4 flex items-center justify-between bg-white rounded-lg shadow-md px-6 py-4">
+            <div className="text-sm text-slate-600">
+              បង្ហាញ {(pagination.page - 1) * pagination.limit + 1}-
+              {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
+              នៃ {pagination.total}
+            </div>
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  disabled={!pagination.hasPrevPage}
+                  className="px-3 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  មុន
+                </button>
+                {Array.from(
+                  { length: pagination.totalPages },
+                  (_, i) => i + 1
+                ).map((page) => {
+                  if (
+                    page === 1 ||
+                    page === pagination.totalPages ||
+                    (page >= pagination.page - 1 && page <= pagination.page + 1)
+                  ) {
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-2 rounded-lg ${
+                          pagination.page === page
+                            ? "bg-slate-800 text-white"
+                            : "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  } else if (
+                    page === pagination.page - 2 ||
+                    page === pagination.page + 2
+                  ) {
+                    return (
+                      <span key={page} className="px-2">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) =>
+                      Math.min(pagination.totalPages, prev + 1)
+                    )
+                  }
+                  disabled={!pagination.hasNextPage}
+                  className="px-3 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  បន្ទាប់
+                </button>
               </div>
             )}
-          </>
+          </div>
         )}
 
         {isModalOpen && (
@@ -427,7 +486,9 @@ export default function MenuItemsPage() {
               </h2>
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">ឈ្មោះ <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium mb-2">
+                    ឈ្មោះ <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     value={formData.name}
@@ -468,7 +529,9 @@ export default function MenuItemsPage() {
                     disabled={uploading}
                   />
                   {uploading && (
-                    <p className="text-sm text-blue-600 mt-2">កំពុងផ្ទុកឡើង...</p>
+                    <p className="text-sm text-blue-600 mt-2">
+                      កំពុងផ្ទុកឡើង...
+                    </p>
                   )}
                   {uploadError && (
                     <p className="text-sm text-red-600 mt-2">{uploadError}</p>
@@ -507,7 +570,24 @@ export default function MenuItemsPage() {
                   </select>
                 </div>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">តម្លៃ</label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.isCook}
+                      onChange={(e) =>
+                        setFormData({ ...formData, isCook: e.target.checked })
+                      }
+                      className="w-4 h-4 text-slate-800 border-slate-300 rounded focus:ring-slate-500"
+                    />
+                    <span className="text-sm font-medium">
+                      ត្រូវការចម្អិន
+                    </span>
+                  </label>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">
+                    តម្លៃ
+                  </label>
                   <div className="space-y-2">
                     {tableTypes.map((type) => {
                       const price = formData.prices.find(
@@ -515,7 +595,9 @@ export default function MenuItemsPage() {
                       );
                       return (
                         <div key={type.id} className="flex items-center gap-2">
-                          <label className="w-32 text-sm">{type.displayName}</label>
+                          <label className="w-32 text-sm">
+                            {type.displayName}
+                          </label>
                           <div className="flex-1 flex items-center">
                             <input
                               type="number"
@@ -561,4 +643,3 @@ export default function MenuItemsPage() {
     </div>
   );
 }
-

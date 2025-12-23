@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { successResponse, errorResponse } from "@/utils/api-response";
 
 type MenuItemWithRelations = Prisma.MenuItemGetPayload<{
   include: {
@@ -79,8 +80,8 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(total / limit);
 
-    return NextResponse.json({
-      data: formatted,
+    return successResponse({
+      items: formatted,
       pagination: {
         page,
         limit,
@@ -89,15 +90,14 @@ export async function GET(request: NextRequest) {
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
       },
-    });
+    }, "Menu items fetched successfully");
   } catch (error: any) {
     console.error("Error fetching menu items:", error);
-    return NextResponse.json(
-      { 
-        error: "Failed to fetch menu items",
-        details: error?.message || String(error)
-      },
-      { status: 500 }
+    return errorResponse(
+      "FETCH_MENU_ITEMS_ERROR",
+      "Failed to fetch menu items",
+      500,
+      [{ message: error?.message || String(error) }]
     );
   }
 }
@@ -105,12 +105,18 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, description, image, categoryId, prices } = body;
+    const { name, description, image, categoryId, prices, isCook } = body;
 
     if (!name || !image || !categoryId) {
-      return NextResponse.json(
-        { error: "Name, image, and categoryId are required" },
-        { status: 400 }
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "Name, image, and categoryId are required",
+        400,
+        [
+          ...(!name ? [{ field: "name", message: "Name is required" }] : []),
+          ...(!image ? [{ field: "image", message: "Image is required" }] : []),
+          ...(!categoryId ? [{ field: "categoryId", message: "CategoryId is required" }] : []),
+        ]
       );
     }
 
@@ -122,9 +128,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingItem) {
-      return NextResponse.json(
-        { error: "Menu item with this name already exists in this category" },
-        { status: 409 }
+      return errorResponse(
+        "DUPLICATE_ENTRY",
+        "Menu item with this name already exists in this category",
+        409,
+        [{ field: "name", message: "Menu item name must be unique within category" }]
       );
     }
 
@@ -134,6 +142,7 @@ export async function POST(request: NextRequest) {
         description: description || "",
         image,
         categoryId,
+        isCook: isCook ?? false,
         prices: {
           create: prices || [],
         },
@@ -148,15 +157,22 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(menuItem, { status: 201 });
+    return successResponse(menuItem, "Menu item created successfully", 201);
   } catch (error: any) {
     console.error("Error creating menu item:", error);
-    return NextResponse.json(
-      { 
-        error: "Failed to create menu item",
-        details: error?.message || String(error)
-      },
-      { status: 500 }
+    if (error?.code === "P2003") {
+      return errorResponse(
+        "INVALID_REFERENCE",
+        "Invalid category reference",
+        400,
+        [{ field: "categoryId", message: "Category does not exist" }]
+      );
+    }
+    return errorResponse(
+      "CREATE_MENU_ITEM_ERROR",
+      "Failed to create menu item",
+      500,
+      [{ message: error?.message || String(error) }]
     );
   }
 }

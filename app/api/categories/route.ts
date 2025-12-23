@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { successResponse, errorResponse } from "@/utils/api-response";
 
 export async function GET() {
   try {
@@ -9,12 +9,14 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json(categories);
-  } catch (error) {
+    return successResponse(categories, "Categories fetched successfully");
+  } catch (error: any) {
     console.error("Error fetching categories:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch categories" },
-      { status: 500 }
+    return errorResponse(
+      "FETCH_CATEGORIES_ERROR",
+      "Failed to fetch categories",
+      500,
+      [{ message: error?.message || String(error) }]
     );
   }
 }

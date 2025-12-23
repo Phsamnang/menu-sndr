@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { uploadToImageKit } from "@/utils/imagekit";
+import { successResponse, errorResponse } from "@/utils/api-response";
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,9 +9,11 @@ export async function POST(request: NextRequest) {
     const folder = formData.get("folder") as string | null;
 
     if (!file) {
-      return NextResponse.json(
-        { error: "No file provided" },
-        { status: 400 }
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "No file provided",
+        400,
+        [{ field: "file", message: "File is required" }]
       );
     }
 
@@ -23,17 +26,19 @@ export async function POST(request: NextRequest) {
       folder || "image_menus_sndr"
     );
 
-    return NextResponse.json({
+    return successResponse({
       url: result.url,
       fileId: result.fileId,
       name: result.name,
       path: result.filePath,
-    });
-  } catch (error) {
+    }, "Image uploaded successfully");
+  } catch (error: any) {
     console.error("Error uploading to ImageKit:", error);
-    return NextResponse.json(
-      { error: "Failed to upload image" },
-      { status: 500 }
+    return errorResponse(
+      "IMAGEKIT_UPLOAD_ERROR",
+      "Failed to upload image",
+      500,
+      [{ message: error?.message || String(error) }]
     );
   }
 }

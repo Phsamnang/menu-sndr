@@ -1,15 +1,17 @@
-import { NextResponse } from "next/server";
 import { imagekit } from "@/utils/imagekit";
+import { successResponse, errorResponse } from "@/utils/api-response";
 
 export async function GET() {
   try {
     const authenticationParameters = imagekit.getAuthenticationParameters();
-    return NextResponse.json(authenticationParameters);
-  } catch (error) {
+    return successResponse(authenticationParameters, "Authentication parameters generated successfully");
+  } catch (error: any) {
     console.error("Error generating ImageKit auth:", error);
-    return NextResponse.json(
-      { error: "Failed to generate authentication" },
-      { status: 500 }
+    return errorResponse(
+      "IMAGEKIT_AUTH_ERROR",
+      "Failed to generate authentication",
+      500,
+      [{ message: error?.message || String(error) }]
     );
   }
 }
