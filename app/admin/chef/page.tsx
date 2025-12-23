@@ -1,7 +1,7 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import OptimizedImage from "@/components/OptimizedImage";
 
@@ -42,23 +42,41 @@ interface Order {
 
 export default function ChefPage() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [ordersData, setOrdersData] = useState<{ items: Order[] }>({ items: [] });
+  const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
 
-  const { data: ordersData, isLoading } = useQuery<{ items: Order[] }>({
-    queryKey: ["chefOrders", statusFilter],
-    queryFn: async () => {
-      const url = statusFilter
-        ? `/api/chef/orders?status=${statusFilter}`
-        : "/api/chef/orders";
-      const res = await fetch(url);
-      const result = await res.json();
-      if (!res.ok || !result.success) {
-        throw new Error(result.error?.message || "Failed to fetch cook orders");
+  useEffect(() => {
+    const url = statusFilter
+      ? `/api/chef/orders/stream?status=${statusFilter}`
+      : "/api/chef/orders/stream";
+    
+    const eventSource = new EventSource(url);
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.error) {
+          console.error("SSE error:", data.error);
+        } else {
+          setOrdersData(data);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error parsing SSE data:", error);
       }
-      return result.data || { items: [] };
-    },
-    refetchInterval: 3000,
-  });
+    };
+
+    eventSource.onerror = (error) => {
+      console.error("SSE connection error:", error);
+      eventSource.close();
+      setIsLoading(false);
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [statusFilter]);
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({

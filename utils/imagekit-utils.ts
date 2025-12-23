@@ -89,7 +89,6 @@ export function getOptimizedImageUrl(
 
   const path = extractPathFromUrl(url);
   if (!path) {
-    console.log("Not an ImageKit URL, returning original:", url);
     return url;
   }
 

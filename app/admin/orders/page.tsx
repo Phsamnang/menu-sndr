@@ -410,6 +410,10 @@ export default function OrdersPage() {
       alert("សូមជ្រើសរើសតុមុន");
       return;
     }
+    if (orderData?.status === "done") {
+      alert("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចបន្ថែមមុខម្ហូបបានទេ");
+      return;
+    }
     const quantity = itemQuantities[item.id] || 1;
     addItemMutation.mutate({ menuItemId: item.id, quantity });
     // Reset quantity after adding
@@ -421,6 +425,10 @@ export default function OrdersPage() {
   };
 
   const updateQuantity = (itemId: string, delta: number) => {
+    if (orderData?.status === "done") {
+      alert("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចកែប្រែបានទេ");
+      return;
+    }
     const item = orderItems.find((i) => i.id === itemId);
     if (!item) return;
     const newQuantity = Math.max(0, item.quantity + delta);
@@ -432,10 +440,18 @@ export default function OrdersPage() {
   };
 
   const removeFromCart = (itemId: string) => {
+    if (orderData?.status === "done") {
+      alert("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចលុបបានទេ");
+      return;
+    }
     deleteItemMutation.mutate(itemId);
   };
 
   const clearCart = () => {
+    if (orderData?.status === "done") {
+      alert("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចលុបបានទេ");
+      return;
+    }
     orderItems.forEach((item) => {
       deleteItemMutation.mutate(item.id);
     });
@@ -521,13 +537,50 @@ export default function OrdersPage() {
     }
   };
 
+  const completePaymentMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentOrder?.id) {
+        throw new Error("Order not found");
+      }
+      const res = await fetch(`/api/admin/orders/${currentOrder.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "done",
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to complete payment");
+      }
+      return result.data;
+    },
+    onSuccess: (data) => {
+      setCurrentOrder(data);
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["currentOrder"] });
+      alert("ការទូទាត់បានបញ្ចប់! តុត្រូវបានដំណើរការទៅជា 'អាចប្រើបាន'");
+    },
+  });
+
   const handlePlaceOrder = () => {
     if (!orderItems || orderItems.length === 0) {
       alert("សូមបន្ថែមមុខម្ហូបទៅកន្ត្រក់");
       return;
     }
-    alert("ការបញ្ជាទិញត្រូវបានបង្កើតដោយជោគជ័យ!");
-    queryClient.invalidateQueries({ queryKey: ["orders"] });
+
+    if (orderData?.status === "done") {
+      alert("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ!");
+      return;
+    }
+
+    const confirmMessage = `សូមបញ្ជាក់ការទូទាត់\nសរុប: ${total.toLocaleString(
+      "km-KH"
+    )}៛\n\nតើអ្នកចង់បញ្ចប់ការទូទាត់ទេ?`;
+    if (confirm(confirmMessage)) {
+      completePaymentMutation.mutate();
+    }
   };
 
   const handlePrintInvoice = () => {
@@ -875,7 +928,11 @@ export default function OrdersPage() {
                         </div>
                         <button
                           onClick={() => addToCart(item)}
-                          disabled={price === 0 || addItemMutation.isPending}
+                          disabled={
+                            price === 0 ||
+                            addItemMutation.isPending ||
+                            orderData?.status === "done"
+                          }
                           className="w-full px-3 py-2.5 bg-slate-800 text-white text-xs sm:text-sm rounded-lg active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation"
                         >
                           + បន្ថែមទៅកន្ត្រក់
@@ -945,7 +1002,7 @@ export default function OrdersPage() {
           <div className="flex-1 overflow-y-auto p-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-slate-800">មុខម្ហូប</h3>
-              {orderItems.length > 0 && (
+              {orderItems.length > 0 && orderData?.status !== "done" && (
                 <button
                   onClick={clearCart}
                   className="text-xs text-red-600 hover:text-red-700 font-medium"
@@ -1025,7 +1082,10 @@ export default function OrdersPage() {
                       <div className="flex flex-col items-end justify-between">
                         <button
                           onClick={() => removeFromCart(item.id)}
-                          disabled={deleteItemMutation.isPending}
+                          disabled={
+                            deleteItemMutation.isPending ||
+                            orderData?.status === "done"
+                          }
                           className="text-red-500 active:text-red-600 md:hover:text-red-600 text-sm disabled:opacity-50 touch-manipulation p-1"
                         >
                           <svg
@@ -1089,6 +1149,29 @@ export default function OrdersPage() {
               </div>
             </div>
 
+            {orderData?.status === "done" && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg mb-4">
+                <div className="flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="text-sm font-semibold text-green-800">
+                    ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">
                 បញ្ចុះតម្លៃ
@@ -1099,7 +1182,8 @@ export default function OrdersPage() {
                   onChange={(e) =>
                     setDiscountType(e.target.value as "percentage" | "amount")
                   }
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                  disabled={orderData?.status === "done"}
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
                 >
                   <option value="percentage">%</option>
                   <option value="amount">៛</option>
@@ -1113,7 +1197,8 @@ export default function OrdersPage() {
                     handleDiscountChange(parseFloat(e.target.value) || 0)
                   }
                   placeholder="0"
-                  className="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                  disabled={orderData?.status === "done"}
+                  className="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -1125,7 +1210,8 @@ export default function OrdersPage() {
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                disabled={orderData?.status === "done"}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
               >
                 <option value="cash">សាច់ប្រាក់</option>
                 <option value="card">កាត</option>
@@ -1156,10 +1242,19 @@ export default function OrdersPage() {
               </button>
               <button
                 onClick={handlePlaceOrder}
-                disabled={!orderItems || orderItems.length === 0}
+                disabled={
+                  !orderItems ||
+                  orderItems.length === 0 ||
+                  orderData?.status === "done" ||
+                  completePaymentMutation.isPending
+                }
                 className="flex-1 py-3 bg-slate-800 text-white rounded-lg font-semibold active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base"
               >
-                បង្កើតការបញ្ជាទិញ
+                {orderData?.status === "done"
+                  ? "បានបង់រួចរាល់"
+                  : completePaymentMutation.isPending
+                  ? "កំពុងដំណើរការ..."
+                  : "បញ្ចប់ការទូទាត់"}
               </button>
             </div>
           </div>

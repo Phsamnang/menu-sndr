@@ -1,7 +1,7 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import OptimizedImage from "@/components/OptimizedImage";
 
@@ -43,23 +43,43 @@ interface Order {
 
 export default function DeliveryPage() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [ordersData, setOrdersData] = useState<{ items: Order[] }>({
+    items: [],
+  });
+  const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
 
-  const { data: ordersData, isLoading } = useQuery<{ items: Order[] }>({
-    queryKey: ["deliveryItems", statusFilter],
-    queryFn: async () => {
-      const url = statusFilter
-        ? `/api/delivery/items?status=${statusFilter}`
-        : "/api/delivery/items";
-      const res = await fetch(url);
-      const result = await res.json();
-      if (!res.ok || !result.success) {
-        throw new Error(result.error?.message || "Failed to fetch delivery items");
+  useEffect(() => {
+    const url = statusFilter
+      ? `/api/delivery/items/stream?status=${statusFilter}`
+      : "/api/delivery/items/stream";
+
+    const eventSource = new EventSource(url);
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.error) {
+          console.error("SSE error:", data.error);
+        } else {
+          setOrdersData(data);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error parsing SSE data:", error);
       }
-      return result.data || { items: [] };
-    },
-    refetchInterval: 3000,
-  });
+    };
+
+    eventSource.onerror = (error) => {
+      console.error("SSE connection error:", error);
+      eventSource.close();
+      setIsLoading(false);
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [statusFilter]);
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({
@@ -142,16 +162,13 @@ export default function DeliveryPage() {
     order.items.map((item) => ({ ...item, order }))
   );
 
-  const groupedByStatus = allItems.reduce(
-    (acc, item) => {
-      if (!acc[item.status]) {
-        acc[item.status] = [];
-      }
-      acc[item.status].push(item);
-      return acc;
-    },
-    {} as Record<string, typeof allItems>
-  );
+  const groupedByStatus = allItems.reduce((acc, item) => {
+    if (!acc[item.status]) {
+      acc[item.status] = [];
+    }
+    acc[item.status].push(item);
+    return acc;
+  }, {} as Record<string, typeof allItems>);
 
   const filteredItems = statusFilter
     ? groupedByStatus[statusFilter] || []
@@ -205,8 +222,7 @@ export default function DeliveryPage() {
                   : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"
               }`}
             >
-              {getStatusLabel(status)} (
-              {groupedByStatus[status]?.length || 0})
+              {getStatusLabel(status)} ({groupedByStatus[status]?.length || 0})
             </button>
           ))}
         </div>
@@ -326,7 +342,9 @@ export default function DeliveryPage() {
                               {item.menuItem.category.displayName}
                             </p>
                             <div className="flex items-center gap-2 mb-2">
-                              <span className="text-xs text-slate-600">ចំនួន:</span>
+                              <span className="text-xs text-slate-600">
+                                ចំនួន:
+                              </span>
                               <span className="font-bold text-slate-900 text-sm">
                                 {item.quantity}
                               </span>
@@ -341,9 +359,7 @@ export default function DeliveryPage() {
                           </div>
                         </div>
                         <button
-                          onClick={() =>
-                            handleMarkServed(order.id, item.id)
-                          }
+                          onClick={() => handleMarkServed(order.id, item.id)}
                           disabled={
                             updateStatusMutation.isPending ||
                             item.status === "served"
@@ -364,4 +380,3 @@ export default function DeliveryPage() {
     </div>
   );
 }
-

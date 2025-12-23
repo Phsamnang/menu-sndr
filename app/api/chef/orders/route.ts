@@ -43,9 +43,11 @@ export async function GET(request: NextRequest) {
       .map((order) => {
         const cookItems = order.items.filter((item: any) => {
           const menuItem = item.menuItem as any;
+          const itemStatus = item.status as string;
           return (
             menuItem.isCook === true &&
-            (status ? (item.status as string) === status : true)
+            (itemStatus === "pending" || itemStatus === "preparing") &&
+            (status ? itemStatus === status : true)
           );
         });
         return {

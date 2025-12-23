@@ -72,24 +72,9 @@ export async function POST(
       );
     }
 
-    const existingItem = await prisma.orderItem.findFirst({
-      where: {
-        orderId: id,
-        menuItemId: menuItemId,
-      },
-    });
-
     let orderItem;
-    if (existingItem) {
-      const newQuantity = existingItem.quantity + quantity;
-      orderItem = await prisma.orderItem.update({
-        where: { id: existingItem.id },
-        data: {
-          quantity: newQuantity,
-          totalPrice: newQuantity * unitPrice,
-        },
-      });
-    } else {
+    
+    if (order.status === "new") {
       orderItem = await prisma.orderItem.create({
         data: {
           orderId: id,
@@ -99,6 +84,34 @@ export async function POST(
           totalPrice: quantity * unitPrice,
         },
       });
+    } else {
+      const existingItem = await prisma.orderItem.findFirst({
+        where: {
+          orderId: id,
+          menuItemId: menuItemId,
+        },
+      });
+
+      if (existingItem) {
+        const newQuantity = existingItem.quantity + quantity;
+        orderItem = await prisma.orderItem.update({
+          where: { id: existingItem.id },
+          data: {
+            quantity: newQuantity,
+            totalPrice: newQuantity * unitPrice,
+          },
+        });
+      } else {
+        orderItem = await prisma.orderItem.create({
+          data: {
+            orderId: id,
+            menuItemId: menuItemId,
+            quantity: quantity,
+            unitPrice: unitPrice,
+            totalPrice: quantity * unitPrice,
+          },
+        });
+      }
     }
 
     await updateOrderTotals(id);

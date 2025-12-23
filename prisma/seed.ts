@@ -248,7 +248,6 @@ async function main() {
         },
       },
     });
-    console.log(`Created menu item: ${menuItem.name}`);
   }
 }
 

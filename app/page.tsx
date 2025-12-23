@@ -23,13 +23,8 @@ function HomeContent() {
 
   useEffect(() => {
     const tableType = searchParams.get("tableType");
-    console.log("Table type from URL:", tableType);
     setSelectedTableType(tableType);
   }, [searchParams]);
-
-  useEffect(() => {
-    console.log("Selected table type changed:", selectedTableType);
-  }, [selectedTableType]);
 
   const {
     data: menuData = [],
@@ -41,7 +36,6 @@ function HomeContent() {
       const url = selectedTableType
         ? `/api/menu?tableType=${selectedTableType}`
         : "/api/menu";
-      console.log("Fetching menu from:", url);
       const response = await fetch(url);
       const result = await response.json();
 
@@ -51,7 +45,6 @@ function HomeContent() {
         throw new Error(errorMessage);
       }
 
-      console.log("Menu data received:", result.data?.length || 0, "items");
       return result.data || [];
     },
     enabled: true,
@@ -61,7 +54,6 @@ function HomeContent() {
   const { data: tableTypes = [] } = useQuery<TableType[]>({
     queryKey: ["tableTypes"],
     queryFn: async () => {
-      console.log("Fetching table types...");
       const res = await fetch("/api/admin/table-types");
       const result = await res.json();
 
@@ -73,7 +65,6 @@ function HomeContent() {
         throw new Error(errorMessage);
       }
 
-      console.log("Table types received:", result.data?.length || 0, "types");
       return result.data || [];
     },
     enabled: true,

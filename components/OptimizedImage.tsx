@@ -30,8 +30,6 @@ export default function OptimizedImage({
     );
   }
 
-  console.log("Original image URL from API:", src);
-
   return (
     <img
       src={src}
