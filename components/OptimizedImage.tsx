@@ -1,6 +1,7 @@
 "use client";
 
-import { getOptimizedImageUrl } from "@/utils/imagekit-utils";
+import Image from "next/image";
+import { useState } from "react";
 
 interface OptimizedImageProps {
   src: string;
@@ -19,7 +20,9 @@ export default function OptimizedImage({
   className = "",
   quality = 80,
 }: OptimizedImageProps) {
-  if (!src || src.trim() === "") {
+  const [hasError, setHasError] = useState(false);
+
+  if (!src || src.trim() === "" || hasError) {
     return (
       <div
         className={`${className} bg-slate-200 flex items-center justify-center`}
@@ -30,26 +33,26 @@ export default function OptimizedImage({
     );
   }
 
+  const isImageKitUrl = src.includes("imagekit.io");
+
   return (
-    <img
+    <Image
       src={src}
       alt={alt}
-      className={`${className} w-full h-full object-cover`}
+      width={width || 200}
+      height={height || 200}
+      className={className}
+      quality={quality}
       loading="lazy"
-      style={{
-        objectFit: "cover",
-        objectPosition: "center",
-      }}
       onError={(e) => {
-        console.error("Image load error. URL:", src);
-        const target = e.target as HTMLImageElement;
-        target.style.display = "none";
-        const fallback = document.createElement("div");
-        fallback.className = `${className} bg-slate-200 flex items-center justify-center w-full h-full`;
-        fallback.innerHTML = `<span class="text-slate-400 text-sm">Image Error<br/><span class="text-xs">${src.substring(0, 50)}...</span></span>`;
-        target.parentNode?.appendChild(fallback);
+        console.error("Image load error:", {
+          src: src,
+          error: e,
+        });
+        setHasError(true);
       }}
+      unoptimized={isImageKitUrl}
+      priority={false}
     />
   );
 }
-

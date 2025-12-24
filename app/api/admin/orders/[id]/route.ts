@@ -53,7 +53,13 @@ async function putHandler(
 
     const order = await prisma.order.findUnique({
       where: { id },
-      include: { items: true },
+      select: {
+        subtotal: true,
+        discountType: true,
+        discountValue: true,
+        status: true,
+        tableId: true,
+      },
     });
 
     if (!order) {
@@ -61,50 +67,53 @@ async function putHandler(
     }
 
     let discountAmount = 0;
-    if (discountType && discountValue !== undefined) {
-      if (discountType === "percentage") {
-        discountAmount = (order.subtotal * discountValue) / 100;
-      } else if (discountType === "amount") {
-        discountAmount = discountValue;
+    const finalDiscountType = discountType || order.discountType;
+    const finalDiscountValue = discountValue !== undefined ? discountValue : order.discountValue;
+
+    if (finalDiscountType && finalDiscountValue !== undefined) {
+      if (finalDiscountType === "percentage") {
+        discountAmount = (order.subtotal * finalDiscountValue) / 100;
+      } else if (finalDiscountType === "amount") {
+        discountAmount = finalDiscountValue;
       }
     }
 
     const total = order.subtotal - discountAmount;
 
-    const updatedOrder = await prisma.order.update({
-      where: { id },
-      data: {
-        status: status || order.status,
-        discountType: discountType || order.discountType,
-        discountValue:
-          discountValue !== undefined ? discountValue : order.discountValue,
-        discountAmount,
-        total,
-      },
-      include: {
-        table: {
-          include: {
-            tableType: true,
-          },
+    const [updatedOrder] = await Promise.all([
+      prisma.order.update({
+        where: { id },
+        data: {
+          status: status || order.status,
+          discountType: finalDiscountType,
+          discountValue: finalDiscountValue,
+          discountAmount,
+          total,
         },
-        items: {
-          include: {
-            menuItem: {
-              include: {
-                category: true,
+        include: {
+          table: {
+            include: {
+              tableType: true,
+            },
+          },
+          items: {
+            include: {
+              menuItem: {
+                include: {
+                  category: true,
+                },
               },
             },
           },
         },
-      },
-    });
-
-    if (status === "done" && order.tableId) {
-      await prisma.table.update({
-        where: { id: order.tableId },
-        data: { status: "available" },
-      });
-    }
+      }),
+      status === "done" && order.tableId
+        ? prisma.table.update({
+            where: { id: order.tableId },
+            data: { status: "available" },
+          })
+        : Promise.resolve(null),
+    ]);
 
     return successResponse(updatedOrder, "Order updated successfully");
   } catch (error: any) {
@@ -123,22 +132,26 @@ async function deleteHandler(
     const { id } = await params;
     const order = await prisma.order.findUnique({
       where: { id },
+      select: {
+        tableId: true,
+      },
     });
 
     if (!order) {
       return errorResponse("NOT_FOUND", "Order not found", 404);
     }
 
-    if (order.tableId) {
-      await prisma.table.update({
-        where: { id: order.tableId },
-        data: { status: "available" },
-      });
-    }
-
-    await prisma.order.delete({
-      where: { id },
-    });
+    await prisma.$transaction([
+      prisma.order.delete({
+        where: { id },
+      }),
+      order.tableId
+        ? prisma.table.update({
+            where: { id: order.tableId },
+            data: { status: "available" },
+          })
+        : Promise.resolve(null),
+    ]);
 
     return successResponse(null, "Order deleted successfully");
   } catch (error: any) {

@@ -3,14 +3,37 @@ import { prisma } from "@/lib/prisma";
 import { withAuth, AuthenticatedRequest } from "@/lib/middleware";
 
 async function fetchDeliveryItems(status?: string) {
-  const where: any = {
-    status: {
-      in: ["new", "on_process"],
+  const orders = await prisma.order.findMany({
+    where: {
+      status: {
+        in: ["new", "on_process"],
+      },
+      items: {
+        some: {
+          OR: [
+            {
+              menuItem: {
+                isCook: true,
+              },
+              status: "ready",
+            },
+            {
+              menuItem: {
+                isCook: false,
+              },
+              status: {
+                in: ["pending", "preparing", "ready"],
+              },
+            },
+          ],
+          status: status
+            ? status
+            : {
+                notIn: ["served", "cancelled"],
+              },
+        },
+      },
     },
-  };
-
-  const allOrders = await prisma.order.findMany({
-    where,
     include: {
       table: {
         include: {
@@ -18,6 +41,29 @@ async function fetchDeliveryItems(status?: string) {
         },
       },
       items: {
+        where: {
+          OR: [
+            {
+              menuItem: {
+                isCook: true,
+              },
+              status: "ready",
+            },
+            {
+              menuItem: {
+                isCook: false,
+              },
+              status: {
+                in: ["pending", "preparing", "ready"],
+              },
+            },
+          ],
+          status: status
+            ? status
+            : {
+                notIn: ["served", "cancelled"],
+              },
+        },
         include: {
           menuItem: {
             include: {
@@ -35,32 +81,7 @@ async function fetchDeliveryItems(status?: string) {
     },
   });
 
-  const filteredOrders = allOrders
-    .map((order) => {
-      const deliveryItems = order.items.filter((item: any) => {
-        const menuItem = item.menuItem as any;
-        const itemStatus = item.status as string;
-
-        if (menuItem.isCook === true) {
-          return (
-            itemStatus === "ready" && (status ? itemStatus === status : true)
-          );
-        } else {
-          return (
-            itemStatus !== "served" &&
-            itemStatus !== "cancelled" &&
-            (status ? itemStatus === status : true)
-          );
-        }
-      });
-      return {
-        ...order,
-        items: deliveryItems,
-      };
-    })
-    .filter((order) => order.items.length > 0);
-
-  return filteredOrders;
+  return orders;
 }
 
 async function handler(request: AuthenticatedRequest) {

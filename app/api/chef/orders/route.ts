@@ -8,14 +8,24 @@ async function handler(request: AuthenticatedRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || undefined;
 
-    const where: any = {
-      status: {
-        in: ["new", "on_process"],
-      },
-    };
+    const itemStatusFilter = status ? [status] : ["pending", "preparing"];
 
-    const allOrders = await prisma.order.findMany({
-      where,
+    const orders = await prisma.order.findMany({
+      where: {
+        status: {
+          in: ["new", "on_process"],
+        },
+        items: {
+          some: {
+            menuItem: {
+              isCook: true,
+            },
+            status: {
+              in: itemStatusFilter,
+            },
+          },
+        },
+      },
       include: {
         table: {
           include: {
@@ -23,6 +33,14 @@ async function handler(request: AuthenticatedRequest) {
           },
         },
         items: {
+          where: {
+            menuItem: {
+              isCook: true,
+            },
+            status: {
+              in: itemStatusFilter,
+            },
+          },
           include: {
             menuItem: {
               include: {
@@ -40,26 +58,8 @@ async function handler(request: AuthenticatedRequest) {
       },
     });
 
-    const filteredOrders = allOrders
-      .map((order) => {
-        const cookItems = order.items.filter((item: any) => {
-          const menuItem = item.menuItem as any;
-          const itemStatus = item.status as string;
-          return (
-            menuItem.isCook === true &&
-            (itemStatus === "pending" || itemStatus === "preparing") &&
-            (status ? itemStatus === status : true)
-          );
-        });
-        return {
-          ...order,
-          items: cookItems,
-        };
-      })
-      .filter((order) => order.items.length > 0);
-
     return successResponse(
-      { items: filteredOrders },
+      { items: orders },
       "Cook orders fetched successfully"
     );
   } catch (error: any) {

@@ -8,14 +8,41 @@ async function handler(request: AuthenticatedRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || undefined;
 
-    const where: any = {
-      status: {
-        in: ["new", "on_process"],
-      },
-    };
+    const itemStatusFilter = status
+      ? [status]
+      : ["pending", "preparing", "ready"];
 
-    const allOrders = await prisma.order.findMany({
-      where,
+    const orders = await prisma.order.findMany({
+      where: {
+        status: {
+          in: ["new", "on_process"],
+        },
+        items: {
+          some: {
+            OR: [
+              {
+                menuItem: {
+                  isCook: true,
+                },
+                status: "ready",
+              },
+              {
+                menuItem: {
+                  isCook: false,
+                },
+                status: {
+                  in: ["pending", "preparing", "ready"],
+                },
+              },
+            ],
+            status: status
+              ? status
+              : {
+                  notIn: ["served", "cancelled"],
+                },
+          },
+        },
+      },
       include: {
         table: {
           include: {
@@ -23,6 +50,29 @@ async function handler(request: AuthenticatedRequest) {
           },
         },
         items: {
+          where: {
+            OR: [
+              {
+                menuItem: {
+                  isCook: true,
+                },
+                status: "ready",
+              },
+              {
+                menuItem: {
+                  isCook: false,
+                },
+                status: {
+                  in: ["pending", "preparing", "ready"],
+                },
+              },
+            ],
+            status: status
+              ? status
+              : {
+                  notIn: ["served", "cancelled"],
+                },
+          },
           include: {
             menuItem: {
               include: {
@@ -40,33 +90,8 @@ async function handler(request: AuthenticatedRequest) {
       },
     });
 
-    const filteredOrders = allOrders
-      .map((order) => {
-        const deliveryItems = order.items.filter((item: any) => {
-          const menuItem = item.menuItem as any;
-          const itemStatus = item.status as string;
-
-          if (menuItem.isCook === true) {
-            return (
-              itemStatus === "ready" && (status ? itemStatus === status : true)
-            );
-          } else {
-            return (
-              itemStatus !== "served" &&
-              itemStatus !== "cancelled" &&
-              (status ? itemStatus === status : true)
-            );
-          }
-        });
-        return {
-          ...order,
-          items: deliveryItems,
-        };
-      })
-      .filter((order) => order.items.length > 0);
-
     return successResponse(
-      { items: filteredOrders },
+      { items: orders },
       "Delivery items fetched successfully"
     );
   } catch (error: any) {

@@ -88,15 +88,28 @@ async function postHandler(request: AuthenticatedRequest) {
     const orderItems = [];
 
     if (items && items.length > 0) {
-      for (const item of items) {
-        const menuItem = await prisma.menuItem.findUnique({
-          where: { id: item.menuItemId },
-          include: {
-            prices: {
-              include: { tableType: true },
-            },
+      const menuItemIds = items.map((item) => item.menuItemId);
+      const menuItems = await prisma.menuItem.findMany({
+        where: { id: { in: menuItemIds } },
+        include: {
+          prices: {
+            include: { tableType: true },
           },
+        },
+      });
+
+      const menuItemMap = new Map(menuItems.map((item) => [item.id, item]));
+
+      let table = null;
+      if (tableId) {
+        table = await prisma.table.findUnique({
+          where: { id: tableId },
+          include: { tableType: true },
         });
+      }
+
+      for (const item of items) {
+        const menuItem = menuItemMap.get(item.menuItemId);
 
         if (!menuItem) {
           return errorResponse(
@@ -107,17 +120,11 @@ async function postHandler(request: AuthenticatedRequest) {
         }
 
         let unitPrice = 0;
-        if (tableId) {
-          const table = await prisma.table.findUnique({
-            where: { id: tableId },
-            include: { tableType: true },
-          });
-          if (table) {
-            const price = menuItem.prices.find(
-              (p) => p.tableTypeId === table.tableTypeId
-            );
-            unitPrice = price?.amount || 0;
-          }
+        if (table) {
+          const price = menuItem.prices.find(
+            (p) => p.tableTypeId === table.tableTypeId
+          );
+          unitPrice = price?.amount || 0;
         } else {
           unitPrice = menuItem.prices[0]?.amount || 0;
         }

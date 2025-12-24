@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import OptimizedImage from "@/components/OptimizedImage";
@@ -86,6 +86,7 @@ export default function OrdersPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
   const [itemQuantities, setItemQuantities] = useState<Record<string, number>>(
     {}
   );
@@ -156,7 +157,7 @@ export default function OrdersPage() {
     queryKey: ["activeOrders"],
     queryFn: async () => {
       const result = await apiClientJson<{ items: Order[] }>(
-        "/api/admin/orders?status=new&limit=1000"
+        "/api/admin/orders?status=new&limit=100"
       );
       if (!result.success || !result.data) {
         return { items: [] };
@@ -219,7 +220,7 @@ export default function OrdersPage() {
     }
   };
 
-  const { data: orderData, refetch: refetchOrder } = useQuery<Order>({
+  const { data: orderData, refetch: refetchOrder } = useQuery<Order | null>({
     queryKey: ["currentOrder", currentOrder?.id],
     queryFn: async () => {
       if (!currentOrder?.id) return null;
@@ -234,7 +235,7 @@ export default function OrdersPage() {
     enabled: !!currentOrder?.id,
   });
 
-  const orderItems = orderData?.items || [];
+  const orderItems = useMemo(() => orderData?.items || [], [orderData?.items]);
 
   // Sync customer name and discount from order data
   useEffect(() => {
@@ -254,6 +255,13 @@ export default function OrdersPage() {
     }
   }, [orderItems.length]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const filteredMenu = useMemo(() => {
     let filtered = menuData;
 
@@ -261,8 +269,8 @@ export default function OrdersPage() {
       filtered = filtered.filter((item) => item.category === selectedCategory);
     }
 
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+    if (debouncedSearchQuery.trim()) {
+      const query = debouncedSearchQuery.toLowerCase();
       filtered = filtered.filter(
         (item) =>
           item.name.toLowerCase().includes(query) ||
@@ -271,7 +279,7 @@ export default function OrdersPage() {
     }
 
     return filtered;
-  }, [menuData, selectedCategory, searchQuery]);
+  }, [menuData, selectedCategory, debouncedSearchQuery]);
 
   const categoriesList = useMemo(() => {
     return Array.from(new Set(menuData.map((item) => item.category)));
@@ -293,42 +301,45 @@ export default function OrdersPage() {
     },
   });
 
-  const handleTableSelect = async (table: TableItem) => {
-    // Check if table has an active order
-    const tableOrders = ordersByTable[table.id] || [];
-    const activeOrder = tableOrders.find(
-      (o) => o.status === "new" || o.status === "on_process"
-    );
-
-    if (activeOrder && activeOrder.status !== "done") {
-      // If table is occupied, load order directly without asking
-      if (table.status === "occupied") {
-        setSelectedTable(table);
-        setSelectedCategory(null);
-        setSearchQuery("");
-        setCustomerName("");
-        setDiscountValue(0);
-        setItemQuantities({});
-        setCurrentOrder(activeOrder);
-      } else {
-        // Show confirmation popup to view order details for other statuses
-        setPendingTable(table);
-        setPendingOrder(activeOrder);
-        setShowViewOrderConfirm(true);
-      }
-    } else if (table.status === "available") {
-      // Show confirmation popup before creating new order
-      setPendingTable(table);
-      setShowCreateOrderConfirm(true);
-    } else {
-      // Table is not available and has no active order
-      toast.error(
-        `តុនេះមិនអាចប្រើបានទេ (${getTableStatusLabel(table.status)})`
+  const handleTableSelect = useCallback(
+    async (table: TableItem) => {
+      // Check if table has an active order
+      const tableOrders = ordersByTable[table.id] || [];
+      const activeOrder = tableOrders.find(
+        (o) => o.status === "new" || o.status === "on_process"
       );
-    }
-  };
 
-  const handleConfirmViewOrder = () => {
+      if (activeOrder && activeOrder.status !== "done") {
+        // If table is occupied, load order directly without asking
+        if (table.status === "occupied") {
+          setSelectedTable(table);
+          setSelectedCategory(null);
+          setSearchQuery("");
+          setCustomerName("");
+          setDiscountValue(0);
+          setItemQuantities({});
+          setCurrentOrder(activeOrder);
+        } else {
+          // Show confirmation popup to view order details for other statuses
+          setPendingTable(table);
+          setPendingOrder(activeOrder);
+          setShowViewOrderConfirm(true);
+        }
+      } else if (table.status === "available") {
+        // Show confirmation popup before creating new order
+        setPendingTable(table);
+        setShowCreateOrderConfirm(true);
+      } else {
+        // Table is not available and has no active order
+        toast.error(
+          `តុនេះមិនអាចប្រើបានទេ (${getTableStatusLabel(table.status)})`
+        );
+      }
+    },
+    [ordersByTable]
+  );
+
+  const handleConfirmViewOrder = useCallback(() => {
     if (!pendingTable || !pendingOrder) return;
 
     setSelectedTable(pendingTable);
@@ -341,15 +352,15 @@ export default function OrdersPage() {
     setShowViewOrderConfirm(false);
     setPendingTable(null);
     setPendingOrder(null);
-  };
+  }, [pendingTable, pendingOrder]);
 
-  const handleCancelViewOrder = () => {
+  const handleCancelViewOrder = useCallback(() => {
     setShowViewOrderConfirm(false);
     setPendingTable(null);
     setPendingOrder(null);
-  };
+  }, []);
 
-  const handleConfirmCreateOrder = () => {
+  const handleConfirmCreateOrder = useCallback(() => {
     if (!pendingTable) return;
 
     setSelectedTable(pendingTable);
@@ -363,21 +374,21 @@ export default function OrdersPage() {
     // Create new order
     createOrderMutation.mutate(pendingTable.id);
     setPendingTable(null);
-  };
+  }, [pendingTable, createOrderMutation]);
 
-  const handleCancelCreateOrder = () => {
+  const handleCancelCreateOrder = useCallback(() => {
     setShowCreateOrderConfirm(false);
     setPendingTable(null);
-  };
+  }, []);
 
-  const handleClearTable = () => {
+  const handleClearTable = useCallback(() => {
     setSelectedTable(null);
     setCurrentOrder(null);
     setSelectedCategory(null);
     setSearchQuery("");
     setCustomerName("");
     setDiscountValue(0);
-  };
+  }, []);
 
   const addItemMutation = useMutation({
     mutationFn: async ({
@@ -437,57 +448,68 @@ export default function OrdersPage() {
     }));
   };
 
-  const addToCart = (item: MenuItem) => {
-    if (!currentOrder) {
-      toast.error("សូមជ្រើសរើសតុមុន");
-      return;
-    }
-    if (orderData?.status === "done") {
-      toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចបន្ថែមមុខម្ហូបបានទេ");
-      return;
-    }
-    const quantity = itemQuantities[item.id] || 1;
-    addItemMutation.mutate({ menuItemId: item.id, quantity });
-    // Reset quantity after adding
-    setItemQuantities((prev) => {
-      const newQty = { ...prev };
-      delete newQty[item.id];
-      return newQty;
-    });
-  };
+  const addToCart = useCallback(
+    (item: MenuItem) => {
+      if (!currentOrder) {
+        toast.error("សូមជ្រើសរើសតុមុន");
+        return;
+      }
+      if (orderData?.status === "done") {
+        toast.error(
+          "ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចបន្ថែមមុខម្ហូបបានទេ"
+        );
+        return;
+      }
+      const quantity = itemQuantities[item.id] || 1;
+      addItemMutation.mutate({ menuItemId: item.id, quantity });
+      // Reset quantity after adding
+      setItemQuantities((prev) => {
+        const newQty = { ...prev };
+        delete newQty[item.id];
+        return newQty;
+      });
+    },
+    [currentOrder, itemQuantities, orderData?.status, addItemMutation]
+  );
 
-  const updateQuantity = (itemId: string, delta: number) => {
-    if (orderData?.status === "done") {
-      toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចកែប្រែបានទេ");
-      return;
-    }
-    const item = orderItems.find((i) => i.id === itemId);
-    if (!item) return;
-    const newQuantity = Math.max(0, item.quantity + delta);
-    if (newQuantity === 0) {
+  const updateQuantity = useCallback(
+    (itemId: string, delta: number) => {
+      if (orderData?.status === "done") {
+        toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចកែប្រែបានទេ");
+        return;
+      }
+      const item = orderItems.find((i: OrderItem) => i.id === itemId);
+      if (!item) return;
+      const newQuantity = Math.max(0, item.quantity + delta);
+      if (newQuantity === 0) {
+        deleteItemMutation.mutate(itemId);
+      } else {
+        updateItemMutation.mutate({ itemId, quantity: newQuantity });
+      }
+    },
+    [orderData?.status, orderItems, deleteItemMutation, updateItemMutation]
+  );
+
+  const removeFromCart = useCallback(
+    (itemId: string) => {
+      if (orderData?.status === "done") {
+        toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចលុបបានទេ");
+        return;
+      }
       deleteItemMutation.mutate(itemId);
-    } else {
-      updateItemMutation.mutate({ itemId, quantity: newQuantity });
-    }
-  };
+    },
+    [orderData?.status, deleteItemMutation]
+  );
 
-  const removeFromCart = (itemId: string) => {
+  const clearCart = useCallback(() => {
     if (orderData?.status === "done") {
       toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចលុបបានទេ");
       return;
     }
-    deleteItemMutation.mutate(itemId);
-  };
-
-  const clearCart = () => {
-    if (orderData?.status === "done") {
-      toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចលុបបានទេ");
-      return;
-    }
-    orderItems.forEach((item) => {
+    orderItems.forEach((item: OrderItem) => {
       deleteItemMutation.mutate(item.id);
     });
-  };
+  }, [orderData?.status, orderItems, deleteItemMutation]);
 
   const subtotal = useMemo(() => {
     return orderData?.subtotal || 0;
@@ -531,19 +553,25 @@ export default function OrdersPage() {
     return orderData?.total || 0;
   }, [orderData]);
 
-  const handleDiscountChange = (value: number) => {
-    setDiscountValue(value);
-    if (currentOrder) {
-      updateDiscountMutation.mutate();
-    }
-  };
+  const handleDiscountChange = useCallback(
+    (value: number) => {
+      setDiscountValue(value);
+      if (currentOrder) {
+        updateDiscountMutation.mutate();
+      }
+    },
+    [currentOrder, updateDiscountMutation]
+  );
 
-  const handleCustomerNameChange = (name: string) => {
-    setCustomerName(name);
-    if (currentOrder) {
-      updateCustomerNameMutation.mutate(name);
-    }
-  };
+  const handleCustomerNameChange = useCallback(
+    (name: string) => {
+      setCustomerName(name);
+      if (currentOrder) {
+        updateCustomerNameMutation.mutate(name);
+      }
+    },
+    [currentOrder, updateCustomerNameMutation]
+  );
 
   const completePaymentMutation = useMutation({
     mutationFn: async () => {
@@ -592,24 +620,24 @@ export default function OrdersPage() {
     return orderItems.length === 0 || total === 0;
   }, [orderData, orderItems.length, total]);
 
-  const handleCancelOrder = () => {
+  const handleCancelOrder = useCallback(() => {
     if (!canCancelOrder) {
       toast.error("មិនអាចលុបការបញ្ជាទិញនេះបានទេ");
       return;
     }
     setShowCancelOrderConfirm(true);
-  };
+  }, [canCancelOrder]);
 
-  const handleConfirmCancelOrder = () => {
+  const handleConfirmCancelOrder = useCallback(() => {
     cancelOrderMutation.mutate();
     setShowCancelOrderConfirm(false);
-  };
+  }, [cancelOrderMutation]);
 
-  const handleCancelCancelOrder = () => {
+  const handleCancelCancelOrder = useCallback(() => {
     setShowCancelOrderConfirm(false);
-  };
+  }, []);
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = useCallback(() => {
     if (!orderItems || orderItems.length === 0) {
       toast.error("សូមបន្ថែមមុខម្ហូបទៅកន្ត្រក់");
       return;
@@ -626,9 +654,9 @@ export default function OrdersPage() {
     if (confirm(confirmMessage)) {
       completePaymentMutation.mutate();
     }
-  };
+  }, [orderItems, orderData?.status, total, completePaymentMutation]);
 
-  const handlePrintInvoice = async () => {
+  const handlePrintInvoice = useCallback(async () => {
     if (!orderData || !orderItems || orderItems.length === 0) {
       toast.error("មិនមានការបញ្ជាទិញទេ");
       return;
@@ -642,7 +670,7 @@ export default function OrdersPage() {
       console.error("Error printing invoice:", error);
       toast.error("មានបញ្ហាក្នុងការបោះពុម្ពវិក្កយបត្រ");
     }
-  };
+  }, [orderData, orderItems]);
 
   if (!selectedTable) {
     return (

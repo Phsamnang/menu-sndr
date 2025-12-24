@@ -28,27 +28,24 @@ async function postHandler(
       );
     }
 
-    const order = await prisma.order.findUnique({
-      where: { id },
-      include: {
-        table: {
-          include: { tableType: true },
+    const [order, menuItem] = await Promise.all([
+      prisma.order.findUnique({
+        where: { id },
+        include: {
+          table: {
+            include: { tableType: true },
+          },
         },
-      },
-    });
-
-    if (!order) {
-      return errorResponse("NOT_FOUND", "Order not found", 404);
-    }
-
-    const menuItem = await prisma.menuItem.findUnique({
-      where: { id: menuItemId },
-      include: {
-        prices: {
-          include: { tableType: true },
+      }),
+      prisma.menuItem.findUnique({
+        where: { id: menuItemId },
+        include: {
+          prices: {
+            include: { tableType: true },
+          },
         },
-      },
-    });
+      }),
+    ]);
 
     if (!menuItem) {
       return errorResponse("NOT_FOUND", "Menu item not found", 404);
@@ -69,12 +66,17 @@ async function postHandler(
         "VALIDATION_ERROR",
         "No price found for this menu item",
         400,
-        [{ field: "menuItemId", message: "Price not available for this table type" }]
+        [
+          {
+            field: "menuItemId",
+            message: "Price not available for this table type",
+          },
+        ]
       );
     }
 
     let orderItem;
-    
+
     if (order.status === "new") {
       orderItem = await prisma.orderItem.create({
         data: {
@@ -115,32 +117,30 @@ async function postHandler(
       }
     }
 
-    await updateOrderTotals(id);
-
-    const updatedOrder = await prisma.order.findUnique({
-      where: { id },
-      include: {
-        items: {
-          include: {
-            menuItem: {
-              include: {
-                category: true,
+    const [updatedOrder] = await Promise.all([
+      prisma.order.findUnique({
+        where: { id },
+        include: {
+          items: {
+            include: {
+              menuItem: {
+                include: {
+                  category: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      }),
+      updateOrderTotals(id),
+    ]);
 
     return successResponse(updatedOrder, "Item added to order successfully");
   } catch (error: any) {
     console.error("Error adding item to order:", error);
-    return errorResponse(
-      "ADD_ITEM_ERROR",
-      "Failed to add item to order",
-      500,
-      [{ message: error?.message || String(error) }]
-    );
+    return errorResponse("ADD_ITEM_ERROR", "Failed to add item to order", 500, [
+      { message: error?.message || String(error) },
+    ]);
   }
 }
 
@@ -183,22 +183,23 @@ async function putHandler(
       });
     }
 
-    await updateOrderTotals(id);
-
-    const updatedOrder = await prisma.order.findUnique({
-      where: { id },
-      include: {
-        items: {
-          include: {
-            menuItem: {
-              include: {
-                category: true,
+    const [updatedOrder] = await Promise.all([
+      prisma.order.findUnique({
+        where: { id },
+        include: {
+          items: {
+            include: {
+              menuItem: {
+                include: {
+                  category: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      }),
+      updateOrderTotals(id),
+    ]);
 
     return successResponse(updatedOrder, "Order item updated successfully");
   } catch (error: any) {
@@ -222,34 +223,32 @@ async function deleteHandler(
     const itemId = searchParams.get("itemId");
 
     if (!itemId) {
-      return errorResponse(
-        "VALIDATION_ERROR",
-        "itemId is required",
-        400,
-        [{ field: "itemId", message: "Item ID is required" }]
-      );
+      return errorResponse("VALIDATION_ERROR", "itemId is required", 400, [
+        { field: "itemId", message: "Item ID is required" },
+      ]);
     }
 
     await prisma.orderItem.delete({
       where: { id: itemId },
     });
 
-    await updateOrderTotals(id);
-
-    const updatedOrder = await prisma.order.findUnique({
-      where: { id },
-      include: {
-        items: {
-          include: {
-            menuItem: {
-              include: {
-                category: true,
+    const [updatedOrder] = await Promise.all([
+      prisma.order.findUnique({
+        where: { id },
+        include: {
+          items: {
+            include: {
+              menuItem: {
+                include: {
+                  category: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      }),
+      updateOrderTotals(id),
+    ]);
 
     return successResponse(updatedOrder, "Order item deleted successfully");
   } catch (error: any) {
@@ -264,14 +263,22 @@ async function deleteHandler(
 }
 
 async function updateOrderTotals(orderId: string) {
+  const result = await prisma.orderItem.aggregate({
+    where: { orderId },
+    _sum: { totalPrice: true },
+  });
+
+  const subtotal = result._sum.totalPrice || 0;
+
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: { items: true },
+    select: {
+      discountType: true,
+      discountValue: true,
+    },
   });
 
   if (!order) return;
-
-  const subtotal = order.items.reduce((sum, item) => sum + item.totalPrice, 0);
 
   let discountAmount = 0;
   if (order.discountType && order.discountValue) {
@@ -314,4 +321,3 @@ export async function DELETE(
 ) {
   return withAuth((req) => deleteHandler(req, context), ["admin"])(request);
 }
-
