@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getTokenSync } from "@/utils/token";
 
 interface OrderItem {
@@ -40,11 +40,25 @@ interface ChefStreamData {
   items: Order[];
 }
 
+const playNotificationSound = () => {
+  try {
+    const audio = new Audio("/audio/notification.mp3");
+    audio.volume = 0.5;
+    audio.play().catch((error) => {
+      console.error("Error playing notification sound:", error);
+    });
+  } catch (error) {
+    console.error("Error creating audio:", error);
+  }
+};
+
 export function useChefStream(statusFilter: string | null) {
   const [ordersData, setOrdersData] = useState<ChefStreamData>({
     items: [],
   });
   const [isLoading, setIsLoading] = useState(true);
+  const previousItemIdsRef = useRef<Set<string>>(new Set());
+  const isInitialLoadRef = useRef(true);
 
   useEffect(() => {
     const token = getTokenSync();
@@ -61,6 +75,25 @@ export function useChefStream(statusFilter: string | null) {
         if (data.error) {
           console.error("SSE error:", data.error);
         } else {
+          const allItemIds = new Set<string>();
+          data.items?.forEach((order: Order) => {
+            order.items?.forEach((item: OrderItem) => {
+              allItemIds.add(item.id);
+            });
+          });
+
+          if (!isInitialLoadRef.current) {
+            const hasNewItems = Array.from(allItemIds).some(
+              (id) => !previousItemIdsRef.current.has(id)
+            );
+            if (hasNewItems) {
+              playNotificationSound();
+            }
+          } else {
+            isInitialLoadRef.current = false;
+          }
+
+          previousItemIdsRef.current = allItemIds;
           setOrdersData(data);
           setIsLoading(false);
         }
@@ -77,6 +110,8 @@ export function useChefStream(statusFilter: string | null) {
 
     return () => {
       eventSource.close();
+      previousItemIdsRef.current.clear();
+      isInitialLoadRef.current = true;
     };
   }, [statusFilter]);
 
