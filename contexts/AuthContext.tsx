@@ -8,8 +8,8 @@ import {
   ReactNode,
 } from "react";
 import {
-  getToken,
-  getUser,
+  getTokenSync,
+  getUserSync,
   removeToken,
   setToken,
   setUser,
@@ -31,8 +31,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<StoredUser | null>(null);
 
   useEffect(() => {
-    const storedToken = getToken();
-    const storedUser = getUser();
+    const storedToken = getTokenSync();
+    const storedUser = getUserSync();
     if (storedToken && storedUser) {
       setTokenState(storedToken);
       setUserState(storedUser);

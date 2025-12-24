@@ -4,24 +4,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
 import Table, { TableColumn } from "@/components/Table";
-import { apiClientJson } from "@/utils/api-client";
-
-interface TableType {
-  id: string;
-  name: string;
-  displayName: string;
-  order: number;
-}
-
-interface TableItem {
-  id: string;
-  number: string;
-  name: string | null;
-  capacity: number;
-  tableTypeId: string;
-  status: string;
-  tableType: TableType;
-}
+import { tableService, TableItem } from "@/services/table.service";
+import { tableTypeService, TableType } from "@/services/table-type.service";
+import TableModal from "./components/TableModal";
 
 export default function TablesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,37 +22,16 @@ export default function TablesPage() {
 
   const { data: tables = [], isLoading } = useQuery<TableItem[]>({
     queryKey: ["tables"],
-    queryFn: async () => {
-      const result = await apiClientJson<TableItem[]>("/api/admin/tables");
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to fetch tables");
-      }
-      return result.data;
-    },
+    queryFn: () => tableService.getAll(),
   });
 
   const { data: tableTypes = [] } = useQuery<TableType[]>({
     queryKey: ["tableTypes"],
-    queryFn: async () => {
-      const result = await apiClientJson<TableType[]>("/api/admin/table-types");
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to fetch table types");
-      }
-      return result.data;
-    },
+    queryFn: () => tableTypeService.getAll(),
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      const result = await apiClientJson("/api/admin/tables", {
-        method: "POST",
-        data,
-      });
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to create table");
-      }
-      return result.data;
-    },
+    mutationFn: (data: typeof formData) => tableService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tables"] });
       setIsModalOpen(false);
@@ -82,16 +46,8 @@ export default function TablesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const result = await apiClientJson(`/api/admin/tables/${id}`, {
-        method: "PUT",
-        data,
-      });
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to update table");
-      }
-      return result.data;
-    },
+    mutationFn: ({ id, data }: { id: string; data: typeof formData }) =>
+      tableService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tables"] });
       setIsModalOpen(false);
@@ -107,15 +63,7 @@ export default function TablesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const result = await apiClientJson(`/api/admin/tables/${id}`, {
-        method: "DELETE",
-      });
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to delete table");
-      }
-      return result.data;
-    },
+    mutationFn: (id: string) => tableService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tables"] });
     },
@@ -283,116 +231,26 @@ export default function TablesPage() {
           emptyMessage="រកមិនឃើញតុទេ។"
         />
 
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h2 className="text-2xl font-bold mb-4">
-                {editingTable ? "កែប្រែតុ" : "បន្ថែមតុ"}
-              </h2>
-              <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    លេខតុ <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.number}
-                    onChange={(e) =>
-                      setFormData({ ...formData, number: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border rounded-lg"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    ឈ្មោះ
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border rounded-lg"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    ចំនួនអាចអង្គុយ
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={formData.capacity}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        capacity: parseInt(e.target.value) || 4,
-                      })
-                    }
-                    className="w-full px-3 py-2 border rounded-lg"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    ប្រភេទតុ <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={formData.tableTypeId}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        tableTypeId: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border rounded-lg"
-                    required
-                  >
-                    <option value="">ជ្រើសរើសប្រភេទតុ</option>
-                    {tableTypes.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.displayName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    ស្ថានភាព
-                  </label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) =>
-                      setFormData({ ...formData, status: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border rounded-lg"
-                  >
-                    <option value="available">អាចប្រើបាន</option>
-                    <option value="occupied">កំពុងប្រើ</option>
-                    <option value="reserved">កក់ទុក</option>
-                    <option value="maintenance">កំពុងជួសជុល</option>
-                  </select>
-                </div>
-                <div className="flex gap-4">
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900"
-                  >
-                    {editingTable ? "ធ្វើបច្ចុប្បន្នភាព" : "បង្កើត"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300"
-                  >
-                    បោះបង់
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        <TableModal
+          isOpen={isModalOpen}
+          editingTable={editingTable}
+          formData={formData}
+          tableTypes={tableTypes}
+          isSubmitting={createMutation.isPending || updateMutation.isPending}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingTable(null);
+            setFormData({
+              number: "",
+              name: "",
+              capacity: 4,
+              tableTypeId: "",
+              status: "available",
+            });
+          }}
+          onSubmit={handleSubmit}
+          onFormDataChange={setFormData}
+        />
       </div>
     </div>
   );

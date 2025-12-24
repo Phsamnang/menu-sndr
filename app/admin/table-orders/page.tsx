@@ -4,20 +4,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import OptimizedImage from "@/components/OptimizedImage";
-import { apiClientJson } from "@/utils/api-client";
-
-interface TableItem {
-  id: string;
-  number: string;
-  name: string | null;
-  status: string;
-  capacity: number;
-  tableType: {
-    id: string;
-    name: string;
-    displayName: string;
-  };
-}
+import { tableService, TableItem } from "@/services/table.service";
+import { orderService, Order } from "@/services/order.service";
+import { menuService, MenuItem } from "@/services/menu.service";
+import { categoryService, Category } from "@/services/category.service";
 
 interface OrderItem {
   id: string;
@@ -35,37 +25,6 @@ interface OrderItem {
   };
 }
 
-interface Order {
-  id: string;
-  orderNumber: string;
-  tableId: string | null;
-  customerName: string | null;
-  status: string;
-  subtotal: number;
-  discountAmount: number;
-  total: number;
-  createdAt: string;
-  items: OrderItem[];
-  table?: TableItem;
-}
-
-interface MenuItem {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-  category: string;
-  prices: {
-    [tableType: string]: number;
-  };
-}
-
-interface Category {
-  id: string;
-  name: string;
-  displayName: string;
-}
-
 export default function TableOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedTable, setSelectedTable] = useState<TableItem | null>(null);
@@ -79,13 +38,7 @@ export default function TableOrdersPage() {
   const { data: tables = [], isLoading: tablesLoading } = useQuery<TableItem[]>(
     {
       queryKey: ["tables"],
-      queryFn: async () => {
-        const result = await apiClientJson<TableItem[]>("/api/admin/tables");
-        if (!result.success || !result.data) {
-          throw new Error(result.error?.message || "Failed to fetch tables");
-        }
-        return result.data;
-      },
+      queryFn: () => tableService.getAll(),
     }
   );
 
@@ -93,59 +46,30 @@ export default function TableOrdersPage() {
     items: Order[];
   }>({
     queryKey: ["activeOrders"],
-    queryFn: async () => {
-      const result = await apiClientJson<{ items: Order[] }>(
-        "/api/admin/orders?status=new&limit=1000"
-      );
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to fetch orders");
-      }
-      return result.data;
-    },
-    refetchInterval: 3000, // Refresh every 3 seconds
+    queryFn: () => orderService.getAll({ status: "new", limit: 1000 }),
   });
 
-  const { data: orderDetails } = useQuery<Order>({
+  const { data: orderDetails } = useQuery<Order | null>({
     queryKey: ["orderDetails", selectedOrder?.id],
     queryFn: async () => {
       if (!selectedOrder?.id) return null;
-      const result = await apiClientJson<Order>(
-        `/api/admin/orders/${selectedOrder.id}`
-      );
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to fetch order");
-      }
-      return result.data;
+      return orderService.getById(selectedOrder.id);
     },
     enabled: !!selectedOrder?.id,
-    refetchInterval: selectedOrder ? 2000 : false,
   });
 
   const { data: menuData = [] } = useQuery<MenuItem[]>({
     queryKey: ["menu", selectedTable?.tableType.name],
-    queryFn: async () => {
-      if (!selectedTable?.tableType.name) {
-        return [];
-      }
-      const url = `/api/menu?tableType=${selectedTable.tableType.name}`;
-      const result = await apiClientJson<MenuItem[]>(url);
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to fetch menu");
-      }
-      return result.data;
-    },
+    queryFn: () =>
+      selectedTable?.tableType.name
+        ? menuService.getAll({ tableType: selectedTable.tableType.name })
+        : Promise.resolve([]),
     enabled: !!selectedTable?.tableType.name,
   });
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["categories"],
-    queryFn: async () => {
-      const result = await apiClientJson<Category[]>("/api/admin/categories");
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to fetch categories");
-      }
-      return result.data;
-    },
+    queryFn: () => categoryService.getAll(),
   });
 
   const orders = ordersData?.items || [];
@@ -230,20 +154,7 @@ export default function TableOrdersPage() {
       if (!selectedOrder?.id) {
         throw new Error("Order not found");
       }
-      const result = await apiClientJson(
-        `/api/admin/orders/${selectedOrder.id}/items`,
-        {
-          method: "POST",
-          data: {
-            menuItemId,
-            quantity,
-          },
-        }
-      );
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to add item");
-      }
-      return result.data;
+      return orderService.addItem(selectedOrder.id, { menuItemId, quantity });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orderDetails"] });
@@ -280,20 +191,7 @@ export default function TableOrdersPage() {
       if (!selectedOrder?.id) {
         throw new Error("Order not found");
       }
-      const result = await apiClientJson(
-        `/api/admin/orders/${selectedOrder.id}/items`,
-        {
-          method: "PUT",
-          data: {
-            itemId,
-            quantity,
-          },
-        }
-      );
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to update item");
-      }
-      return result.data;
+      return orderService.updateItem(selectedOrder.id, { itemId, quantity });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orderDetails"] });
@@ -306,16 +204,7 @@ export default function TableOrdersPage() {
       if (!selectedOrder?.id) {
         throw new Error("Order not found");
       }
-      const result = await apiClientJson(
-        `/api/admin/orders/${selectedOrder.id}/items?itemId=${itemId}`,
-        {
-          method: "DELETE",
-        }
-      );
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to delete item");
-      }
-      return result.data;
+      return orderService.deleteItem(selectedOrder.id, itemId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orderDetails"] });
@@ -325,17 +214,13 @@ export default function TableOrdersPage() {
 
   const createOrderMutation = useMutation({
     mutationFn: async (tableId: string) => {
-      const result = await apiClientJson("/api/admin/orders", {
-        method: "POST",
-        data: {
-          tableId,
-          items: [],
-        },
+      return orderService.create({
+        tableId,
+        customerName: null,
+        items: [],
+        discountType: null,
+        discountValue: 0,
       });
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to create order");
-      }
-      return result.data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["activeOrders"] });
@@ -551,7 +436,9 @@ export default function TableOrdersPage() {
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                           />
                         </svg>
-                        <p className="text-sm text-slate-500">មិនមានការបញ្ជាទិញ</p>
+                        <p className="text-sm text-slate-500">
+                          មិនមានការបញ្ជាទិញ
+                        </p>
                       </>
                     )}
                   </div>
@@ -591,94 +478,183 @@ export default function TableOrdersPage() {
               {createOrderMutation.isPending ? (
                 <div className="text-center py-12">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-slate-800"></div>
-                  <p className="text-slate-600 mt-4">កំពុងបង្កើតការបញ្ជាទិញ...</p>
+                  <p className="text-slate-600 mt-4">
+                    កំពុងបង្កើតការបញ្ជាទិញ...
+                  </p>
                 </div>
               ) : currentOrder ? (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-2">
                     {canAddItems(currentOrder) && (
-                    <div className="mb-6">
-                      <div className="mb-4 flex gap-4 items-center">
-                        <div className="flex-1 relative">
-                          <input
-                            type="text"
-                            placeholder="ស្វែងរកមុខម្ហូប..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full px-4 py-3 pl-10 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
-                          />
-                          <svg
-                            className="absolute left-3 top-3.5 w-5 h-5 text-slate-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      <div className="mb-6">
+                        <div className="mb-4 flex gap-4 items-center">
+                          <div className="flex-1 relative">
+                            <input
+                              type="text"
+                              placeholder="ស្វែងរកមុខម្ហូប..."
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              className="w-full px-4 py-3 pl-10 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                             />
-                          </svg>
+                            <svg
+                              className="absolute left-3 top-3.5 w-5 h-5 text-slate-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                              />
+                            </svg>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="mb-4">
-                        <div className="flex gap-2 overflow-x-auto pb-2">
-                          <button
-                            onClick={() => setSelectedCategory(null)}
-                            className={`flex-shrink-0 px-4 py-2 rounded-full font-medium transition-all ${
-                              selectedCategory === null
-                                ? "bg-slate-800 text-white"
-                                : "bg-white text-slate-700 hover:bg-slate-100"
-                            }`}
-                          >
-                            ទាំងអស់
-                          </button>
-                          {categoriesList.map((catName) => {
-                            const category = categories.find(
-                              (c) => c.name === catName
-                            );
+                        <div className="mb-4">
+                          <div className="flex gap-2 overflow-x-auto pb-2">
+                            <button
+                              onClick={() => setSelectedCategory(null)}
+                              className={`flex-shrink-0 px-4 py-2 rounded-full font-medium transition-all ${
+                                selectedCategory === null
+                                  ? "bg-slate-800 text-white"
+                                  : "bg-white text-slate-700 hover:bg-slate-100"
+                              }`}
+                            >
+                              ទាំងអស់
+                            </button>
+                            {categoriesList.map((catName) => {
+                              const category = categories.find(
+                                (c) => c.name === catName
+                              );
+                              return (
+                                <button
+                                  key={catName}
+                                  onClick={() => setSelectedCategory(catName)}
+                                  className={`flex-shrink-0 px-4 py-2 rounded-full font-medium transition-all ${
+                                    selectedCategory === catName
+                                      ? "bg-slate-800 text-white"
+                                      : "bg-white text-slate-700 hover:bg-slate-100"
+                                  }`}
+                                >
+                                  {category?.displayName || catName}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-96 overflow-y-auto">
+                          {filteredMenu.map((item) => {
+                            const price =
+                              item.prices[selectedTable.tableType.name] || 0;
                             return (
-                              <button
-                                key={catName}
-                                onClick={() => setSelectedCategory(catName)}
-                                className={`flex-shrink-0 px-4 py-2 rounded-full font-medium transition-all ${
-                                  selectedCategory === catName
-                                    ? "bg-slate-800 text-white"
-                                    : "bg-white text-slate-700 hover:bg-slate-100"
-                                }`}
+                              <div
+                                key={item.id}
+                                className="bg-slate-50 rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow"
                               >
-                                {category?.displayName || catName}
-                              </button>
+                                <div className="relative h-32 bg-slate-100">
+                                  {item.image ? (
+                                    <OptimizedImage
+                                      src={item.image}
+                                      alt={item.name}
+                                      width={150}
+                                      height={128}
+                                      className="w-full h-full object-cover"
+                                      quality={85}
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <svg
+                                        className="w-8 h-8 text-slate-300"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                        />
+                                      </svg>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="p-2">
+                                  <h3 className="font-semibold text-slate-900 text-xs mb-1 line-clamp-2">
+                                    {item.name}
+                                  </h3>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-bold text-slate-900">
+                                      {price.toLocaleString("km-KH")}៛
+                                    </span>
+                                  </div>
+                                  <div className="mb-2">
+                                    <label className="block text-xs text-slate-600 mb-1">
+                                      ចំនួន
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      value={itemQuantities[item.id] || 1}
+                                      onChange={(e) =>
+                                        setItemQuantity(
+                                          item.id,
+                                          parseInt(e.target.value) || 1
+                                        )
+                                      }
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="w-full px-2 py-1 text-center text-xs border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-500"
+                                    />
+                                  </div>
+                                  <button
+                                    onClick={() => handleAddToOrder(item)}
+                                    disabled={
+                                      price === 0 || addItemMutation.isPending
+                                    }
+                                    className="w-full px-2 py-1.5 bg-slate-800 text-white text-xs rounded-lg hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed"
+                                  >
+                                    + បន្ថែម
+                                  </button>
+                                </div>
+                              </div>
                             );
                           })}
                         </div>
                       </div>
+                    )}
 
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-96 overflow-y-auto">
-                        {filteredMenu.map((item) => {
-                          const price =
-                            item.prices[selectedTable.tableType.name] || 0;
-                          return (
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-800 mb-4">
+                        មុខម្ហូបក្នុងការបញ្ជាទិញ
+                      </h3>
+                      {currentOrder.items.length === 0 ? (
+                        <div className="text-center py-8 bg-slate-50 rounded-lg">
+                          <p className="text-slate-500">មិនមានមុខម្ហូប</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {currentOrder.items.map((item) => (
                             <div
                               key={item.id}
-                              className="bg-slate-50 rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow"
+                              className="flex items-center gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200"
                             >
-                              <div className="relative h-32 bg-slate-100">
-                                {item.image ? (
+                              <div className="w-16 h-16 bg-slate-200 rounded overflow-hidden flex-shrink-0">
+                                {item.menuItem.image ? (
                                   <OptimizedImage
-                                    src={item.image}
-                                    alt={item.name}
-                                    width={150}
-                                    height={128}
+                                    src={item.menuItem.image}
+                                    alt={item.menuItem.name}
+                                    width={64}
+                                    height={64}
                                     className="w-full h-full object-cover"
-                                    quality={85}
+                                    quality={75}
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center">
                                     <svg
-                                      className="w-8 h-8 text-slate-300"
+                                      className="w-6 h-6 text-slate-300"
                                       fill="none"
                                       stroke="currentColor"
                                       viewBox="0 0 24 24"
@@ -693,220 +669,133 @@ export default function TableOrdersPage() {
                                   </div>
                                 )}
                               </div>
-                              <div className="p-2">
-                                <h3 className="font-semibold text-slate-900 text-xs mb-1 line-clamp-2">
-                                  {item.name}
-                                </h3>
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className="text-xs font-bold text-slate-900">
-                                    {price.toLocaleString("km-KH")}៛
-                                  </span>
-                                </div>
-                                <div className="mb-2">
-                                  <label className="block text-xs text-slate-600 mb-1">
-                                    ចំនួន
-                                  </label>
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    value={itemQuantities[item.id] || 1}
-                                    onChange={(e) =>
-                                      setItemQuantity(
-                                        item.id,
-                                        parseInt(e.target.value) || 1
-                                      )
-                                    }
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="w-full px-2 py-1 text-center text-xs border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-500"
-                                  />
-                                </div>
-                                <button
-                                  onClick={() => handleAddToOrder(item)}
-                                  disabled={
-                                    price === 0 || addItemMutation.isPending
-                                  }
-                                  className="w-full px-2 py-1.5 bg-slate-800 text-white text-xs rounded-lg hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed"
-                                >
-                                  + បន្ថែម
-                                </button>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-slate-900 text-sm">
+                                  {item.menuItem.name}
+                                </h4>
+                                <p className="text-xs text-slate-600">
+                                  {item.unitPrice.toLocaleString("km-KH")}៛
+                                </p>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-800 mb-4">
-                      មុខម្ហូបក្នុងការបញ្ជាទិញ
-                    </h3>
-                    {currentOrder.items.length === 0 ? (
-                      <div className="text-center py-8 bg-slate-50 rounded-lg">
-                        <p className="text-slate-500">មិនមានមុខម្ហូប</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {currentOrder.items.map((item) => (
-                          <div
-                            key={item.id}
-                            className="flex items-center gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200"
-                          >
-                            <div className="w-16 h-16 bg-slate-200 rounded overflow-hidden flex-shrink-0">
-                              {item.menuItem.image ? (
-                                <OptimizedImage
-                                  src={item.menuItem.image}
-                                  alt={item.menuItem.name}
-                                  width={64}
-                                  height={64}
-                                  className="w-full h-full object-cover"
-                                  quality={75}
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <svg
-                                    className="w-6 h-6 text-slate-300"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
+                              {canAddItems(currentOrder) && (
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() =>
+                                      updateItemMutation.mutate({
+                                        itemId: item.id,
+                                        quantity: item.quantity - 1,
+                                      })
+                                    }
+                                    disabled={
+                                      updateItemMutation.isPending ||
+                                      deleteItemMutation.isPending
+                                    }
+                                    className="w-6 h-6 flex items-center justify-center bg-slate-200 hover:bg-slate-300 rounded text-slate-700 text-sm font-medium disabled:opacity-50"
                                   >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                    />
-                                  </svg>
+                                    −
+                                  </button>
+                                  <span className="w-8 text-center text-sm font-medium text-slate-900">
+                                    {item.quantity}
+                                  </span>
+                                  <button
+                                    onClick={() =>
+                                      updateItemMutation.mutate({
+                                        itemId: item.id,
+                                        quantity: item.quantity + 1,
+                                      })
+                                    }
+                                    disabled={
+                                      updateItemMutation.isPending ||
+                                      addItemMutation.isPending
+                                    }
+                                    className="w-6 h-6 flex items-center justify-center bg-slate-200 hover:bg-slate-300 rounded text-slate-700 text-sm font-medium disabled:opacity-50"
+                                  >
+                                    +
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      deleteItemMutation.mutate(item.id)
+                                    }
+                                    disabled={deleteItemMutation.isPending}
+                                    className="ml-2 text-red-500 hover:text-red-600 text-sm disabled:opacity-50"
+                                  >
+                                    <svg
+                                      className="w-5 h-5"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                      />
+                                    </svg>
+                                  </button>
                                 </div>
                               )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-slate-900 text-sm">
-                                {item.menuItem.name}
-                              </h4>
-                              <p className="text-xs text-slate-600">
-                                {item.unitPrice.toLocaleString("km-KH")}៛
-                              </p>
-                            </div>
-                            {canAddItems(currentOrder) && (
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() =>
-                                    updateItemMutation.mutate({
-                                      itemId: item.id,
-                                      quantity: item.quantity - 1,
-                                    })
-                                  }
-                                  disabled={
-                                    updateItemMutation.isPending ||
-                                    deleteItemMutation.isPending
-                                  }
-                                  className="w-6 h-6 flex items-center justify-center bg-slate-200 hover:bg-slate-300 rounded text-slate-700 text-sm font-medium disabled:opacity-50"
-                                >
-                                  −
-                                </button>
-                                <span className="w-8 text-center text-sm font-medium text-slate-900">
-                                  {item.quantity}
+                              <div className="text-right">
+                                <span className="text-sm font-bold text-slate-900">
+                                  {item.totalPrice.toLocaleString("km-KH")}៛
                                 </span>
-                                <button
-                                  onClick={() =>
-                                    updateItemMutation.mutate({
-                                      itemId: item.id,
-                                      quantity: item.quantity + 1,
-                                    })
-                                  }
-                                  disabled={
-                                    updateItemMutation.isPending ||
-                                    addItemMutation.isPending
-                                  }
-                                  className="w-6 h-6 flex items-center justify-center bg-slate-200 hover:bg-slate-300 rounded text-slate-700 text-sm font-medium disabled:opacity-50"
-                                >
-                                  +
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    deleteItemMutation.mutate(item.id)
-                                  }
-                                  disabled={deleteItemMutation.isPending}
-                                  className="ml-2 text-red-500 hover:text-red-600 text-sm disabled:opacity-50"
-                                >
-                                  <svg
-                                    className="w-5 h-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    />
-                                  </svg>
-                                </button>
                               </div>
-                            )}
-                            <div className="text-right">
-                              <span className="text-sm font-bold text-slate-900">
-                                {item.totalPrice.toLocaleString("km-KH")}៛
-                              </span>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="lg:col-span-1">
-                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 sticky top-20">
-                    <h3 className="font-bold text-slate-800 mb-4">សរុប</h3>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">
-                          សរុបមុនបញ្ចុះតម្លៃ:
-                        </span>
-                        <span className="font-medium text-slate-900">
-                          {currentOrder.subtotal.toLocaleString("km-KH")}៛
-                        </span>
-                      </div>
-                      {currentOrder.discountAmount > 0 && (
-                        <div className="flex justify-between text-sm text-green-600">
-                          <span>បញ្ចុះតម្លៃ:</span>
-                          <span className="font-medium">
-                            -
-                            {currentOrder.discountAmount.toLocaleString(
-                              "km-KH"
-                            )}
-                            ៛
-                          </span>
+                          ))}
                         </div>
                       )}
-                      <div className="flex justify-between font-bold text-lg border-t border-slate-300 pt-2">
-                        <span>សរុប:</span>
-                        <span className="text-slate-900">
-                          {currentOrder.total.toLocaleString("km-KH")}៛
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-1">
+                    <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 sticky top-20">
+                      <h3 className="font-bold text-slate-800 mb-4">សរុប</h3>
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-600">
+                            សរុបមុនបញ្ចុះតម្លៃ:
+                          </span>
+                          <span className="font-medium text-slate-900">
+                            {currentOrder.subtotal.toLocaleString("km-KH")}៛
+                          </span>
+                        </div>
+                        {currentOrder.discountAmount > 0 && (
+                          <div className="flex justify-between text-sm text-green-600">
+                            <span>បញ្ចុះតម្លៃ:</span>
+                            <span className="font-medium">
+                              -
+                              {currentOrder.discountAmount.toLocaleString(
+                                "km-KH"
+                              )}
+                              ៛
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between font-bold text-lg border-t border-slate-300 pt-2">
+                          <span>សរុប:</span>
+                          <span className="text-slate-900">
+                            {currentOrder.total.toLocaleString("km-KH")}៛
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mb-4">
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getOrderStatusColor(
+                            currentOrder.status
+                          )}`}
+                        >
+                          {getOrderStatusLabel(currentOrder.status)}
                         </span>
                       </div>
+                      {currentOrder.customerName && (
+                        <div className="text-sm text-slate-600">
+                          <span className="font-medium">អតិថិជន:</span>{" "}
+                          {currentOrder.customerName}
+                        </div>
+                      )}
                     </div>
-                    <div className="mb-4">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getOrderStatusColor(
-                          currentOrder.status
-                        )}`}
-                      >
-                        {getOrderStatusLabel(currentOrder.status)}
-                      </span>
-                    </div>
-                    {currentOrder.customerName && (
-                      <div className="text-sm text-slate-600">
-                        <span className="font-medium">អតិថិជន:</span>{" "}
-                        {currentOrder.customerName}
-                      </div>
-                    )}
                   </div>
                 </div>
-              </div>
               ) : null}
             </div>
           </div>

@@ -1,11 +1,11 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import OptimizedImage from "@/components/OptimizedImage";
 import { apiClientJson } from "@/utils/api-client";
-import { getToken } from "@/utils/token";
+import { useChefStream } from "@/hooks/useChefStream";
 
 interface OrderItem {
   id: string;
@@ -44,43 +44,8 @@ interface Order {
 
 export default function ChefPage() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [ordersData, setOrdersData] = useState<{ items: Order[] }>({ items: [] });
-  const [isLoading, setIsLoading] = useState(true);
+  const { ordersData, isLoading } = useChefStream(statusFilter);
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const token = getToken();
-    const tokenParam = token ? `&token=${encodeURIComponent(token)}` : "";
-    const url = statusFilter
-      ? `/api/chef/orders/stream?status=${statusFilter}${tokenParam}`
-      : `/api/chef/orders/stream${tokenParam ? `?${tokenParam.substring(1)}` : ""}`;
-    
-    const eventSource = new EventSource(url);
-
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.error) {
-          console.error("SSE error:", data.error);
-        } else {
-          setOrdersData(data);
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error("Error parsing SSE data:", error);
-      }
-    };
-
-    eventSource.onerror = (error) => {
-      console.error("SSE connection error:", error);
-      eventSource.close();
-      setIsLoading(false);
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [statusFilter]);
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({
@@ -158,16 +123,13 @@ export default function ChefPage() {
     order.items.map((item) => ({ ...item, order }))
   );
 
-  const groupedByStatus = allItems.reduce(
-    (acc, item) => {
-      if (!acc[item.status]) {
-        acc[item.status] = [];
-      }
-      acc[item.status].push(item);
-      return acc;
-    },
-    {} as Record<string, typeof allItems>
-  );
+  const groupedByStatus = allItems.reduce((acc, item) => {
+    if (!acc[item.status]) {
+      acc[item.status] = [];
+    }
+    acc[item.status].push(item);
+    return acc;
+  }, {} as Record<string, typeof allItems>);
 
   const filteredItems = statusFilter
     ? groupedByStatus[statusFilter] || []
@@ -214,8 +176,7 @@ export default function ChefPage() {
                   : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"
               }`}
             >
-              {getStatusLabel(status)} (
-              {groupedByStatus[status]?.length || 0})
+              {getStatusLabel(status)} ({groupedByStatus[status]?.length || 0})
             </button>
           ))}
         </div>
@@ -325,7 +286,11 @@ export default function ChefPage() {
                     {item.status === "pending" && (
                       <button
                         onClick={() =>
-                          handleStatusChange(item.order.id, item.id, "preparing")
+                          handleStatusChange(
+                            item.order.id,
+                            item.id,
+                            "preparing"
+                          )
                         }
                         disabled={updateStatusMutation.isPending}
                         className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -355,10 +320,15 @@ export default function ChefPage() {
                         បានដឹក
                       </button>
                     )}
-                    {(item.status === "pending" || item.status === "preparing") && (
+                    {(item.status === "pending" ||
+                      item.status === "preparing") && (
                       <button
                         onClick={() =>
-                          handleStatusChange(item.order.id, item.id, "cancelled")
+                          handleStatusChange(
+                            item.order.id,
+                            item.id,
+                            "cancelled"
+                          )
                         }
                         disabled={updateStatusMutation.isPending}
                         className="px-3 py-2 bg-red-600 text-white rounded-lg font-medium text-sm hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -376,4 +346,3 @@ export default function ChefPage() {
     </div>
   );
 }
-

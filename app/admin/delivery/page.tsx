@@ -1,11 +1,11 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import OptimizedImage from "@/components/OptimizedImage";
 import { apiClientJson } from "@/utils/api-client";
-import { getToken } from "@/utils/token";
+import { useDeliveryStream } from "@/hooks/useDeliveryStream";
 
 interface OrderItem {
   id: string;
@@ -45,45 +45,8 @@ interface Order {
 
 export default function DeliveryPage() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [ordersData, setOrdersData] = useState<{ items: Order[] }>({
-    items: [],
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  const { ordersData, isLoading } = useDeliveryStream(statusFilter);
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const token = getToken();
-    const tokenParam = token ? `&token=${encodeURIComponent(token)}` : "";
-    const url = statusFilter
-      ? `/api/delivery/items/stream?status=${statusFilter}${tokenParam}`
-      : `/api/delivery/items/stream${tokenParam ? `?${tokenParam.substring(1)}` : ""}`;
-
-    const eventSource = new EventSource(url);
-
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.error) {
-          console.error("SSE error:", data.error);
-        } else {
-          setOrdersData(data);
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error("Error parsing SSE data:", error);
-      }
-    };
-
-    eventSource.onerror = (error) => {
-      console.error("SSE connection error:", error);
-      eventSource.close();
-      setIsLoading(false);
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [statusFilter]);
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({

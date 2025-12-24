@@ -3,15 +3,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
-import Table, { TableColumn } from "@/components/Table";
-import { apiClientJson } from "@/utils/api-client";
-
-interface TableType {
-  id: string;
-  name: string;
-  displayName: string;
-  order: number;
-}
+import Table from "@/components/Table";
+import { tableTypeService, TableType } from "@/services/table-type.service";
+import TableTypeModal from "./components/TableTypeModal";
 
 export default function TableTypesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,30 +19,12 @@ export default function TableTypesPage() {
 
   const { data: tableTypes = [], isLoading } = useQuery<TableType[]>({
     queryKey: ["tableTypes"],
-    queryFn: async () => {
-      const result = await apiClientJson<TableType[]>("/api/admin/table-types");
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to fetch table types");
-      }
-      return result.data;
-    },
+    queryFn: () => tableTypeService.getAll(),
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: {
-      name: string;
-      displayName: string;
-      order: number;
-    }) => {
-      const result = await apiClientJson("/api/admin/table-types", {
-        method: "POST",
-        data,
-      });
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to create table type");
-      }
-      return result.data;
-    },
+    mutationFn: (data: { name: string; displayName: string; order: number }) =>
+      tableTypeService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tableTypes"] });
       setIsModalOpen(false);
@@ -57,22 +33,13 @@ export default function TableTypesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       id,
       data,
     }: {
       id: string;
       data: { name: string; displayName: string; order: number };
-    }) => {
-      const result = await apiClientJson(`/api/admin/table-types/${id}`, {
-        method: "PUT",
-        data,
-      });
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to update table type");
-      }
-      return result.data;
-    },
+    }) => tableTypeService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tableTypes"] });
       setIsModalOpen(false);
@@ -82,15 +49,7 @@ export default function TableTypesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const result = await apiClientJson(`/api/admin/table-types/${id}`, {
-        method: "DELETE",
-      });
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to delete table type");
-      }
-      return result.data;
-    },
+    mutationFn: (id: string) => tableTypeService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tableTypes"] });
     },
@@ -193,77 +152,19 @@ export default function TableTypesPage() {
           emptyMessage="រកមិនឃើញប្រភេទតុទេ។"
         />
 
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h2 className="text-2xl font-bold mb-4">
-                {editingType ? "កែប្រែប្រភេទតុ" : "បន្ថែមប្រភេទតុ"}
-              </h2>
-              <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    ឈ្មោះ
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border rounded-lg"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    ឈ្មោះបង្ហាញ
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.displayName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, displayName: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border rounded-lg"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    លំដាប់
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.order}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        order: parseInt(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full px-3 py-2 border rounded-lg"
-                    required
-                  />
-                </div>
-                <div className="flex gap-4">
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900"
-                  >
-                    {editingType ? "ធ្វើបច្ចុប្បន្នភាព" : "បង្កើត"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300"
-                  >
-                    បោះបង់
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        <TableTypeModal
+          isOpen={isModalOpen}
+          editingType={editingType}
+          formData={formData}
+          isSubmitting={createMutation.isPending || updateMutation.isPending}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingType(null);
+            setFormData({ name: "", displayName: "", order: 0 });
+          }}
+          onSubmit={handleSubmit}
+          onFormDataChange={setFormData}
+        />
       </div>
     </div>
   );

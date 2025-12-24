@@ -4,49 +4,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
 import Table, { TableColumn } from "@/components/Table";
-import { apiClientJson } from "@/utils/api-client";
-
-interface TableType {
-  id: string;
-  name: string;
-  displayName: string;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  displayName: string;
-}
-
-interface Price {
-  id?: string;
-  tableTypeId: string;
-  tableTypeName?: string;
-  amount: number;
-}
-
-interface MenuItem {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-  categoryId: string;
-  categoryName?: string;
-  isCook?: boolean;
-  prices: Price[];
-}
-
-interface PaginatedResponse {
-  items: MenuItem[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  };
-}
+import {
+  menuItemService,
+  MenuItem,
+  Category,
+  TableType,
+  Price,
+  PaginatedResponse,
+} from "@/services/menu-item.service";
+import { categoryService } from "@/services/category.service";
+import { tableTypeService } from "@/services/table-type.service";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -70,25 +37,13 @@ export default function MenuItemsPage() {
 
   const { data: menuItemsData, isLoading } = useQuery<PaginatedResponse>({
     queryKey: ["menuItems", currentPage, selectedCategory, searchQuery],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: ITEMS_PER_PAGE.toString(),
-      });
-      if (selectedCategory) {
-        params.append("categoryId", selectedCategory);
-      }
-      if (searchQuery.trim()) {
-        params.append("search", searchQuery.trim());
-      }
-      const result = await apiClientJson<PaginatedResponse>(
-        `/api/admin/menu-items?${params.toString()}`
-      );
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to fetch menu items");
-      }
-      return result.data;
-    },
+    queryFn: () =>
+      menuItemService.getAll({
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        categoryId: selectedCategory || undefined,
+        search: searchQuery.trim() || undefined,
+      }),
   });
 
   const menuItems = menuItemsData?.items || [];
@@ -96,37 +51,16 @@ export default function MenuItemsPage() {
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["categories"],
-    queryFn: async () => {
-      const result = await apiClientJson<Category[]>("/api/admin/categories");
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to fetch categories");
-      }
-      return result.data;
-    },
+    queryFn: () => categoryService.getAll(),
   });
 
   const { data: tableTypes = [] } = useQuery<TableType[]>({
     queryKey: ["tableTypes"],
-    queryFn: async () => {
-      const result = await apiClientJson<TableType[]>("/api/admin/table-types");
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to fetch table types");
-      }
-      return result.data;
-    },
+    queryFn: () => tableTypeService.getAll(),
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      const result = await apiClientJson("/api/admin/menu-items", {
-        method: "POST",
-        data,
-      });
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to create menu item");
-      }
-      return result.data;
-    },
+    mutationFn: (data: typeof formData) => menuItemService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menuItems"] });
       setIsModalOpen(false);
@@ -143,16 +77,8 @@ export default function MenuItemsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const result = await apiClientJson(`/api/admin/menu-items/${id}`, {
-        method: "PUT",
-        data,
-      });
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to update menu item");
-      }
-      return result.data;
-    },
+    mutationFn: ({ id, data }: { id: string; data: typeof formData }) =>
+      menuItemService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menuItems"] });
       setIsModalOpen(false);
@@ -170,15 +96,7 @@ export default function MenuItemsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const result = await apiClientJson(`/api/admin/menu-items/${id}`, {
-        method: "DELETE",
-      });
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to delete menu item");
-      }
-      return result.data;
-    },
+    mutationFn: (id: string) => menuItemService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menuItems"] });
     },

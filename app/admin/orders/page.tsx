@@ -3,9 +3,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 import OptimizedImage from "@/components/OptimizedImage";
 import InvoicePrint from "@/components/InvoicePrint";
 import { apiClientJson } from "@/utils/api-client";
+import { orderService } from "@/services/order.service";
+import CreateOrderModal from "./components/CreateOrderModal";
+import ViewOrderModal from "./components/ViewOrderModal";
+import CancelOrderModal from "./components/CancelOrderModal";
 
 interface Category {
   id: string;
@@ -83,6 +88,9 @@ export default function OrdersPage() {
   const [itemQuantities, setItemQuantities] = useState<Record<string, number>>(
     {}
   );
+  const [itemQuantityInputs, setItemQuantityInputs] = useState<
+    Record<string, string>
+  >({});
   const [discountType, setDiscountType] = useState<"percentage" | "amount">(
     "percentage"
   );
@@ -90,6 +98,14 @@ export default function OrdersPage() {
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [showCart, setShowCart] = useState<boolean>(false);
   const [showInvoice, setShowInvoice] = useState<boolean>(false);
+  const [showCreateOrderConfirm, setShowCreateOrderConfirm] =
+    useState<boolean>(false);
+  const [showViewOrderConfirm, setShowViewOrderConfirm] =
+    useState<boolean>(false);
+  const [showCancelOrderConfirm, setShowCancelOrderConfirm] =
+    useState<boolean>(false);
+  const [pendingTable, setPendingTable] = useState<TableItem | null>(null);
+  const [pendingOrder, setPendingOrder] = useState<Order | null>(null);
   const queryClient = useQueryClient();
 
   const { data: menuData = [], isLoading: menuLoading } = useQuery<MenuItem[]>({
@@ -257,25 +273,13 @@ export default function OrdersPage() {
 
   const createOrderMutation = useMutation({
     mutationFn: async (tableId: string) => {
-      const orderNumber = `ORD-${Date.now()}-${Math.random()
-        .toString(36)
-        .substr(2, 9)
-        .toUpperCase()}`;
-
-      const result = await apiClientJson("/api/admin/orders", {
-        method: "POST",
-        data: {
-          tableId,
-          customerName: null,
-          items: [],
-          discountType: null,
-          discountValue: 0,
-        },
+      return orderService.create({
+        tableId,
+        customerName: null,
+        items: [],
+        discountType: null,
+        discountValue: 0,
       });
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to create order");
-      }
-      return result.data;
     },
     onSuccess: (data) => {
       setCurrentOrder(data);
@@ -284,30 +288,80 @@ export default function OrdersPage() {
   });
 
   const handleTableSelect = async (table: TableItem) => {
-    setSelectedTable(table);
-    setSelectedCategory(null);
-    setSearchQuery("");
-    setCustomerName("");
-    setDiscountValue(0);
-    setItemQuantities({});
-
     // Check if table has an active order
     const tableOrders = ordersByTable[table.id] || [];
     const activeOrder = tableOrders.find(
       (o) => o.status === "new" || o.status === "on_process"
     );
 
-    if (activeOrder) {
-      // Load existing order
-      setCurrentOrder(activeOrder);
+    if (activeOrder && activeOrder.status !== "done") {
+      // If table is occupied, load order directly without asking
+      if (table.status === "occupied") {
+        setSelectedTable(table);
+        setSelectedCategory(null);
+        setSearchQuery("");
+        setCustomerName("");
+        setDiscountValue(0);
+        setItemQuantities({});
+        setCurrentOrder(activeOrder);
+      } else {
+        // Show confirmation popup to view order details for other statuses
+        setPendingTable(table);
+        setPendingOrder(activeOrder);
+        setShowViewOrderConfirm(true);
+      }
     } else if (table.status === "available") {
-      // Create new order for available table
-      createOrderMutation.mutate(table.id);
+      // Show confirmation popup before creating new order
+      setPendingTable(table);
+      setShowCreateOrderConfirm(true);
     } else {
       // Table is not available and has no active order
-      alert(`តុនេះមិនអាចប្រើបានទេ (${getTableStatusLabel(table.status)})`);
-      setSelectedTable(null);
+      toast.error(
+        `តុនេះមិនអាចប្រើបានទេ (${getTableStatusLabel(table.status)})`
+      );
     }
+  };
+
+  const handleConfirmViewOrder = () => {
+    if (!pendingTable || !pendingOrder) return;
+
+    setSelectedTable(pendingTable);
+    setSelectedCategory(null);
+    setSearchQuery("");
+    setCustomerName("");
+    setDiscountValue(0);
+    setItemQuantities({});
+    setCurrentOrder(pendingOrder);
+    setShowViewOrderConfirm(false);
+    setPendingTable(null);
+    setPendingOrder(null);
+  };
+
+  const handleCancelViewOrder = () => {
+    setShowViewOrderConfirm(false);
+    setPendingTable(null);
+    setPendingOrder(null);
+  };
+
+  const handleConfirmCreateOrder = () => {
+    if (!pendingTable) return;
+
+    setSelectedTable(pendingTable);
+    setSelectedCategory(null);
+    setSearchQuery("");
+    setCustomerName("");
+    setDiscountValue(0);
+    setItemQuantities({});
+    setShowCreateOrderConfirm(false);
+
+    // Create new order
+    createOrderMutation.mutate(pendingTable.id);
+    setPendingTable(null);
+  };
+
+  const handleCancelCreateOrder = () => {
+    setShowCreateOrderConfirm(false);
+    setPendingTable(null);
   };
 
   const handleClearTable = () => {
@@ -330,20 +384,7 @@ export default function OrdersPage() {
       if (!currentOrder?.id) {
         throw new Error("Order not found");
       }
-      const result = await apiClientJson(
-        `/api/admin/orders/${currentOrder.id}/items`,
-        {
-          method: "POST",
-          data: {
-            menuItemId,
-            quantity,
-          },
-        }
-      );
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to add item");
-      }
-      return result.data;
+      return orderService.addItem(currentOrder.id, { menuItemId, quantity });
     },
     onSuccess: (data) => {
       setCurrentOrder(data);
@@ -362,20 +403,7 @@ export default function OrdersPage() {
       if (!currentOrder?.id) {
         throw new Error("Order not found");
       }
-      const result = await apiClientJson(
-        `/api/admin/orders/${currentOrder.id}/items`,
-        {
-          method: "PUT",
-          data: {
-            itemId,
-            quantity,
-          },
-        }
-      );
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to update item");
-      }
-      return result.data;
+      return orderService.updateItem(currentOrder.id, { itemId, quantity });
     },
     onSuccess: (data) => {
       setCurrentOrder(data);
@@ -388,16 +416,7 @@ export default function OrdersPage() {
       if (!currentOrder?.id) {
         throw new Error("Order not found");
       }
-      const result = await apiClientJson(
-        `/api/admin/orders/${currentOrder.id}/items?itemId=${itemId}`,
-        {
-          method: "DELETE",
-        }
-      );
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to delete item");
-      }
-      return result.data;
+      return orderService.deleteItem(currentOrder.id, itemId);
     },
     onSuccess: (data) => {
       setCurrentOrder(data);
@@ -408,17 +427,17 @@ export default function OrdersPage() {
   const setItemQuantity = (itemId: string, quantity: number) => {
     setItemQuantities((prev) => ({
       ...prev,
-      [itemId]: Math.max(1, quantity),
+      [itemId]: quantity > 0 ? quantity : 1,
     }));
   };
 
   const addToCart = (item: MenuItem) => {
     if (!currentOrder) {
-      alert("សូមជ្រើសរើសតុមុន");
+      toast.error("សូមជ្រើសរើសតុមុន");
       return;
     }
     if (orderData?.status === "done") {
-      alert("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចបន្ថែមមុខម្ហូបបានទេ");
+      toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចបន្ថែមមុខម្ហូបបានទេ");
       return;
     }
     const quantity = itemQuantities[item.id] || 1;
@@ -433,7 +452,7 @@ export default function OrdersPage() {
 
   const updateQuantity = (itemId: string, delta: number) => {
     if (orderData?.status === "done") {
-      alert("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចកែប្រែបានទេ");
+      toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចកែប្រែបានទេ");
       return;
     }
     const item = orderItems.find((i) => i.id === itemId);
@@ -448,7 +467,7 @@ export default function OrdersPage() {
 
   const removeFromCart = (itemId: string) => {
     if (orderData?.status === "done") {
-      alert("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចលុបបានទេ");
+      toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចលុបបានទេ");
       return;
     }
     deleteItemMutation.mutate(itemId);
@@ -456,7 +475,7 @@ export default function OrdersPage() {
 
   const clearCart = () => {
     if (orderData?.status === "done") {
-      alert("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចលុបបានទេ");
+      toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចលុបបានទេ");
       return;
     }
     orderItems.forEach((item) => {
@@ -473,20 +492,10 @@ export default function OrdersPage() {
       if (!currentOrder?.id) {
         throw new Error("Order not found");
       }
-      const result = await apiClientJson(
-        `/api/admin/orders/${currentOrder.id}`,
-        {
-          method: "PUT",
-          data: {
-            discountType: discountValue > 0 ? discountType : null,
-            discountValue: discountValue || 0,
-          },
-        }
-      );
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to update discount");
-      }
-      return result.data;
+      return orderService.update(currentOrder.id, {
+        discountType: discountValue > 0 ? discountType : null,
+        discountValue: discountValue || 0,
+      });
     },
     onSuccess: (data) => {
       setCurrentOrder(data);
@@ -499,21 +508,9 @@ export default function OrdersPage() {
       if (!currentOrder?.id) {
         throw new Error("Order not found");
       }
-      const result = await apiClientJson(
-        `/api/admin/orders/${currentOrder.id}`,
-        {
-          method: "PUT",
-          data: {
-            customerName: name || null,
-          },
-        }
-      );
-      if (!result.success || !result.data) {
-        throw new Error(
-          result.error?.message || "Failed to update customer name"
-        );
-      }
-      return result.data;
+      return orderService.update(currentOrder.id, {
+        customerName: name || null,
+      });
     },
     onSuccess: (data) => {
       setCurrentOrder(data);
@@ -547,37 +544,73 @@ export default function OrdersPage() {
       if (!currentOrder?.id) {
         throw new Error("Order not found");
       }
-      const result = await apiClientJson(
-        `/api/admin/orders/${currentOrder.id}`,
-        {
-          method: "PUT",
-          data: {
-            status: "done",
-          },
-        }
-      );
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to complete payment");
-      }
-      return result.data;
+      return orderService.update(currentOrder.id, {
+        status: "done",
+      });
     },
     onSuccess: (data) => {
-      setCurrentOrder(data);
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["tables"] });
       queryClient.invalidateQueries({ queryKey: ["currentOrder"] });
-      alert("ការទូទាត់បានបញ្ចប់! តុត្រូវបានដំណើរការទៅជា 'អាចប្រើបាន'");
+      queryClient.invalidateQueries({ queryKey: ["activeOrders"] });
+      toast.success("ការទូទាត់បានបញ្ចប់! តុត្រូវបានដំណើរការទៅជា 'អាចប្រើបាន'");
+      handleClearTable();
     },
   });
 
+  const cancelOrderMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentOrder?.id) {
+        throw new Error("Order not found");
+      }
+      await orderService.delete(currentOrder.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["currentOrder"] });
+      queryClient.invalidateQueries({ queryKey: ["activeOrders"] });
+      toast.success(
+        "ការបញ្ជាទិញត្រូវបានលុប! តុត្រូវបានដំណើរការទៅជា 'អាចប្រើបាន'"
+      );
+      handleClearTable();
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "មានបញ្ហាក្នុងការលុបការបញ្ជាទិញ");
+    },
+  });
+
+  const canCancelOrder = useMemo(() => {
+    if (!orderData) return false;
+    if (orderData.status === "done") return false;
+    return orderItems.length === 0 || total === 0;
+  }, [orderData, orderItems.length, total]);
+
+  const handleCancelOrder = () => {
+    if (!canCancelOrder) {
+      toast.error("មិនអាចលុបការបញ្ជាទិញនេះបានទេ");
+      return;
+    }
+    setShowCancelOrderConfirm(true);
+  };
+
+  const handleConfirmCancelOrder = () => {
+    cancelOrderMutation.mutate();
+    setShowCancelOrderConfirm(false);
+  };
+
+  const handleCancelCancelOrder = () => {
+    setShowCancelOrderConfirm(false);
+  };
+
   const handlePlaceOrder = () => {
     if (!orderItems || orderItems.length === 0) {
-      alert("សូមបន្ថែមមុខម្ហូបទៅកន្ត្រក់");
+      toast.error("សូមបន្ថែមមុខម្ហូបទៅកន្ត្រក់");
       return;
     }
 
     if (orderData?.status === "done") {
-      alert("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ!");
+      toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ!");
       return;
     }
 
@@ -591,7 +624,7 @@ export default function OrdersPage() {
 
   const handlePrintInvoice = async () => {
     if (!orderData || !orderItems || orderItems.length === 0) {
-      alert("មិនមានការបញ្ជាទិញទេ");
+      toast.error("មិនមានការបញ្ជាទិញទេ");
       return;
     }
     try {
@@ -601,7 +634,7 @@ export default function OrdersPage() {
       window.location.href = printUrl;
     } catch (error) {
       console.error("Error printing invoice:", error);
-      alert("មានបញ្ហាក្នុងការបោះពុម្ពវិក្កយបត្រ");
+      toast.error("មានបញ្ហាក្នុងការបោះពុម្ពវិក្កយបត្រ");
     }
   };
 
@@ -715,6 +748,22 @@ export default function OrdersPage() {
             </div>
           )}
         </div>
+
+        <CreateOrderModal
+          isOpen={showCreateOrderConfirm}
+          table={pendingTable}
+          isCreating={createOrderMutation.isPending}
+          onConfirm={handleConfirmCreateOrder}
+          onCancel={handleCancelCreateOrder}
+        />
+
+        <ViewOrderModal
+          isOpen={showViewOrderConfirm}
+          table={pendingTable}
+          order={pendingOrder}
+          onConfirm={handleConfirmViewOrder}
+          onCancel={handleCancelViewOrder}
+        />
       </div>
     );
   }
@@ -914,15 +963,48 @@ export default function OrdersPage() {
                           </label>
                           <input
                             type="number"
-                            min="1"
-                            value={itemQuantities[item.id] || 1}
-                            onChange={(e) =>
-                              setItemQuantity(
-                                item.id,
-                                parseInt(e.target.value) || 1
-                              )
+                            value={
+                              itemQuantityInputs[item.id] !== undefined
+                                ? itemQuantityInputs[item.id]
+                                : itemQuantities[item.id] || ""
                             }
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setItemQuantityInputs((prev) => ({
+                                ...prev,
+                                [item.id]: value,
+                              }));
+                            }}
+                            onBlur={(e) => {
+                              const value = e.target.value;
+                              const numValue = parseInt(value, 10);
+                              if (
+                                value === "" ||
+                                isNaN(numValue) ||
+                                numValue < 1
+                              ) {
+                                const finalValue = 1;
+                                setItemQuantities((prev) => ({
+                                  ...prev,
+                                  [item.id]: finalValue,
+                                }));
+                                setItemQuantityInputs((prev) => {
+                                  const next = { ...prev };
+                                  delete next[item.id];
+                                  return next;
+                                });
+                              } else {
+                                setItemQuantity(item.id, numValue);
+                                setItemQuantityInputs((prev) => {
+                                  const next = { ...prev };
+                                  delete next[item.id];
+                                  return next;
+                                });
+                              }
+                            }}
+                            onFocus={(e) => e.target.select()}
                             onClick={(e) => e.stopPropagation()}
+                            placeholder="1"
                             className="w-full px-2 py-2 text-center text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-500"
                           />
                         </div>
@@ -1036,75 +1118,91 @@ export default function OrdersPage() {
                     key={item.id}
                     className="bg-slate-50 rounded-lg p-2.5 md:p-3 border border-slate-200"
                   >
-                    <div className="flex gap-2 md:gap-3">
-                      <div className="w-14 h-14 md:w-16 md:h-16 bg-slate-200 rounded overflow-hidden flex-shrink-0">
-                        {item.menuItem.image ? (
-                          <OptimizedImage
-                            src={item.menuItem.image}
-                            alt={item.menuItem.name}
-                            width={64}
-                            height={64}
-                            className="w-full h-full object-cover"
-                            quality={75}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <svg
-                              className="w-8 h-8 text-slate-300"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-slate-900 text-sm mb-1 truncate">
-                          {item.menuItem.name}
-                        </h4>
-                        <p className="text-xs text-slate-600 mb-2">
-                          {item.unitPrice.toLocaleString("km-KH")}៛
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-slate-600">ចំនួន:</span>
-                          <span className="text-sm font-medium text-slate-900">
-                            {item.quantity}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end justify-between">
-                        <button
-                          onClick={() => removeFromCart(item.id)}
-                          disabled={
-                            deleteItemMutation.isPending ||
-                            orderData?.status === "done"
-                          }
-                          className="text-red-500 active:text-red-600 md:hover:text-red-600 text-sm disabled:opacity-50 touch-manipulation p-1"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
+                      <div className="flex gap-2 md:gap-3 flex-1 min-w-0">
+                        <div className="w-16 h-16 md:w-16 md:h-16 bg-slate-200 rounded overflow-hidden flex-shrink-0">
+                          {item.menuItem.image ? (
+                            <OptimizedImage
+                              src={item.menuItem.image}
+                              alt={item.menuItem.name}
+                              width={64}
+                              height={64}
+                              className="w-full h-full object-cover"
+                              quality={75}
                             />
-                          </svg>
-                        </button>
-                        <span className="font-semibold text-slate-900 text-xs sm:text-sm">
-                          {item.totalPrice.toLocaleString("km-KH")}៛
-                        </span>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <svg
+                                className="w-8 h-8 text-slate-300"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h4 className="font-medium text-slate-900 text-sm sm:text-base flex-1 min-w-0">
+                              {item.menuItem.name}
+                            </h4>
+                            <button
+                              onClick={() => removeFromCart(item.id)}
+                              disabled={
+                                deleteItemMutation.isPending ||
+                                orderData?.status === "done"
+                              }
+                              className="text-red-500 active:text-red-600 md:hover:text-red-600 text-sm disabled:opacity-50 touch-manipulation p-1 flex-shrink-0"
+                            >
+                              <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs text-slate-600">
+                                តម្លៃ:
+                              </span>
+                              <span className="text-xs sm:text-sm text-slate-700 font-medium">
+                                {item.unitPrice.toLocaleString("km-KH")}៛
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs text-slate-600">
+                                ចំនួន:
+                              </span>
+                              <span className="text-xs sm:text-sm font-medium text-slate-900">
+                                {item.quantity}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200">
+                              <span className="text-xs sm:text-sm font-semibold text-slate-900">
+                                សរុប:
+                              </span>
+                              <span className="text-sm sm:text-base font-bold text-slate-900">
+                                {item.totalPrice.toLocaleString("km-KH")}៛
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1213,6 +1311,31 @@ export default function OrdersPage() {
               </select>
             </div>
 
+            {canCancelOrder && (
+              <button
+                onClick={handleCancelOrder}
+                disabled={cancelOrderMutation.isPending}
+                className="w-full py-3 bg-red-600 text-white rounded-lg font-semibold active:bg-red-700 md:hover:bg-red-700 transition-colors disabled:bg-red-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base flex items-center justify-center gap-2 mb-2"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+                {cancelOrderMutation.isPending
+                  ? "កំពុងលុប..."
+                  : "លុបការបញ្ជាទិញ"}
+              </button>
+            )}
+
             <div className="flex gap-2">
               <button
                 onClick={handlePrintInvoice}
@@ -1269,6 +1392,31 @@ export default function OrdersPage() {
           paymentMethod={paymentMethod}
         />
       )}
+
+      <CreateOrderModal
+        isOpen={showCreateOrderConfirm}
+        table={pendingTable}
+        isCreating={createOrderMutation.isPending}
+        onConfirm={handleConfirmCreateOrder}
+        onCancel={handleCancelCreateOrder}
+      />
+
+      <ViewOrderModal
+        isOpen={showViewOrderConfirm}
+        table={pendingTable}
+        order={pendingOrder}
+        onConfirm={handleConfirmViewOrder}
+        onCancel={handleCancelViewOrder}
+      />
+
+      <CancelOrderModal
+        isOpen={showCancelOrderConfirm}
+        table={selectedTable}
+        orderNumber={orderData?.orderNumber || ""}
+        isCancelling={cancelOrderMutation.isPending}
+        onConfirm={handleConfirmCancelOrder}
+        onCancel={handleCancelCancelOrder}
+      />
     </div>
   );
 }

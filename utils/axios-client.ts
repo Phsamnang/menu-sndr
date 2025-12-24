@@ -4,7 +4,7 @@ import axios, {
   AxiosError,
   InternalAxiosRequestConfig,
 } from "axios";
-import { getToken, removeToken } from "./token";
+import { getTokenSync, removeToken } from "./token";
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL:
@@ -19,14 +19,14 @@ axiosInstance.interceptors.request.use(
     const requireAuth = (config as any).requireAuth !== false;
 
     if (requireAuth) {
-      const token = getToken();
+      const token = getTokenSync();
       if (token) {
         config.headers = config.headers || {};
-        config.headers['Authorization'] = `Bearer ${token}`;
+        config.headers["Authorization"] = `Bearer ${token}`;
       }
     } else {
-      if (config.headers && config.headers['Authorization']) {
-        delete config.headers['Authorization'];
+      if (config.headers && config.headers["Authorization"]) {
+        delete config.headers["Authorization"];
       }
     }
 

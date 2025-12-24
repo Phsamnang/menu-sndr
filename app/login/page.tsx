@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiClientJson } from "@/utils/api-client";
+import { authService } from "@/services/auth.service";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,32 +25,12 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const result = await apiClientJson<{
-        token: string;
-        user: {
-          id: string;
-          username: string;
-          role: {
-            id: string;
-            name: string;
-            displayName: string;
-          };
-        };
-      }>("/api/auth/login", {
-        method: "POST",
-        requireAuth: false,
-        data: { username, password },
-      });
-
-      if (!result.success || !result.data) {
-        setError(result.error?.message || "Invalid username or password");
-      } else {
-        login(result.data.token, result.data.user);
-        router.push("/admin");
-        router.refresh();
-      }
-    } catch (err) {
-      setError("An error occurred. Please try again.");
+      const result = await authService.login(username, password);
+      login(result.token, result.user);
+      router.push("/admin");
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message || "An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }

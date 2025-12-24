@@ -3,16 +3,9 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { type MenuItem } from "@/utils/menu";
 import OptimizedImage from "@/components/OptimizedImage";
-import { apiClientJson } from "@/utils/api-client";
-
-interface TableType {
-  id: string;
-  name: string;
-  displayName: string;
-  order: number;
-}
+import { menuService, MenuItem } from "@/services/menu.service";
+import { tableTypeService, TableType } from "@/services/table-type.service";
 
 function HomeContent() {
   const router = useRouter();
@@ -37,17 +30,7 @@ function HomeContent() {
       const url = selectedTableType
         ? `/api/menu?tableType=${selectedTableType}`
         : "/api/menu";
-      const result = await apiClientJson<MenuItem[]>(url, {
-        requireAuth: false,
-      });
-
-      if (!result.success || !result.data) {
-        const errorMessage =
-          result.error?.message || result.error || "Failed to fetch menu";
-        throw new Error(errorMessage);
-      }
-
-      return result.data;
+      return menuService.getAll({ tableType: selectedTableType });
     },
     enabled: true,
     retry: 1,
@@ -55,21 +38,7 @@ function HomeContent() {
 
   const { data: tableTypes = [] } = useQuery<TableType[]>({
     queryKey: ["tableTypes"],
-    queryFn: async () => {
-      const result = await apiClientJson<TableType[]>("/api/admin/table-types", {
-        requireAuth: false,
-      });
-
-      if (!result.success || !result.data) {
-        const errorMessage =
-          result.error?.message ||
-          result.error ||
-          "Failed to fetch table types";
-        throw new Error(errorMessage);
-      }
-
-      return result.data;
-    },
+    queryFn: () => tableTypeService.getAll(false),
     enabled: true,
     retry: 1,
   });

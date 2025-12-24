@@ -43,10 +43,10 @@ export default function AdminPage() {
       allowedRoles: ["admin"],
     },
     {
-      href: "/admin/table-orders",
+      href: "/admin/tables",
       icon: FaTable,
       title: "តុ",
-      description: "មើលការបញ្ជាទិញតាមតុ",
+      description: "គ្រប់គ្រងតុ",
       allowedRoles: ["admin"],
     },
     {

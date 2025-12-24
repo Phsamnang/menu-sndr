@@ -4,13 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
 import Table, { TableColumn } from "@/components/Table";
-import { apiClientJson } from "@/utils/api-client";
-
-interface Category {
-  id: string;
-  name: string;
-  displayName: string;
-}
+import { categoryService, Category } from "@/services/category.service";
+import CategoryModal from "./components/CategoryModal";
 
 export default function CategoriesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,26 +15,12 @@ export default function CategoriesPage() {
 
   const { data: categories = [], isLoading } = useQuery<Category[]>({
     queryKey: ["categories"],
-    queryFn: async () => {
-      const result = await apiClientJson<Category[]>("/api/admin/categories");
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to fetch categories");
-      }
-      return result.data;
-    },
+    queryFn: () => categoryService.getAll(),
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: { name: string; displayName: string }) => {
-      const result = await apiClientJson("/api/admin/categories", {
-        method: "POST",
-        data,
-      });
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to create category");
-      }
-      return result.data;
-    },
+    mutationFn: (data: { name: string; displayName: string }) =>
+      categoryService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       setIsModalOpen(false);
@@ -48,22 +29,13 @@ export default function CategoriesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       id,
       data,
     }: {
       id: string;
       data: { name: string; displayName: string };
-    }) => {
-      const result = await apiClientJson(`/api/admin/categories/${id}`, {
-        method: "PUT",
-        data,
-      });
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to update category");
-      }
-      return result.data;
-    },
+    }) => categoryService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       setIsModalOpen(false);
@@ -73,15 +45,7 @@ export default function CategoriesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const result = await apiClientJson(`/api/admin/categories/${id}`, {
-        method: "DELETE",
-      });
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to delete category");
-      }
-      return result.data;
-    },
+    mutationFn: (id: string) => categoryService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
@@ -173,60 +137,19 @@ export default function CategoriesPage() {
           emptyMessage="រកមិនឃើញប្រភេទម្ហូបទេ។"
         />
 
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h2 className="text-2xl font-bold mb-4">
-                {editingCategory ? "កែប្រែប្រភេទ" : "បន្ថែមប្រភេទ"}
-              </h2>
-              <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    ឈ្មោះ
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border rounded-lg"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    ឈ្មោះបង្ហាញ
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.displayName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, displayName: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border rounded-lg"
-                    required
-                  />
-                </div>
-                <div className="flex gap-4">
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900"
-                  >
-                    {editingCategory ? "ធ្វើបច្ចុប្បន្នភាព" : "បង្កើត"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300"
-                  >
-                    បោះបង់
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        <CategoryModal
+          isOpen={isModalOpen}
+          editingCategory={editingCategory}
+          formData={formData}
+          isSubmitting={createMutation.isPending || updateMutation.isPending}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingCategory(null);
+            setFormData({ name: "", displayName: "" });
+          }}
+          onSubmit={handleSubmit}
+          onFormDataChange={setFormData}
+        />
       </div>
     </div>
   );
