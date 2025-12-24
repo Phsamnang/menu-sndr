@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import OptimizedImage from "@/components/OptimizedImage";
 import { apiClientJson } from "@/utils/api-client";
+import { getToken } from "@/utils/token";
 
 interface OrderItem {
   id: string;
@@ -51,9 +52,11 @@ export default function DeliveryPage() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    const token = getToken();
+    const tokenParam = token ? `&token=${encodeURIComponent(token)}` : "";
     const url = statusFilter
-      ? `/api/delivery/items/stream?status=${statusFilter}`
-      : "/api/delivery/items/stream";
+      ? `/api/delivery/items/stream?status=${statusFilter}${tokenParam}`
+      : `/api/delivery/items/stream${tokenParam ? `?${tokenParam.substring(1)}` : ""}`;
 
     const eventSource = new EventSource(url);
 

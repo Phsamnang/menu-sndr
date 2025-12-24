@@ -37,6 +37,13 @@ export function getTokenFromRequest(request: Request): string | null {
   if (authHeader && authHeader.startsWith("Bearer ")) {
     return authHeader.substring(7);
   }
+  
+  const url = new URL(request.url);
+  const tokenParam = url.searchParams.get("token");
+  if (tokenParam) {
+    return tokenParam;
+  }
+  
   return null;
 }
 

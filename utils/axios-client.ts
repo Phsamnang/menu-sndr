@@ -20,11 +20,14 @@ axiosInstance.interceptors.request.use(
 
     if (requireAuth) {
       const token = getToken();
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
+      if (token) {
+        config.headers = config.headers || {};
+        config.headers['Authorization'] = `Bearer ${token}`;
       }
     } else {
-      delete config.headers?.Authorization;
+      if (config.headers && config.headers['Authorization']) {
+        delete config.headers['Authorization'];
+      }
     }
 
     return config;

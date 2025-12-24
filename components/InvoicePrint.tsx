@@ -64,7 +64,7 @@ export default function InvoicePrint({
         }
 
         html, body {
-          width: 80mm;
+          width: 58mm;
           margin: 0;
           padding: 0;
           overflow: hidden;
@@ -83,9 +83,9 @@ export default function InvoicePrint({
           position: absolute;
           left: 0;
           top: 0;
-          width: 80mm !important;
-          max-width: 80mm !important;
-          min-width: 80mm !important;
+          width: 58mm !important;
+          max-width: 58mm !important;
+          min-width: 58mm !important;
           display: block !important;
           padding: 2mm 3mm;
           margin: 0;
@@ -283,7 +283,7 @@ export default function InvoicePrint({
         }
 
         @page {
-          size: 80mm auto;
+          size: 58mm auto;
           margin: 0mm;
           padding: 0mm;
         }

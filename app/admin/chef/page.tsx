@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import OptimizedImage from "@/components/OptimizedImage";
 import { apiClientJson } from "@/utils/api-client";
+import { getToken } from "@/utils/token";
 
 interface OrderItem {
   id: string;
@@ -48,9 +49,11 @@ export default function ChefPage() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    const token = getToken();
+    const tokenParam = token ? `&token=${encodeURIComponent(token)}` : "";
     const url = statusFilter
-      ? `/api/chef/orders/stream?status=${statusFilter}`
-      : "/api/chef/orders/stream";
+      ? `/api/chef/orders/stream?status=${statusFilter}${tokenParam}`
+      : `/api/chef/orders/stream${tokenParam ? `?${tokenParam.substring(1)}` : ""}`;
     
     const eventSource = new EventSource(url);
 

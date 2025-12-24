@@ -178,3 +178,6 @@ async function postHandler(request: AuthenticatedRequest) {
   }
 }
 
+export const GET = withAuth(getHandler, ["admin"]);
+export const POST = withAuth(postHandler, ["admin"]);
+

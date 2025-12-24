@@ -118,7 +118,7 @@ export default function TableOrdersPage() {
       return result.data;
     },
     enabled: !!selectedOrder?.id,
-    refetchInterval: 2000,
+    refetchInterval: selectedOrder ? 2000 : false,
   });
 
   const { data: menuData = [] } = useQuery<MenuItem[]>({
@@ -128,9 +128,7 @@ export default function TableOrdersPage() {
         return [];
       }
       const url = `/api/menu?tableType=${selectedTable.tableType.name}`;
-      const result = await apiClientJson<MenuItem[]>(url, {
-        requireAuth: false,
-      });
+      const result = await apiClientJson<MenuItem[]>(url);
       if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch menu");
       }
@@ -325,12 +323,48 @@ export default function TableOrdersPage() {
     },
   });
 
+  const createOrderMutation = useMutation({
+    mutationFn: async (tableId: string) => {
+      const result = await apiClientJson("/api/admin/orders", {
+        method: "POST",
+        data: {
+          tableId,
+          items: [],
+        },
+      });
+      if (!result.success || !result.data) {
+        throw new Error(result.error?.message || "Failed to create order");
+      }
+      return result.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["activeOrders"] });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+      setSelectedOrder(data);
+      if (selectedTable) {
+        setSelectedTable({ ...selectedTable, status: "occupied" });
+      }
+    },
+  });
+
   const handleOrderClick = (order: Order, table: TableItem) => {
     setSelectedOrder(order);
     setSelectedTable(table);
     setSelectedCategory(null);
     setSearchQuery("");
     setItemQuantities({});
+  };
+
+  const handleTableClick = (table: TableItem) => {
+    const tableOrders = ordersByTable[table.id] || [];
+    const hasActiveOrders = tableOrders.length > 0;
+
+    if (hasActiveOrders && tableOrders.length > 0) {
+      handleOrderClick(tableOrders[0], table);
+    } else if (table.status === "available") {
+      setSelectedTable(table);
+      createOrderMutation.mutate(table.id);
+    }
   };
 
   const handleCloseModal = () => {
@@ -394,14 +428,12 @@ export default function TableOrdersPage() {
             return (
               <div
                 key={table.id}
-                onClick={() => {
-                  if (hasActiveOrders && tableOrders.length > 0) {
-                    handleOrderClick(tableOrders[0], table);
-                  }
-                }}
+                onClick={() => handleTableClick(table)}
                 className={`bg-white rounded-lg shadow-md p-6 border-2 ${
                   hasActiveOrders
                     ? "border-blue-400 bg-blue-50 cursor-pointer hover:shadow-xl transition-all"
+                    : table.status === "available"
+                    ? "border-green-400 bg-green-50 cursor-pointer hover:shadow-xl transition-all"
                     : getStatusColor(table.status)
                 }`}
               >
@@ -485,20 +517,43 @@ export default function TableOrdersPage() {
                   </div>
                 ) : (
                   <div className="text-center py-4">
-                    <svg
-                      className="w-12 h-12 text-slate-300 mx-auto mb-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                    <p className="text-sm text-slate-500">មិនមានការបញ្ជាទិញ</p>
+                    {table.status === "available" ? (
+                      <>
+                        <svg
+                          className="w-12 h-12 text-green-400 mx-auto mb-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
+                        </svg>
+                        <p className="text-sm font-medium text-green-700">
+                          ចុចដើម្បីបង្កើតការបញ្ជាទិញ
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-12 h-12 text-slate-300 mx-auto mb-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        <p className="text-sm text-slate-500">មិនមានការបញ្ជាទិញ</p>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -507,14 +562,16 @@ export default function TableOrdersPage() {
         </div>
       </div>
 
-      {currentOrder && selectedTable && (
+      {(currentOrder || createOrderMutation.isPending) && selectedTable && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-slate-200 p-6 z-10">
               <div className="flex justify-between items-center">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-800">
-                    ការបញ្ជាទិញ: {currentOrder.orderNumber}
+                    {createOrderMutation.isPending
+                      ? "កំពុងបង្កើតការបញ្ជាទិញ..."
+                      : `ការបញ្ជាទិញ: ${currentOrder?.orderNumber || ""}`}
                   </h2>
                   <p className="text-sm text-slate-600 mt-1">
                     តុ: {selectedTable.number} -{" "}
@@ -531,9 +588,15 @@ export default function TableOrdersPage() {
             </div>
 
             <div className="p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                  {canAddItems(currentOrder) && (
+              {createOrderMutation.isPending ? (
+                <div className="text-center py-12">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-slate-800"></div>
+                  <p className="text-slate-600 mt-4">កំពុងបង្កើតការបញ្ជាទិញ...</p>
+                </div>
+              ) : currentOrder ? (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2">
+                    {canAddItems(currentOrder) && (
                     <div className="mb-6">
                       <div className="mb-4 flex gap-4 items-center">
                         <div className="flex-1 relative">
@@ -844,6 +907,7 @@ export default function TableOrdersPage() {
                   </div>
                 </div>
               </div>
+              ) : null}
             </div>
           </div>
         </div>

@@ -3,6 +3,27 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/utils/auth";
 
+const getEnvVar = (key: string, defaultValue?: string): string => {
+  const value = process.env[key]?.trim();
+  if (!value && !defaultValue) {
+    throw new Error(`[next-auth][error] ${key} is not set in environment variables.`);
+  }
+  return value || defaultValue!;
+};
+
+const NEXTAUTH_SECRET = getEnvVar("NEXTAUTH_SECRET");
+const NEXTAUTH_URL = getEnvVar(
+  "NEXTAUTH_URL",
+  process.env.NODE_ENV === "development" ? "http://localhost:3000" : undefined
+);
+
+console.log("[next-auth] Configuration check:", {
+  hasSecret: !!NEXTAUTH_SECRET,
+  secretLength: NEXTAUTH_SECRET?.length,
+  hasUrl: !!NEXTAUTH_URL,
+  url: NEXTAUTH_URL,
+});
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -71,7 +92,7 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET || "fallback-secret-for-dev-only",
+  secret: NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === "development",
 };
 

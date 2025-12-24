@@ -87,7 +87,6 @@ export default function OrdersPage() {
     "percentage"
   );
   const [discountValue, setDiscountValue] = useState<number>(0);
-  const [taxRate, setTaxRate] = useState<number>(10);
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [showCart, setShowCart] = useState<boolean>(false);
   const [showInvoice, setShowInvoice] = useState<boolean>(false);
@@ -100,9 +99,7 @@ export default function OrdersPage() {
         return [];
       }
       const url = `/api/menu?tableType=${selectedTable.tableType.name}`;
-      const result = await apiClientJson<MenuItem[]>(url, {
-        requireAuth: false,
-      });
+      const result = await apiClientJson<MenuItem[]>(url);
       if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch menu");
       }
@@ -391,14 +388,13 @@ export default function OrdersPage() {
       if (!currentOrder?.id) {
         throw new Error("Order not found");
       }
-      const res = await fetch(
+      const result = await apiClientJson(
         `/api/admin/orders/${currentOrder.id}/items?itemId=${itemId}`,
         {
           method: "DELETE",
         }
       );
-      const result = await res.json();
-      if (!res.ok || !result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to delete item");
       }
       return result.data;
@@ -472,10 +468,6 @@ export default function OrdersPage() {
     return orderData?.subtotal || 0;
   }, [orderData]);
 
-  const taxAmount = useMemo(() => {
-    return (subtotal * taxRate) / 100;
-  }, [subtotal, taxRate]);
-
   const updateDiscountMutation = useMutation({
     mutationFn: async () => {
       if (!currentOrder?.id) {
@@ -533,8 +525,8 @@ export default function OrdersPage() {
   }, [orderData]);
 
   const total = useMemo(() => {
-    return (orderData?.total || 0) + taxAmount;
-  }, [orderData, taxAmount]);
+    return orderData?.total || 0;
+  }, [orderData]);
 
   const handleDiscountChange = (value: number) => {
     setDiscountValue(value);
@@ -597,16 +589,20 @@ export default function OrdersPage() {
     }
   };
 
-  const handlePrintInvoice = () => {
+  const handlePrintInvoice = async () => {
     if (!orderData || !orderItems || orderItems.length === 0) {
       alert("មិនមានការបញ្ជាទិញទេ");
       return;
     }
-    setShowInvoice(true);
-    setTimeout(() => {
-      window.print();
-      setShowInvoice(false);
-    }, 100);
+    try {
+      const cacheBuster = Date.now();
+      const imageUrl = `${window.location.origin}/api/admin/orders/${orderData.id}/invoice-image?t=${cacheBuster}`;
+      const printUrl = `com.samathosoft.webprint://#imageurl#${imageUrl}#/imageurl#`;
+      window.location.href = printUrl;
+    } catch (error) {
+      console.error("Error printing invoice:", error);
+      alert("មានបញ្ហាក្នុងការបោះពុម្ពវិក្កយបត្រ");
+    }
   };
 
   if (!selectedTable) {
@@ -1125,12 +1121,6 @@ export default function OrdersPage() {
                   {subtotal.toLocaleString("km-KH")}៛
                 </span>
               </div>
-              <div className="flex justify-between text-xs sm:text-sm">
-                <span className="text-slate-600">ពន្ធ ({taxRate}%):</span>
-                <span className="font-medium text-slate-900">
-                  {taxAmount.toLocaleString("km-KH")}៛
-                </span>
-              </div>
               {discountAmount > 0 && (
                 <div className="flex justify-between text-xs sm:text-sm text-green-600">
                   <span>
@@ -1276,8 +1266,6 @@ export default function OrdersPage() {
               ? `${selectedTable.number} - ${selectedTable.tableType.displayName}`
               : undefined
           }
-          taxRate={taxRate}
-          taxAmount={taxAmount}
           paymentMethod={paymentMethod}
         />
       )}

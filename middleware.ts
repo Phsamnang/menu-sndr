@@ -1,31 +1,11 @@
-import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token;
-    const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
+// Disabled server-side auth middleware because the app uses a custom
+// localStorage-based token, not NextAuth session cookies. The previous
+// NextAuth middleware always redirected /admin back to /login.
+export function middleware() {
+  return NextResponse.next();
+}
 
-    if (isAdminRoute && !token) {
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
-
-    return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
-        if (isAdminRoute) {
-          return !!token;
-        }
-        return true;
-      },
-    },
-  }
-);
-
-export const config = {
-  matcher: ["/admin/:path*"],
-};
+// No matcher so this middleware is effectively a pass-through.
 
