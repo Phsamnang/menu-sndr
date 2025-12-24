@@ -10,12 +10,26 @@ async function getHandler(request: AuthenticatedRequest) {
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const status = searchParams.get("status") || undefined;
     const tableId = searchParams.get("tableId") || undefined;
+    const startDate = searchParams.get("startDate") || undefined;
+    const endDate = searchParams.get("endDate") || undefined;
 
     const skip = (page - 1) * limit;
 
     const where: any = {};
     if (status) where.status = status;
     if (tableId) where.tableId = tableId;
+    
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) {
+        where.createdAt.gte = new Date(startDate);
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        where.createdAt.lte = end;
+      }
+    }
 
     const [orders, total] = await Promise.all([
       prisma.order.findMany({

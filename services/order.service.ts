@@ -30,12 +30,22 @@ export interface Order {
   total: number;
   items: OrderItem[];
   createdAt?: string;
+  table?: {
+    id: string;
+    number: string;
+    name: string | null;
+    tableType: {
+      displayName: string;
+    };
+  };
 }
 
 export interface OrderFilters {
   status?: string;
   limit?: number;
   page?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface CreateOrderData {
@@ -52,6 +62,8 @@ export const orderService = {
     if (filters?.status) params.append("status", filters.status);
     if (filters?.limit) params.append("limit", filters.limit.toString());
     if (filters?.page) params.append("page", filters.page.toString());
+    if (filters?.startDate) params.append("startDate", filters.startDate);
+    if (filters?.endDate) params.append("endDate", filters.endDate);
 
     const url = params.toString()
       ? `/api/admin/orders?${params.toString()}`

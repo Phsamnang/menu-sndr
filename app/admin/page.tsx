@@ -79,10 +79,10 @@ export default function AdminPage() {
       allowedRoles: ["admin", "order"],
     },
     {
-      href: "/admin/table-orders",
+      href: "/admin/sales",
       icon: FaClipboardList,
-      title: "ការបញ្ជាទិញតុ",
-      description: "មើលការបញ្ជាទិញតាមតុ",
+      title: "គ្រប់គ្រងការលក់",
+      description: "មើលការបញ្ជាទិញ និងចំណូល",
       allowedRoles: ["admin"],
     },
     {
