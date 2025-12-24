@@ -175,3 +175,15 @@ model AdminMenuItemRole {
   @@index([adminMenuItemId])
   @@index([roleId])
 }
+
+model ShopInfo {
+  id          String   @id @default(cuid())
+  name        String
+  address     String?
+  phone       String?
+  email       String?
+  logo        String?
+  taxId       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

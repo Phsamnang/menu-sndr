@@ -8,6 +8,7 @@ import OptimizedImage from "@/components/OptimizedImage";
 import InvoicePrint from "@/components/InvoicePrint";
 import { apiClientJson } from "@/utils/api-client";
 import { orderService } from "@/services/order.service";
+import { shopInfoService } from "@/services/shop-info.service";
 import CreateOrderModal from "./components/CreateOrderModal";
 import ViewOrderModal from "./components/ViewOrderModal";
 import CancelOrderModal from "./components/CancelOrderModal";
@@ -144,6 +145,11 @@ export default function OrdersPage() {
       }
       return result.data;
     },
+  });
+
+  const { data: shopInfo } = useQuery({
+    queryKey: ["shopInfo"],
+    queryFn: () => shopInfoService.get(),
   });
 
   const { data: activeOrdersData } = useQuery<{ items: Order[] }>({
@@ -1390,6 +1396,7 @@ export default function OrdersPage() {
               : undefined
           }
           paymentMethod={paymentMethod}
+          shopInfo={shopInfo}
         />
       )}
 

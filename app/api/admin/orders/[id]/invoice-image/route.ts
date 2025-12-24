@@ -32,6 +32,20 @@ async function getHandler(
       return new Response("Order not found", { status: 404 });
     }
 
+    let shopInfo = await prisma.shopInfo.findFirst();
+    if (!shopInfo) {
+      shopInfo = await prisma.shopInfo.create({
+        data: {
+          name: "Shop Name",
+          address: null,
+          phone: null,
+          email: null,
+          logo: null,
+          taxId: null,
+        },
+      });
+    }
+
     const groupedItems = order.items.reduce((acc: any, item: any) => {
       const key = `${item.menuItem.name}_${item.unitPrice}`;
       if (!acc[key]) {
@@ -247,28 +261,65 @@ async function getHandler(
 </head>
 <body>
   <div class="invoice-wrapper">
+    ${
+      shopInfo.logo
+        ? `<div style="text-align: center; margin-bottom: 4px;"><img src="${shopInfo.logo}" alt="Logo" style="max-width: 100px; max-height: 60px;" /></div>`
+        : ""
+    }
     <div class="invoice-header">
-      <h1>វិក្កយបត្រ</h1>
+      <h1>${shopInfo.name}</h1>
+      <h1 style="font-size: 30pt; margin-top: 2px;">វិក្កយបត្រ</h1>
       <p class="invoice-number">#${order.orderNumber}</p>
     </div>
+    ${
+      shopInfo.address || shopInfo.phone || shopInfo.email
+        ? `
+    <div class="invoice-info" style="font-size: 22pt; margin-bottom: 4px;">
+      ${
+        shopInfo.address
+          ? `<div style="text-align: center; margin-bottom: 2px;">${shopInfo.address}</div>`
+          : ""
+      }
+      ${
+        shopInfo.phone
+          ? `<div style="text-align: center; margin-bottom: 2px;">ទូរស័ព្ទ: ${shopInfo.phone}</div>`
+          : ""
+      }
+      ${
+        shopInfo.email
+          ? `<div style="text-align: center; margin-bottom: 2px;">${shopInfo.email}</div>`
+          : ""
+      }
+    </div>
+    `
+        : ""
+    }
 
     <div class="invoice-info">
       <div class="info-row">
         <span>កាលបរិច្ឆេទ:</span>
         <span>${formatDate(order.createdAt)}</span>
       </div>
-      ${tableName ? `
+      ${
+        tableName
+          ? `
       <div class="info-row">
         <span>តុ:</span>
         <span>${tableName}</span>
       </div>
-      ` : ''}
-      ${order.customerName ? `
+      `
+          : ""
+      }
+      ${
+        order.customerName
+          ? `
       <div class="info-row">
         <span>អតិថិជន:</span>
         <span>${order.customerName}</span>
       </div>
-      ` : ''}
+      `
+          : ""
+      }
     </div>
 
     <div class="invoice-divider"></div>
@@ -279,7 +330,9 @@ async function getHandler(
         <span>ចំនួន</span>
         <span>តម្លៃ</span>
       </div>
-      ${groupedItemsArray.map((item: any) => `
+      ${groupedItemsArray
+        .map(
+          (item: any) => `
       <div class="item-row">
         <div class="item-name">
           <span>${item.menuItem.name}</span>
@@ -287,10 +340,14 @@ async function getHandler(
         <div class="item-details">
           <span></span>
           <span class="item-qty">${item.quantity}x</span>
-          <span class="item-total">${item.totalPrice.toLocaleString("km-KH")}៛</span>
+          <span class="item-total">${item.totalPrice.toLocaleString(
+            "km-KH"
+          )}៛</span>
         </div>
       </div>
-      `).join('')}
+      `
+        )
+        .join("")}
     </div>
 
     <div class="invoice-divider"></div>
@@ -300,18 +357,30 @@ async function getHandler(
         <span>សរុបមុនបញ្ចុះតម្លៃ:</span>
         <span>${order.subtotal.toLocaleString("km-KH")}៛</span>
       </div>
-      ${taxAmount > 0 ? `
+      ${
+        taxAmount > 0
+          ? `
       <div class="summary-row">
         <span>ពន្ធ (${taxRate}%):</span>
         <span>${taxAmount.toLocaleString("km-KH")}៛</span>
       </div>
-      ` : ''}
-      ${order.discountAmount > 0 ? `
+      `
+          : ""
+      }
+      ${
+        order.discountAmount > 0
+          ? `
       <div class="summary-row discount">
-        <span>បញ្ចុះតម្លៃ${order.discountType === "percentage" ? ` (${order.discountValue}%)` : ""}:</span>
+        <span>បញ្ចុះតម្លៃ${
+          order.discountType === "percentage"
+            ? ` (${order.discountValue}%)`
+            : ""
+        }:</span>
         <span>-${order.discountAmount.toLocaleString("km-KH")}៛</span>
       </div>
-      ` : ''}
+      `
+          : ""
+      }
       <div class="summary-row total">
         <span>សរុប:</span>
         <span>${finalTotal.toLocaleString("km-KH")}៛</span>
@@ -334,14 +403,14 @@ async function getHandler(
 
     const browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
     try {
       const page = await browser.newPage();
-      
+
       await page.setViewport({ width: 450, height: 800, deviceScaleFactor: 1 });
-      await page.setContent(invoiceHTML, { waitUntil: 'networkidle0' });
+      await page.setContent(invoiceHTML, { waitUntil: "networkidle0" });
 
       const contentHeight = await page.evaluate(() => {
         const body = document.body;
@@ -364,7 +433,7 @@ async function getHandler(
       });
 
       const screenshot = await page.screenshot({
-        type: 'png',
+        type: "png",
         clip: { x: 0, y: 0, width: 450, height: contentHeight + 20 },
       });
 
@@ -372,8 +441,8 @@ async function getHandler(
 
       return new Response(screenshot as any, {
         headers: {
-          'Content-Type': 'image/png',
-          'Content-Disposition': `inline; filename="invoice-${order.orderNumber}.png"`,
+          "Content-Type": "image/png",
+          "Content-Disposition": `inline; filename="invoice-${order.orderNumber}.png"`,
         },
       });
     } catch (error) {
@@ -383,8 +452,11 @@ async function getHandler(
   } catch (error: any) {
     console.error("Error generating invoice image:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to generate invoice image", message: error?.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({
+        error: "Failed to generate invoice image",
+        message: error?.message,
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }
@@ -395,4 +467,3 @@ export async function GET(
 ) {
   return getHandler(request, context);
 }
-

@@ -15,6 +15,7 @@ import {
   FaTruck,
   FaSignOutAlt,
   FaUsers,
+  FaStore,
 } from "react-icons/fa";
 
 export default function AdminPage() {
@@ -61,6 +62,13 @@ export default function AdminPage() {
       icon: FaUsers,
       title: "អ្នកប្រើប្រាស់",
       description: "គ្រប់គ្រងអ្នកប្រើប្រាស់",
+      allowedRoles: ["admin"],
+    },
+    {
+      href: "/admin/shop-info",
+      icon: FaStore,
+      title: "ព័ត៌មានហាង",
+      description: "គ្រប់គ្រងព័ត៌មានហាង",
       allowedRoles: ["admin"],
     },
     {

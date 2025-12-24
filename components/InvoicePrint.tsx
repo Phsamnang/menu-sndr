@@ -32,12 +32,22 @@ interface Order {
   createdAt?: string;
 }
 
+interface ShopInfo {
+  name: string;
+  address?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  logo?: string | null;
+  taxId?: string | null;
+}
+
 interface InvoicePrintProps {
   order: Order;
   tableName?: string;
   taxRate?: number;
   taxAmount?: number;
   paymentMethod?: string;
+  shopInfo?: ShopInfo | null;
 }
 
 export default function InvoicePrint({
@@ -46,6 +56,7 @@ export default function InvoicePrint({
   taxRate = 10,
   taxAmount = 0,
   paymentMethod = "cash",
+  shopInfo,
 }: InvoicePrintProps) {
   useEffect(() => {
     const link = document.createElement("link");
@@ -334,10 +345,27 @@ export default function InvoicePrint({
   return (
     <div className="invoice-print-content">
       <div className="invoice-wrapper">
+        {shopInfo?.logo && (
+          <div style={{ textAlign: "center", marginBottom: "4px" }}>
+            <img
+              src={shopInfo.logo}
+              alt="Logo"
+              style={{ maxWidth: "80px", maxHeight: "50px" }}
+            />
+          </div>
+        )}
         <div className="invoice-header">
+          {shopInfo?.name && <h1 style={{ fontSize: "10pt", marginBottom: "2px" }}>{shopInfo.name}</h1>}
           <h1>វិក្កយបត្រ</h1>
           <p className="invoice-number">#{order.orderNumber}</p>
         </div>
+        {(shopInfo?.address || shopInfo?.phone || shopInfo?.email) && (
+          <div className="invoice-info" style={{ fontSize: "6pt", marginBottom: "4px", textAlign: "center" }}>
+            {shopInfo.address && <div style={{ marginBottom: "2px" }}>{shopInfo.address}</div>}
+            {shopInfo.phone && <div style={{ marginBottom: "2px" }}>ទូរស័ព្ទ: {shopInfo.phone}</div>}
+            {shopInfo.email && <div style={{ marginBottom: "2px" }}>{shopInfo.email}</div>}
+          </div>
+        )}
 
         <div className="invoice-info">
           <div className="info-row">
