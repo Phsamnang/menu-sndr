@@ -911,7 +911,7 @@ export default function OrdersPage() {
                 <p className="text-slate-500">រកមិនឃើញមុខម្ហូបទេ</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
                 {filteredMenu.map((item) => {
                   const tableTypeName = selectedTable.tableType.name;
                   const price = item.prices[tableTypeName] || 0;
@@ -959,7 +959,7 @@ export default function OrdersPage() {
                           </p>
                         )}
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-bold text-slate-900">
+                          <span className="text-sm font-bold text-orange-500">
                             {price.toLocaleString("km-KH")}៛
                           </span>
                         </div>
@@ -1069,7 +1069,7 @@ export default function OrdersPage() {
                   តុ
                 </label>
                 <div className="px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-xs sm:text-sm">
-                  {selectedTable.number} - {selectedTable.tableType.displayName}
+                  {selectedTable.name || selectedTable.number}
                 </div>
               </div>
               <div>
@@ -1203,7 +1203,7 @@ export default function OrdersPage() {
                               <span className="text-xs sm:text-sm font-semibold text-slate-900">
                                 សរុប:
                               </span>
-                              <span className="text-sm sm:text-base font-bold text-slate-900">
+                              <span className="text-sm sm:text-base font-bold text-orange-500">
                                 {item.totalPrice.toLocaleString("km-KH")}៛
                               </span>
                             </div>
@@ -1239,9 +1239,11 @@ export default function OrdersPage() {
                   </span>
                 </div>
               )}
-              <div className="flex justify-between font-bold text-base sm:text-lg border-t border-slate-200 pt-2">
-                <span>សរុប:</span>
-                <span className="text-slate-900">
+              <div className="flex justify-between font-bold text-base sm:text-lg border-t-2 border-indigo-200 pt-2">
+                <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  សរុប:
+                </span>
+                <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent text-lg sm:text-xl">
                   {total.toLocaleString("km-KH")}៛
                 </span>
               </div>
