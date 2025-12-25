@@ -187,3 +187,88 @@ model ShopInfo {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model Expense {
+  id            String        @id @default(cuid())
+  title         String
+  description   String?
+  amount        Float         @default(0) // Deprecated: Use amountUSD and amountKHR instead
+  amountUSD     Float         @default(0) // Total amount in USD (from USD items only)
+  amountKHR     Float         @default(0) // Total amount in KHR (KHR items + USD items converted to KHR)
+  category      String
+  date          DateTime      @default(now())
+  receiptNumber String?
+  vendor        String?
+  paymentMethod String?
+  receiptImage  String?
+  notes         String?
+  currency      String        @default("USD") // Deprecated: Items can have different currencies
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  items         ExpenseItem[]
+
+  @@index([category])
+  @@index([date])
+  @@index([vendor])
+  @@index([currency])
+}
+
+model Unit {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  displayName String
+  symbol      String?       // kg, g, L, ml, pcs, etc.
+  order       Int           @default(0)
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  products    Product[]
+  expenseItems ExpenseItem[]
+
+  @@index([name])
+  @@index([order])
+  @@index([isActive])
+}
+
+model Product {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  description String?
+  unitId      String?
+  unit        Unit?         @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  category    String?       // ស្រា, ម្ហូប, ផ្លែឈើ, etc.
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  expenseItems ExpenseItem[]
+
+  @@index([name])
+  @@index([category])
+  @@index([isActive])
+  @@index([unitId])
+}
+
+model ExpenseItem {
+  id           String   @id @default(cuid())
+  expenseId    String
+  expense      Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  productId    String?
+  product      Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName  String
+  quantity     Float    @default(1)
+  unitId       String?
+  unit         Unit?    @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  unitPrice    Float
+  totalPrice   Float
+  currency     String   @default("USD") // USD or KHR (Riels)
+  paymentStatus String  @default("UNPAID") // PAID or UNPAID
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([expenseId])
+  @@index([productId])
+  @@index([unitId])
+  @@index([currency])
+  @@index([paymentStatus])
+}

@@ -16,6 +16,9 @@ import {
   FaSignOutAlt,
   FaUsers,
   FaStore,
+  FaDollarSign,
+  FaBox,
+  FaRuler,
 } from "react-icons/fa";
 
 export default function AdminPage() {
@@ -84,6 +87,30 @@ export default function AdminPage() {
       title: "គ្រប់គ្រងការលក់",
       description: "មើលការបញ្ជាទិញ និងចំណូល",
       allowedRoles: ["admin"],
+    },
+    {
+      href: "/admin/units",
+      icon: FaRuler,
+      title: "គ្រប់គ្រងឯកតា",
+      description: "គ្រប់គ្រងឯកតាវាស់វែង",
+      allowedRoles: ["admin"],
+      iconColor: "text-purple-600",
+    },
+    {
+      href: "/admin/products",
+      icon: FaBox,
+      title: "គ្រប់គ្រងផលិតផល",
+      description: "គ្រប់គ្រងផលិតផលសម្រាប់ចំណាយ",
+      allowedRoles: ["admin"],
+      iconColor: "text-green-600",
+    },
+    {
+      href: "/admin/expenses",
+      icon: FaDollarSign,
+      title: "គ្រប់គ្រងចំណាយ",
+      description: "គ្រប់គ្រងចំណាយលម្អិត",
+      allowedRoles: ["admin"],
+      iconColor: "text-red-600",
     },
     {
       href: "/admin/chef",
