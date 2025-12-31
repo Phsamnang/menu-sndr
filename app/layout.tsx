@@ -22,11 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="km" className={kantumruyPro.variable}>
-      <body>
+      <body className={kantumruyPro.className}>
         <Providers>{children}</Providers>
       </body>
     </html>
   );
 }
-
-

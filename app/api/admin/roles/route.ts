@@ -23,3 +23,5 @@ async function getHandler(request: AuthenticatedRequest) {
 export const GET = withAuth(getHandler, ["admin"]);
 
 
+
+

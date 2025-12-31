@@ -12,6 +12,11 @@ import { shopInfoService } from "@/services/shop-info.service";
 import CreateOrderModal from "./components/CreateOrderModal";
 import ViewOrderModal from "./components/ViewOrderModal";
 import CancelOrderModal from "./components/CancelOrderModal";
+import {
+  TableSelectionSkeleton,
+  OrdersPageSkeleton,
+  MenuGridSkeleton,
+} from "./components/OrdersPageSkeleton";
 
 interface Category {
   id: string;
@@ -137,16 +142,18 @@ export default function OrdersPage() {
     },
   });
 
-  const { data: tables = [] } = useQuery<TableItem[]>({
-    queryKey: ["tables"],
-    queryFn: async () => {
-      const result = await apiClientJson<TableItem[]>("/api/admin/tables");
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to fetch tables");
-      }
-      return result.data;
-    },
-  });
+  const { data: tables = [], isLoading: tablesLoading } = useQuery<TableItem[]>(
+    {
+      queryKey: ["tables"],
+      queryFn: async () => {
+        const result = await apiClientJson<TableItem[]>("/api/admin/tables");
+        if (!result.success || !result.data) {
+          throw new Error(result.error?.message || "Failed to fetch tables");
+        }
+        return result.data;
+      },
+    }
+  );
 
   const { data: shopInfo } = useQuery({
     queryKey: ["shopInfo"],
@@ -673,6 +680,10 @@ export default function OrdersPage() {
   }, [orderData, orderItems]);
 
   if (!selectedTable) {
+    if (tablesLoading) {
+      return <TableSelectionSkeleton />;
+    }
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
@@ -917,10 +928,7 @@ export default function OrdersPage() {
             </div>
 
             {menuLoading ? (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-slate-800"></div>
-                <p className="text-slate-600 mt-4">កំពុងផ្ទុក...</p>
-              </div>
+              <MenuGridSkeleton />
             ) : filteredMenu.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-lg shadow-sm">
                 <svg
