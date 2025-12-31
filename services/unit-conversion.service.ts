@@ -1,3 +1,5 @@
+import axiosInstance from "@/utils/axios-client";
+import { ApiResponse } from "@/utils/api-client";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
@@ -67,10 +69,6 @@ export class UnitConversionService {
       throw new Error(`Product ${productId} not found or has no base unit`);
     }
 
-    if (fromUnitId === product.baseUnitId) {
-      return quantity;
-    }
-
     return this.convert(quantity, fromUnitId, product.baseUnitId);
   }
 
@@ -117,3 +115,106 @@ export class UnitConversionService {
   }
 }
 
+export interface UnitConversion {
+  id: string;
+  fromUnitId: string;
+  fromUnit: {
+    id: string;
+    name: string;
+    displayName: string;
+    symbol: string | null;
+  };
+  toUnitId: string;
+  toUnit: {
+    id: string;
+    name: string;
+    displayName: string;
+    symbol: string | null;
+  };
+  conversionRate: number;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateUnitConversionData {
+  fromUnitId: string;
+  toUnitId: string;
+  conversionRate: number;
+  description?: string;
+}
+
+export interface UpdateUnitConversionData {
+  conversionRate?: number;
+  description?: string;
+}
+
+export const unitConversionService = {
+  getAll: async (filters?: {
+    fromUnitId?: string;
+    toUnitId?: string;
+  }): Promise<UnitConversion[]> => {
+    const params = new URLSearchParams();
+    if (filters?.fromUnitId) params.append("fromUnitId", filters.fromUnitId);
+    if (filters?.toUnitId) params.append("toUnitId", filters.toUnitId);
+
+    const response = await axiosInstance.get<ApiResponse<UnitConversion[]>>(
+      `/api/admin/unit-conversions${params.toString() ? `?${params.toString()}` : ""}`
+    );
+    const result = response.data;
+    if (!result.success || !result.data) {
+      return [];
+    }
+    return result.data;
+  },
+
+  getById: async (id: string): Promise<UnitConversion> => {
+    const response = await axiosInstance.get<ApiResponse<UnitConversion>>(
+      `/api/admin/unit-conversions/${id}`
+    );
+    const result = response.data;
+    if (!result.success || !result.data) {
+      throw new Error(result.error?.message || "Failed to fetch unit conversion");
+    }
+    return result.data;
+  },
+
+  create: async (
+    data: CreateUnitConversionData
+  ): Promise<UnitConversion> => {
+    const response = await axiosInstance.post<ApiResponse<UnitConversion>>(
+      "/api/admin/unit-conversions",
+      data
+    );
+    const result = response.data;
+    if (!result.success || !result.data) {
+      throw new Error(result.error?.message || "Failed to create unit conversion");
+    }
+    return result.data;
+  },
+
+  update: async (
+    id: string,
+    data: UpdateUnitConversionData
+  ): Promise<UnitConversion> => {
+    const response = await axiosInstance.put<ApiResponse<UnitConversion>>(
+      `/api/admin/unit-conversions/${id}`,
+      data
+    );
+    const result = response.data;
+    if (!result.success || !result.data) {
+      throw new Error(result.error?.message || "Failed to update unit conversion");
+    }
+    return result.data;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const response = await axiosInstance.delete<ApiResponse>(
+      `/api/admin/unit-conversions/${id}`
+    );
+    const result = response.data;
+    if (!result.success) {
+      throw new Error(result.error?.message || "Failed to delete unit conversion");
+    }
+  },
+};

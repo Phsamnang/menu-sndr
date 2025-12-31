@@ -151,7 +151,7 @@ export default function ExpenseItemsModal({
         ...formData,
         productId: product.id,
         productName: product.name,
-        unitId: product.unitId || "",
+        unitId: product.baseUnitId || "",
       });
     }
   };
@@ -253,9 +253,9 @@ export default function ExpenseItemsModal({
                     .map((product) => (
                       <option key={product.id} value={product.id}>
                         {product.name}
-                        {product.unit
+                        {product.baseUnit
                           ? ` (${
-                              product.unit.displayName || product.unit.name
+                              product.baseUnit.displayName || product.baseUnit.name
                             })`
                           : ""}
                       </option>

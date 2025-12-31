@@ -9,7 +9,7 @@ interface ProductModalProps {
   formData: {
     name: string;
     description: string;
-    unitId: string;
+    baseUnitId: string;
     category: string;
   };
   isSubmitting: boolean;
@@ -18,7 +18,7 @@ interface ProductModalProps {
   onFormDataChange: (data: {
     name: string;
     description: string;
-    unitId: string;
+    baseUnitId: string;
     category: string;
   }) => void;
 }
@@ -87,9 +87,9 @@ export default function ProductModal({
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">ឯកតា *</label>
           <select
-            value={formData.unitId}
+            value={formData.baseUnitId}
             onChange={(e) =>
-              onFormDataChange({ ...formData, unitId: e.target.value })
+              onFormDataChange({ ...formData, baseUnitId: e.target.value })
             }
             className="w-full px-3 py-2 border rounded-lg"
             required

@@ -6,33 +6,30 @@ import { withAuth, AuthenticatedRequest } from "@/lib/middleware";
 async function getHandler(request: AuthenticatedRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const category = searchParams.get("category");
     const isActive = searchParams.get("isActive");
+    const category = searchParams.get("category");
 
     const where: any = {};
-
-    if (category) {
-      where.category = category;
-    }
 
     if (isActive !== null) {
       where.isActive = isActive === "true";
     }
 
-    const products = await prisma.product.findMany({
+    if (category) {
+      where.category = category;
+    }
+
+    const suppliers = await prisma.supplier.findMany({
       where,
-      include: {
-        baseUnit: true,
-      },
       orderBy: { name: "asc" },
     });
 
-    return successResponse(products, "Products fetched successfully");
+    return successResponse(suppliers, "Suppliers fetched successfully");
   } catch (error: any) {
-    console.error("Error fetching products:", error);
+    console.error("Error fetching suppliers:", error);
     return errorResponse(
-      "FETCH_PRODUCTS_ERROR",
-      "Failed to fetch products",
+      "FETCH_SUPPLIERS_ERROR",
+      "Failed to fetch suppliers",
       500,
       [{ message: error?.message || String(error) }]
     );
@@ -42,7 +39,18 @@ async function getHandler(request: AuthenticatedRequest) {
 async function postHandler(request: AuthenticatedRequest) {
   try {
     const body = await request.json();
-    const { name, description, baseUnitId, category } = body;
+    const {
+      name,
+      contactName,
+      phone,
+      email,
+      address,
+      taxId,
+      category,
+      paymentTerms,
+      notes,
+      isActive,
+    } = body;
 
     if (!name) {
       return errorResponse(
@@ -53,32 +61,35 @@ async function postHandler(request: AuthenticatedRequest) {
       );
     }
 
-    const product = await prisma.product.create({
+    const supplier = await prisma.supplier.create({
       data: {
         name,
-        description: description || null,
-        baseUnitId: baseUnitId || null,
+        contactName: contactName || null,
+        phone: phone || null,
+        email: email || null,
+        address: address || null,
+        taxId: taxId || null,
         category: category || null,
-      },
-      include: {
-        baseUnit: true,
+        paymentTerms: paymentTerms || null,
+        notes: notes || null,
+        isActive: isActive !== undefined ? isActive : true,
       },
     });
 
-    return successResponse(product, "Product created successfully", 201);
+    return successResponse(supplier, "Supplier created successfully", 201);
   } catch (error: any) {
-    console.error("Error creating product:", error);
+    console.error("Error creating supplier:", error);
     if (error?.code === "P2002") {
       return errorResponse(
         "DUPLICATE_ENTRY",
-        "Product with this name already exists",
+        "Supplier with this name already exists",
         409,
-        [{ field: "name", message: "Product name must be unique" }]
+        [{ field: "name", message: "Supplier name must be unique" }]
       );
     }
     return errorResponse(
-      "CREATE_PRODUCT_ERROR",
-      "Failed to create product",
+      "CREATE_SUPPLIER_ERROR",
+      "Failed to create supplier",
       500,
       [{ message: error?.message || String(error) }]
     );
@@ -87,4 +98,5 @@ async function postHandler(request: AuthenticatedRequest) {
 
 export const GET = withAuth(getHandler, ["admin"]);
 export const POST = withAuth(postHandler, ["admin"]);
+
 

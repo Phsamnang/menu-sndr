@@ -12,7 +12,7 @@ async function getHandler(
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
-        unit: true,
+        baseUnit: true,
       },
     });
 
@@ -44,7 +44,7 @@ async function putHandler(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, description, unitId, category, isActive } = body;
+    const { name, description, baseUnitId, category, isActive } = body;
 
     const existingProduct = await prisma.product.findUnique({
       where: { id },
@@ -80,7 +80,7 @@ async function putHandler(
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description || null;
-    if (unitId !== undefined) updateData.unitId = unitId || null;
+    if (baseUnitId !== undefined) updateData.baseUnitId = baseUnitId || null;
     if (category !== undefined) updateData.category = category || null;
     if (isActive !== undefined) updateData.isActive = isActive;
 
@@ -88,7 +88,7 @@ async function putHandler(
       where: { id },
       data: updateData,
       include: {
-        unit: true,
+        baseUnit: true,
       },
     });
 

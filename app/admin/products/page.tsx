@@ -13,7 +13,7 @@ export default function ProductsPage() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    unitId: "",
+    baseUnitId: "",
     category: "",
   });
   const queryClient = useQueryClient();
@@ -27,13 +27,13 @@ export default function ProductsPage() {
     mutationFn: (data: {
       name: string;
       description?: string;
-      unitId?: string;
+      baseUnitId?: string;
       category?: string;
     }) => productService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       setIsModalOpen(false);
-      setFormData({ name: "", description: "", unitId: "", category: "" });
+      setFormData({ name: "", description: "", baseUnitId: "", category: "" });
     },
   });
 
@@ -46,7 +46,7 @@ export default function ProductsPage() {
       data: {
         name?: string;
         description?: string;
-        unitId?: string;
+        baseUnitId?: string;
         category?: string;
         isActive?: boolean;
       };
@@ -55,7 +55,7 @@ export default function ProductsPage() {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       setIsModalOpen(false);
       setEditingProduct(null);
-      setFormData({ name: "", description: "", unitId: "", category: "" });
+      setFormData({ name: "", description: "", baseUnitId: "", category: "" });
     },
   });
 
@@ -71,7 +71,7 @@ export default function ProductsPage() {
     setFormData({
       name: product.name,
       description: product.description || "",
-      unitId: product.unitId || "",
+      baseUnitId: product.baseUnitId || "",
       category: product.category || "",
     });
     setIsModalOpen(true);
@@ -104,11 +104,11 @@ export default function ProductsPage() {
       ),
     },
     {
-      key: "unit",
+      key: "baseUnit",
       label: "ឯកតា",
       render: (item) => (
         <span className="text-slate-600">
-          {item.unit?.displayName || item.unit?.name || "-"}
+          {item.baseUnit?.displayName || item.baseUnit?.name || "-"}
         </span>
       ),
     },
@@ -185,7 +185,7 @@ export default function ProductsPage() {
                 setFormData({
                   name: "",
                   description: "",
-                  unitId: "",
+                  baseUnitId: "",
                   category: "",
                 });
                 setIsModalOpen(true);
@@ -215,7 +215,7 @@ export default function ProductsPage() {
             setFormData({
               name: "",
               description: "",
-              unitId: "",
+              baseUnitId: "",
               category: "",
             });
           }}

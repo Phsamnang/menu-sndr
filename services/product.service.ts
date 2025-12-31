@@ -5,8 +5,8 @@ export interface Product {
   id: string;
   name: string;
   description: string | null;
-  unitId: string | null;
-  unit: {
+  baseUnitId: string | null;
+  baseUnit: {
     id: string;
     name: string;
     displayName: string;
@@ -21,14 +21,14 @@ export interface Product {
 export interface CreateProductData {
   name: string;
   description?: string;
-  unitId?: string;
+  baseUnitId?: string;
   category?: string;
 }
 
 export interface UpdateProductData {
   name?: string;
   description?: string;
-  unitId?: string;
+  baseUnitId?: string;
   category?: string;
   isActive?: boolean;
 }
