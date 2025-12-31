@@ -75,6 +75,20 @@ export default function AdminPage() {
           allowedRoles: ["admin", "order"],
         },
         {
+          href: "/admin/reservations",
+          icon: FlaticonIcons.calendar,
+          title: "ការកក់តុ",
+          description: "គ្រប់គ្រងការកក់តុ",
+          allowedRoles: ["admin", "order"],
+        },
+        {
+          href: "/admin/customers",
+          icon: FlaticonIcons.user,
+          title: "អតិថិជន",
+          description: "គ្រប់គ្រងអតិថិជន",
+          allowedRoles: ["admin"],
+        },
+        {
           href: "/admin/sales",
           icon: FlaticonIcons.clipboardList,
           title: "គ្រប់គ្រងការលក់",
@@ -101,6 +115,22 @@ export default function AdminPage() {
           description: "គ្រប់គ្រងផលិតផលសម្រាប់ចំណាយ",
           allowedRoles: ["admin"],
           iconColor: "text-green-600",
+        },
+        {
+          href: "/admin/inventory",
+          icon: FlaticonIcons.warehouse,
+          title: "ស្តុក",
+          description: "គ្រប់គ្រងស្តុកផលិតផល",
+          allowedRoles: ["admin"],
+          iconColor: "text-blue-600",
+        },
+        {
+          href: "/admin/stock-movements",
+          icon: FlaticonIcons.arrows,
+          title: "ចលនាស្តុក",
+          description: "មើលចលនាស្តុក",
+          allowedRoles: ["admin"],
+          iconColor: "text-indigo-600",
         },
         {
           href: "/admin/expenses",

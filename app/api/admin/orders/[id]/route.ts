@@ -17,6 +17,7 @@ async function getHandler(
             tableType: true,
           },
         },
+        customer: true,
         items: {
           include: {
             menuItem: {
@@ -24,7 +25,14 @@ async function getHandler(
                 category: true,
               },
             },
+            kitchenOrder: true,
           },
+        },
+        payments: {
+          orderBy: { createdAt: "desc" },
+        },
+        statusHistory: {
+          orderBy: { createdAt: "desc" },
         },
       },
     });
@@ -49,7 +57,20 @@ async function putHandler(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status, discountType, discountValue } = body;
+    const {
+      status,
+      customerId,
+      orderType,
+      discountType,
+      discountValue,
+      taxRate,
+      serviceCharge,
+      paymentStatus,
+      paymentMethod,
+      paidAmount,
+      notes,
+      cancelReason,
+    } = body;
 
     const order = await prisma.order.findUnique({
       where: { id },
@@ -57,6 +78,8 @@ async function putHandler(
         subtotal: true,
         discountType: true,
         discountValue: true,
+        taxRate: true,
+        serviceCharge: true,
         status: true,
         tableId: true,
       },
@@ -67,8 +90,10 @@ async function putHandler(
     }
 
     let discountAmount = 0;
-    const finalDiscountType = discountType || order.discountType;
+    const finalDiscountType = discountType !== undefined ? discountType : order.discountType;
     const finalDiscountValue = discountValue !== undefined ? discountValue : order.discountValue;
+    const finalTaxRate = taxRate !== undefined ? taxRate : order.taxRate;
+    const finalServiceCharge = serviceCharge !== undefined ? serviceCharge : order.serviceCharge;
 
     if (finalDiscountType && finalDiscountValue !== undefined) {
       if (finalDiscountType === "percentage") {
@@ -78,24 +103,51 @@ async function putHandler(
       }
     }
 
-    const total = order.subtotal - discountAmount;
+    const taxAmount = (order.subtotal * finalTaxRate) / 100;
+    const total = order.subtotal - discountAmount + taxAmount + finalServiceCharge;
+    const grandTotal = total;
+    const changeAmount = paidAmount ? Math.max(0, paidAmount - grandTotal) : 0;
+
+    const updateData: any = {
+      discountType: finalDiscountType,
+      discountValue: finalDiscountValue,
+      discountAmount,
+      taxRate: finalTaxRate,
+      taxAmount,
+      serviceCharge: finalServiceCharge,
+      total,
+      grandTotal,
+    };
+
+    if (status !== undefined) {
+      updateData.status = status;
+      if (status === "completed") {
+        updateData.completedAt = new Date();
+      } else if (status === "cancelled") {
+        updateData.cancelledAt = new Date();
+        updateData.cancelReason = cancelReason || null;
+      }
+    }
+
+    if (customerId !== undefined) updateData.customerId = customerId || null;
+    if (orderType !== undefined) updateData.orderType = orderType;
+    if (paymentStatus !== undefined) updateData.paymentStatus = paymentStatus;
+    if (paymentMethod !== undefined) updateData.paymentMethod = paymentMethod;
+    if (paidAmount !== undefined) updateData.paidAmount = paidAmount;
+    if (changeAmount !== undefined) updateData.changeAmount = changeAmount;
+    if (notes !== undefined) updateData.notes = notes;
 
     const [updatedOrder] = await Promise.all([
       prisma.order.update({
         where: { id },
-        data: {
-          status: status || order.status,
-          discountType: finalDiscountType,
-          discountValue: finalDiscountValue,
-          discountAmount,
-          total,
-        },
+        data: updateData,
         include: {
           table: {
             include: {
               tableType: true,
             },
           },
+          customer: true,
           items: {
             include: {
               menuItem: {
@@ -105,9 +157,24 @@ async function putHandler(
               },
             },
           },
+          payments: true,
+          statusHistory: {
+            orderBy: { createdAt: "desc" },
+            take: 10,
+          },
         },
       }),
-      status === "done" && order.tableId
+      status && status !== order.status
+        ? prisma.orderStatusHistory.create({
+            data: {
+              orderId: id,
+              fromStatus: order.status,
+              toStatus: status,
+              changedBy: request.user?.userId || null,
+            },
+          })
+        : Promise.resolve(null),
+      status === "completed" && order.tableId
         ? prisma.table.update({
             where: { id: order.tableId },
             data: { status: "available" },

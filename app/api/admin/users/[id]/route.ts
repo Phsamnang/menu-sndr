@@ -11,7 +11,7 @@ async function putHandler(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { username, password, roleId, isActive } = body;
+    const { username, password, roleId, isActive, fullName, email, phone } = body;
 
     if (!username || !roleId) {
       return errorResponse(
@@ -72,7 +72,12 @@ async function putHandler(
 
     if (password) {
       updateData.password = hashPassword(password);
+      updateData.passwordChangedAt = new Date();
     }
+
+    if (fullName !== undefined) updateData.fullName = fullName;
+    if (email !== undefined) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone;
 
     const user = await prisma.user.update({
       where: { id },

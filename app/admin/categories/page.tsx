@@ -10,7 +10,13 @@ import CategoryModal from "./components/CategoryModal";
 export default function CategoriesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [formData, setFormData] = useState({ name: "", displayName: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    displayName: "",
+    description: "",
+    sortOrder: 0,
+    isActive: true,
+  });
   const queryClient = useQueryClient();
 
   const { data: categories = [], isLoading } = useQuery<Category[]>({
@@ -19,12 +25,17 @@ export default function CategoriesPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: { name: string; displayName: string }) =>
-      categoryService.create(data),
+    mutationFn: (data: typeof formData) => categoryService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       setIsModalOpen(false);
-      setFormData({ name: "", displayName: "" });
+      setFormData({
+        name: "",
+        displayName: "",
+        description: "",
+        sortOrder: 0,
+        isActive: true,
+      });
     },
   });
 
@@ -34,13 +45,19 @@ export default function CategoriesPage() {
       data,
     }: {
       id: string;
-      data: { name: string; displayName: string };
+      data: typeof formData;
     }) => categoryService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       setIsModalOpen(false);
       setEditingCategory(null);
-      setFormData({ name: "", displayName: "" });
+      setFormData({
+        name: "",
+        displayName: "",
+        description: "",
+        sortOrder: 0,
+        isActive: true,
+      });
     },
   });
 
@@ -53,7 +70,13 @@ export default function CategoriesPage() {
 
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
-    setFormData({ name: category.name, displayName: category.displayName });
+    setFormData({
+      name: category.name,
+      displayName: category.displayName,
+      description: category.description || "",
+      sortOrder: category.sortOrder || 0,
+      isActive: category.isActive !== false,
+    });
     setIsModalOpen(true);
   };
 
@@ -81,7 +104,13 @@ export default function CategoriesPage() {
             <button
               onClick={() => {
                 setEditingCategory(null);
-                setFormData({ name: "", displayName: "" });
+                setFormData({
+                  name: "",
+                  displayName: "",
+                  description: "",
+                  sortOrder: 0,
+                  isActive: true,
+                });
                 setIsModalOpen(true);
               }}
               className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900"
@@ -145,10 +174,16 @@ export default function CategoriesPage() {
           onClose={() => {
             setIsModalOpen(false);
             setEditingCategory(null);
-            setFormData({ name: "", displayName: "" });
+            setFormData({
+              name: "",
+              displayName: "",
+              description: "",
+              sortOrder: 0,
+              isActive: true,
+            });
           }}
           onSubmit={handleSubmit}
-          onFormDataChange={setFormData}
+          onFormDataChange={(data) => setFormData(data as typeof formData)}
         />
       </div>
     </div>

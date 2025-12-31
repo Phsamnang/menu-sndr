@@ -5,6 +5,9 @@ export interface Category {
   id: string;
   name: string;
   displayName: string;
+  description?: string;
+  sortOrder?: number;
+  isActive?: boolean;
 }
 
 const CategoryEndpoints = {
@@ -31,6 +34,9 @@ export const categoryService = {
   create: async (data: {
     name: string;
     displayName: string;
+    description?: string;
+    sortOrder?: number;
+    isActive?: boolean;
   }): Promise<Category> => {
     const response = await axiosInstance.post<ApiResponse<Category>>(
       CategoryEndpoints.create(),
@@ -45,7 +51,13 @@ export const categoryService = {
 
   update: async (
     id: string,
-    data: { name: string; displayName: string }
+    data: {
+      name: string;
+      displayName: string;
+      description?: string;
+      sortOrder?: number;
+      isActive?: boolean;
+    }
   ): Promise<Category> => {
     const response = await axiosInstance.put<ApiResponse<Category>>(
       CategoryEndpoints.update(id),

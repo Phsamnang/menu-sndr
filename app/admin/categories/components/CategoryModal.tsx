@@ -4,11 +4,23 @@ import { Category } from "@/services/category.service";
 interface CategoryModalProps {
   isOpen: boolean;
   editingCategory: Category | null;
-  formData: { name: string; displayName: string };
+  formData: {
+    name: string;
+    displayName: string;
+    description?: string;
+    sortOrder?: number;
+    isActive?: boolean;
+  };
   isSubmitting: boolean;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
-  onFormDataChange: (data: { name: string; displayName: string }) => void;
+  onFormDataChange: (data: {
+    name: string;
+    displayName: string;
+    description?: string;
+    sortOrder?: number;
+    isActive?: boolean;
+  }) => void;
 }
 
 export default function CategoryModal({
@@ -50,6 +62,44 @@ export default function CategoryModal({
             className="w-full px-3 py-2 border rounded-lg"
             required
           />
+        </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">ការពិពណ៌នា</label>
+          <textarea
+            value={formData.description || ""}
+            onChange={(e) =>
+              onFormDataChange({ ...formData, description: e.target.value })
+            }
+            className="w-full px-3 py-2 border rounded-lg"
+            rows={3}
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">លេខតម្រៀប</label>
+          <input
+            type="number"
+            value={formData.sortOrder || 0}
+            onChange={(e) =>
+              onFormDataChange({
+                ...formData,
+                sortOrder: parseInt(e.target.value) || 0,
+              })
+            }
+            className="w-full px-3 py-2 border rounded-lg"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={formData.isActive !== false}
+              onChange={(e) =>
+                onFormDataChange({ ...formData, isActive: e.target.checked })
+              }
+              className="w-4 h-4"
+            />
+            <span className="text-sm font-medium">សកម្ម</span>
+          </label>
         </div>
         <div className="flex gap-4">
           <button

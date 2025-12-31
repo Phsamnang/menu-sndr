@@ -10,7 +10,7 @@ async function putHandler(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, displayName } = body;
+    const { name, displayName, description, sortOrder, isActive } = body;
 
     if (!name || !displayName) {
       return errorResponse(
@@ -24,9 +24,14 @@ async function putHandler(
       );
     }
 
+    const updateData: any = { name, displayName };
+    if (description !== undefined) updateData.description = description;
+    if (sortOrder !== undefined) updateData.sortOrder = sortOrder;
+    if (isActive !== undefined) updateData.isActive = isActive;
+
     const category = await prisma.category.update({
       where: { id },
-      data: { name, displayName },
+      data: updateData,
     });
 
     return successResponse(category, "Category updated successfully");

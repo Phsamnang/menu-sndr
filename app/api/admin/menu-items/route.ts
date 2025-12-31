@@ -106,7 +106,19 @@ async function getHandler(request: AuthenticatedRequest) {
 async function postHandler(request: AuthenticatedRequest) {
   try {
     const body = await request.json();
-    const { name, description, image, categoryId, prices, isCook } = body;
+    const {
+      name,
+      description,
+      image,
+      categoryId,
+      prices,
+      isCook,
+      isAvailable,
+      preparationTime,
+      allergens,
+      isPopular,
+      sortOrder,
+    } = body;
 
     if (!name || !image || !categoryId) {
       return errorResponse(
@@ -144,6 +156,12 @@ async function postHandler(request: AuthenticatedRequest) {
         image,
         categoryId,
         isCook: isCook ?? false,
+        isAvailable: isAvailable !== undefined ? isAvailable : true,
+        preparationTime: preparationTime || null,
+        allergens: allergens || null,
+        isPopular: isPopular ?? false,
+        sortOrder: sortOrder || 0,
+        createdBy: request.user?.userId || null,
         prices: {
           create: prices || [],
         },

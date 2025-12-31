@@ -10,8 +10,12 @@ async function getHandler(request: AuthenticatedRequest) {
       select: {
         id: true,
         username: true,
+        fullName: true,
+        email: true,
+        phone: true,
         roleId: true,
         isActive: true,
+        lastLoginAt: true,
         createdAt: true,
         role: {
           select: {
@@ -36,7 +40,7 @@ async function getHandler(request: AuthenticatedRequest) {
 async function postHandler(request: AuthenticatedRequest) {
   try {
     const body = await request.json();
-    const { username, password, roleId, isActive } = body;
+    const { username, password, roleId, isActive, fullName, email, phone } = body;
 
     if (!username || !password || !roleId) {
       return errorResponse(
@@ -92,6 +96,9 @@ async function postHandler(request: AuthenticatedRequest) {
         password: hashedPassword,
         roleId,
         isActive: isActive ?? true,
+        fullName: fullName || null,
+        email: email || null,
+        phone: phone || null,
       },
       include: {
         role: true,

@@ -15,7 +15,19 @@ async function putHandler(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, description, image, categoryId, prices, isCook } = body;
+    const {
+      name,
+      description,
+      image,
+      categoryId,
+      prices,
+      isCook,
+      isAvailable,
+      preparationTime,
+      allergens,
+      isPopular,
+      sortOrder,
+    } = body;
 
     if (!name || !image || !categoryId) {
       return errorResponse(
@@ -58,15 +70,24 @@ async function putHandler(
       where: { menuItemId: id },
     });
 
+    const updateData: any = {
+      name,
+      description: description || "",
+      image,
+      categoryId,
+      isCook: isCook ?? false,
+      updatedBy: request.user?.userId || null,
+    };
+
+    if (isAvailable !== undefined) updateData.isAvailable = isAvailable;
+    if (preparationTime !== undefined) updateData.preparationTime = preparationTime;
+    if (allergens !== undefined) updateData.allergens = allergens;
+    if (isPopular !== undefined) updateData.isPopular = isPopular;
+    if (sortOrder !== undefined) updateData.sortOrder = sortOrder;
+
     const menuItem = await prisma.menuItem.update({
       where: { id },
-      data: {
-        name,
-        description: description || "",
-        image,
-        categoryId,
-        isCook: isCook ?? false,
-      },
+      data: updateData,
       include: {
         category: true,
         prices: {

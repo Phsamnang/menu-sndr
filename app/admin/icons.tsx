@@ -30,4 +30,10 @@ export const FlaticonIcons = {
   // Quick access icons
   book: "/icons/flaticon/book.svg",
   signOut: "/icons/flaticon/sign-out.svg",
+
+  // New icons
+  calendar: "/icons/flaticon/calendar.svg",
+  user: "/icons/flaticon/user.svg",
+  warehouse: "/icons/flaticon/warehouse.svg",
+  arrows: "/icons/flaticon/arrows.svg",
 };

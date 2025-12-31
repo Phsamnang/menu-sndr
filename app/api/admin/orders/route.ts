@@ -40,6 +40,7 @@ async function getHandler(request: AuthenticatedRequest) {
               tableType: true,
             },
           },
+          customer: true,
           items: {
             include: {
               menuItem: {
@@ -48,6 +49,11 @@ async function getHandler(request: AuthenticatedRequest) {
                 },
               },
             },
+          },
+          payments: true,
+          statusHistory: {
+            orderBy: { createdAt: "desc" },
+            take: 10,
           },
         },
         orderBy: { createdAt: "desc" },
@@ -82,7 +88,19 @@ async function getHandler(request: AuthenticatedRequest) {
 async function postHandler(request: AuthenticatedRequest) {
   try {
     const body = await request.json();
-    const { tableId, customerName, items, discountType, discountValue } = body;
+    const {
+      tableId,
+      customerId,
+      customerName,
+      orderType,
+      items,
+      discountType,
+      discountValue,
+      taxRate,
+      serviceCharge,
+      notes,
+      specialNotes,
+    } = body;
 
     let subtotal = 0;
     const orderItems = [];
@@ -137,6 +155,7 @@ async function postHandler(request: AuthenticatedRequest) {
           quantity: item.quantity,
           unitPrice,
           totalPrice,
+          specialNotes: item.specialNotes || specialNotes || null,
         });
       }
     }
@@ -150,7 +169,9 @@ async function postHandler(request: AuthenticatedRequest) {
       }
     }
 
-    const total = subtotal - discountAmount;
+    const taxAmount = taxRate ? (subtotal * taxRate) / 100 : 0;
+    const total = subtotal - discountAmount + taxAmount + (serviceCharge || 0);
+    const grandTotal = total;
 
     // Generate order number in format: ddmmyyyy0000
     const now = new Date();
@@ -188,15 +209,31 @@ async function postHandler(request: AuthenticatedRequest) {
       data: {
         orderNumber,
         tableId: tableId || null,
+        customerId: customerId || null,
         customerName: customerName || null,
+        orderType: orderType || "dine_in",
         status: "new",
         discountType: discountType || null,
         discountValue: discountValue || 0,
         subtotal,
         discountAmount,
+        taxRate: taxRate || 0,
+        taxAmount,
+        serviceCharge: serviceCharge || 0,
         total,
+        grandTotal,
+        paymentStatus: "unpaid",
+        notes: notes || null,
+        createdBy: request.user?.userId || null,
         items: {
           create: orderItems,
+        },
+        statusHistory: {
+          create: {
+            fromStatus: "new",
+            toStatus: "new",
+            changedBy: request.user?.userId || null,
+          },
         },
       },
       include: {

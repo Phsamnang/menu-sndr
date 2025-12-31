@@ -5,8 +5,17 @@ import { withAuth, AuthenticatedRequest } from "@/lib/middleware";
 
 async function getHandler(request: AuthenticatedRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const isActive = searchParams.get("isActive");
+
+    const where: any = {};
+    if (isActive !== null) {
+      where.isActive = isActive === "true";
+    }
+
     const categories = await prisma.category.findMany({
-      orderBy: { name: "asc" },
+      where,
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     });
     return successResponse(categories, "Categories fetched successfully");
   } catch (error: any) {
@@ -23,7 +32,7 @@ async function getHandler(request: AuthenticatedRequest) {
 async function postHandler(request: AuthenticatedRequest) {
   try {
     const body = await request.json();
-    const { name, displayName } = body;
+    const { name, displayName, description, sortOrder, isActive } = body;
 
     if (!name || !displayName) {
       return errorResponse(
@@ -40,7 +49,13 @@ async function postHandler(request: AuthenticatedRequest) {
     }
 
     const category = await prisma.category.create({
-      data: { name, displayName },
+      data: {
+        name,
+        displayName,
+        description: description || null,
+        sortOrder: sortOrder || 0,
+        isActive: isActive !== undefined ? isActive : true,
+      },
     });
 
     return successResponse(category, "Category created successfully", 201);
