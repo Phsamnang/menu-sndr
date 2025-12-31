@@ -287,18 +287,20 @@ model Expense {
 }
 
 model Unit {
-  id            String          @id @default(cuid())
-  name          String          @unique
-  displayName   String
-  symbol        String?         // kg, g, L, ml, pcs, etc.
-  order         Int             @default(0)
-  isActive      Boolean         @default(true)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  products      Product[]
-  expenseItems  ExpenseItem[]
-  inventories   Inventory[]
-  stockMovements StockMovement[]
+  id                String            @id @default(cuid())
+  name              String            @unique
+  displayName       String
+  symbol            String?           // kg, g, L, ml, pcs, etc.
+  order             Int               @default(0)
+  isActive          Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  products          Product[]         @relation("BaseUnit")
+  expenseItems      ExpenseItem[]
+  inventories       Inventory[]       @relation("InventoryBaseUnit")
+  stockMovements    StockMovement[]
+  fromConversions   UnitConversion[]  @relation("FromUnit")
+  toConversions     UnitConversion[]  @relation("ToUnit")
 
   @@index([name])
   @@index([order])
@@ -310,8 +312,8 @@ model Product {
   name           String          @unique
   description    String?
   sku            String?         @unique
-  unitId         String?
-  unit           Unit?           @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  baseUnitId     String?
+  baseUnit       Unit?           @relation("BaseUnit", fields: [baseUnitId], references: [id], onDelete: SetNull)
   category       String?         // raw_material, beverage, food, supplies
   subCategory    String?
   isActive       Boolean         @default(true)
@@ -326,7 +328,7 @@ model Product {
   @@index([sku])
   @@index([category])
   @@index([isActive])
-  @@index([unitId])
+  @@index([baseUnitId])
 }
 
 model ExpenseItem {
@@ -458,12 +460,12 @@ model Inventory {
   id              String    @id @default(cuid())
   productId       String    @unique
   product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  currentStock    Float     @default(0)
-  minStockLevel   Float     @default(0) // alert threshold
-  maxStockLevel   Float?
-  unitId          String
-  unit            Unit      @relation(fields: [unitId], references: [id], onDelete: Restrict)
-  averageCost     Float     @default(0)
+  currentStock    Float     @default(0) // Always in base unit
+  minStockLevel   Float     @default(0) // alert threshold in base unit
+  maxStockLevel   Float?    // maximum capacity in base unit
+  baseUnitId      String
+  baseUnit        Unit      @relation("InventoryBaseUnit", fields: [baseUnitId], references: [id], onDelete: Restrict)
+  averageCost     Float     @default(0) // Weighted average cost per base unit
   lastRestocked   DateTime?
   lastStockCheck  DateTime?
   createdAt       DateTime  @default(now())
@@ -472,28 +474,46 @@ model Inventory {
   @@index([productId])
   @@index([currentStock])
   @@index([minStockLevel])
+  @@index([baseUnitId])
 }
 
 model StockMovement {
-  id          String   @id @default(cuid())
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  type        String   // IN, OUT, ADJUSTMENT, WASTE, RETURN
-  quantity    Float
-  unitId      String
-  unit        Unit     @relation(fields: [unitId], references: [id], onDelete: Restrict)
-  unitCost    Float?
-  totalCost   Float?
-  reason      String?
-  reference   String?  // links to Order, Expense, etc.
-  notes       String?
-  performedBy String?  // user ID
-  createdAt   DateTime @default(now())
+  id              String   @id @default(cuid())
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type            String   // IN, OUT, ADJUSTMENT, WASTE, RETURN
+  quantity        Float    // Amount in specified unit
+  unitId          String
+  unit            Unit     @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  quantityInBase  Float    // Auto-calculated amount in base unit
+  unitCost        Float?   // Cost per unit in specified unit
+  totalCost       Float?   // Total cost of the movement
+  reason          String?
+  reference       String?  // links to Order, Expense, etc.
+  notes           String?
+  performedBy     String?  // user ID
+  createdAt       DateTime @default(now())
 
   @@index([productId])
   @@index([type])
   @@index([createdAt])
   @@index([performedBy])
+}
+
+model UnitConversion {
+  id             String   @id @default(cuid())
+  fromUnitId     String
+  fromUnit       Unit     @relation("FromUnit", fields: [fromUnitId], references: [id], onDelete: Cascade)
+  toUnitId       String
+  toUnit         Unit     @relation("ToUnit", fields: [toUnitId], references: [id], onDelete: Cascade)
+  conversionRate Float    // How many target units = 1 source unit
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([fromUnitId, toUnitId])
+  @@index([fromUnitId])
+  @@index([toUnitId])
 }
 
 model RecipeItem {

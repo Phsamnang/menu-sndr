@@ -22,7 +22,7 @@ async function getHandler(request: AuthenticatedRequest) {
         ],
       };
     }
-    
+
     let inventoryWhere = where;
     if (lowStock) {
       const allInventories = await prisma.inventory.findMany({
@@ -44,10 +44,10 @@ async function getHandler(request: AuthenticatedRequest) {
         include: {
           product: {
             include: {
-              unit: true,
+              baseUnit: true,
             },
           },
-          unit: true,
+          baseUnit: true,
         },
         orderBy: { updatedAt: "desc" },
         skip,
@@ -72,9 +72,12 @@ async function getHandler(request: AuthenticatedRequest) {
     );
   } catch (error: any) {
     console.error("Error fetching inventory:", error);
-    return errorResponse("FETCH_INVENTORY_ERROR", "Failed to fetch inventory", 500, [
-      { message: error?.message || String(error) },
-    ]);
+    return errorResponse(
+      "FETCH_INVENTORY_ERROR",
+      "Failed to fetch inventory",
+      500,
+      [{ message: error?.message || String(error) }]
+    );
   }
 }
 
@@ -86,19 +89,32 @@ async function postHandler(request: AuthenticatedRequest) {
       currentStock,
       minStockLevel,
       maxStockLevel,
-      unitId,
       averageCost,
     } = body;
 
-    if (!productId || !unitId) {
+    if (!productId) {
+      return errorResponse("VALIDATION_ERROR", "Product is required", 400, [
+        { field: "productId", message: "Product is required" },
+      ]);
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: { baseUnit: true },
+    });
+
+    if (!product) {
+      return errorResponse("NOT_FOUND", "Product not found", 404, [
+        { field: "productId", message: "Product does not exist" },
+      ]);
+    }
+
+    if (!product.baseUnitId) {
       return errorResponse(
         "VALIDATION_ERROR",
-        "Product and unit are required",
+        "Product must have a base unit configured",
         400,
-        [
-          ...(!productId ? [{ field: "productId", message: "Product is required" }] : []),
-          ...(!unitId ? [{ field: "unitId", message: "Unit is required" }] : []),
-        ]
+        [{ field: "productId", message: "Product has no base unit" }]
       );
     }
 
@@ -121,16 +137,16 @@ async function postHandler(request: AuthenticatedRequest) {
         currentStock: currentStock || 0,
         minStockLevel: minStockLevel || 0,
         maxStockLevel: maxStockLevel || null,
-        unitId,
+        baseUnitId: product.baseUnitId,
         averageCost: averageCost || 0,
       },
       include: {
         product: {
           include: {
-            unit: true,
+            baseUnit: true,
           },
         },
-        unit: true,
+        baseUnit: true,
       },
     });
 
@@ -145,12 +161,14 @@ async function postHandler(request: AuthenticatedRequest) {
         [{ field: "productId", message: "Product already has inventory" }]
       );
     }
-    return errorResponse("CREATE_INVENTORY_ERROR", "Failed to create inventory", 500, [
-      { message: error?.message || String(error) },
-    ]);
+    return errorResponse(
+      "CREATE_INVENTORY_ERROR",
+      "Failed to create inventory",
+      500,
+      [{ message: error?.message || String(error) }]
+    );
   }
 }
 
 export const GET = withAuth(getHandler, ["admin"]);
 export const POST = withAuth(postHandler, ["admin"]);
-

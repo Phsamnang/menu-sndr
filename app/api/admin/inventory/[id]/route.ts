@@ -14,10 +14,10 @@ async function getHandler(
       include: {
         product: {
           include: {
-            unit: true,
+            baseUnit: true,
           },
         },
-        unit: true,
+        baseUnit: true,
       },
     });
 
@@ -48,7 +48,6 @@ async function putHandler(
       currentStock,
       minStockLevel,
       maxStockLevel,
-      unitId,
       averageCost,
       lastStockCheck,
     } = body;
@@ -57,7 +56,6 @@ async function putHandler(
     if (currentStock !== undefined) updateData.currentStock = currentStock;
     if (minStockLevel !== undefined) updateData.minStockLevel = minStockLevel;
     if (maxStockLevel !== undefined) updateData.maxStockLevel = maxStockLevel;
-    if (unitId !== undefined) updateData.unitId = unitId;
     if (averageCost !== undefined) updateData.averageCost = averageCost;
     if (lastStockCheck !== undefined)
       updateData.lastStockCheck = new Date(lastStockCheck);
@@ -69,10 +67,10 @@ async function putHandler(
       include: {
         product: {
           include: {
-            unit: true,
+            baseUnit: true,
           },
         },
-        unit: true,
+        baseUnit: true,
       },
     });
 

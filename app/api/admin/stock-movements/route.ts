@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/utils/api-response";
 import { withAuth, AuthenticatedRequest } from "@/lib/middleware";
+import { UnitConversionService } from "@/services/unit-conversion.service";
 
 async function getHandler(request: AuthenticatedRequest) {
   try {
@@ -36,7 +37,7 @@ async function getHandler(request: AuthenticatedRequest) {
         include: {
           product: {
             include: {
-              unit: true,
+              baseUnit: true,
             },
           },
           unit: true,
@@ -93,11 +94,26 @@ async function postHandler(request: AuthenticatedRequest) {
         "Product, type, quantity, and unit are required",
         400,
         [
-          ...(!productId ? [{ field: "productId", message: "Product is required" }] : []),
+          ...(!productId
+            ? [{ field: "productId", message: "Product is required" }]
+            : []),
           ...(!type ? [{ field: "type", message: "Type is required" }] : []),
-          ...(!quantity ? [{ field: "quantity", message: "Quantity is required" }] : []),
-          ...(!unitId ? [{ field: "unitId", message: "Unit is required" }] : []),
+          ...(!quantity
+            ? [{ field: "quantity", message: "Quantity is required" }]
+            : []),
+          ...(!unitId
+            ? [{ field: "unitId", message: "Unit is required" }]
+            : []),
         ]
+      );
+    }
+
+    if (quantity <= 0) {
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "Quantity must be greater than 0",
+        400,
+        [{ field: "quantity", message: "Quantity must be positive" }]
       );
     }
 
@@ -111,15 +127,108 @@ async function postHandler(request: AuthenticatedRequest) {
       );
     }
 
-    const totalCost = unitCost ? unitCost * quantity : null;
-
     const movement = await prisma.$transaction(async (tx) => {
+      const conversionService = new UnitConversionService(tx);
+      const product = await tx.product.findUnique({
+        where: { id: productId },
+        include: { baseUnit: true },
+      });
+
+      if (!product) {
+        throw new Error("Product not found");
+      }
+
+      if (!product.baseUnitId) {
+        throw new Error("Product has no base unit configured");
+      }
+
+      const movementUnit = await tx.unit.findUnique({
+        where: { id: unitId },
+      });
+
+      if (!movementUnit) {
+        throw new Error("Movement unit not found");
+      }
+
+      let inventory = await tx.inventory.findUnique({
+        where: { productId },
+        include: {
+          baseUnit: true,
+        },
+      });
+
+      if (!inventory) {
+        inventory = await tx.inventory.create({
+          data: {
+            productId,
+            currentStock: 0,
+            minStockLevel: 0,
+            baseUnitId: product.baseUnitId,
+            averageCost: 0,
+          },
+          include: {
+            baseUnit: true,
+          },
+        });
+      }
+
+      const quantityInBase = await conversionService.convertToBaseUnit(
+        productId,
+        quantity,
+        unitId
+      );
+
+      if (quantityInBase <= 0) {
+        throw new Error("Converted quantity must be greater than 0");
+      }
+
+      let unitCostInBase = unitCost || null;
+      if (unitCost && unitCost > 0 && unitId !== product.baseUnitId) {
+        const conversionRate = await conversionService.convert(
+          1,
+          unitId,
+          product.baseUnitId
+        );
+        unitCostInBase = unitCost / conversionRate;
+      }
+
+      const totalCost = unitCost ? unitCost * quantity : null;
+
+      if (type === "OUT" || type === "WASTE") {
+        if (inventory.currentStock < quantityInBase) {
+          throw new Error(
+            `Insufficient stock. Available: ${inventory.currentStock} ${inventory.baseUnit.displayName}, Requested: ${quantityInBase} ${inventory.baseUnit.displayName}`
+          );
+        }
+      }
+
+      let newStock = inventory.currentStock;
+      let newAverageCost = inventory.averageCost;
+
+      if (type === "IN" || type === "RETURN") {
+        newStock = inventory.currentStock + quantityInBase;
+        if (unitCostInBase && unitCostInBase > 0) {
+          const totalValue = inventory.currentStock * inventory.averageCost;
+          const newValue = quantityInBase * unitCostInBase;
+          newAverageCost =
+            newStock > 0 ? (totalValue + newValue) / newStock : unitCostInBase;
+        }
+      } else if (type === "OUT" || type === "WASTE") {
+        newStock = inventory.currentStock - quantityInBase;
+        if (newStock < 0) {
+          throw new Error("Cannot have negative stock");
+        }
+      } else if (type === "ADJUSTMENT") {
+        newStock = quantityInBase;
+      }
+
       const stockMovement = await tx.stockMovement.create({
         data: {
           productId,
           type,
           quantity,
           unitId,
+          quantityInBase,
           unitCost: unitCost || null,
           totalCost,
           reason: reason || null,
@@ -129,47 +238,15 @@ async function postHandler(request: AuthenticatedRequest) {
         },
       });
 
-      let inventory = await tx.inventory.findUnique({
-        where: { productId },
-      });
-
-      if (!inventory) {
-        inventory = await tx.inventory.create({
-          data: {
-            productId,
-            currentStock: 0,
-            minStockLevel: 0,
-            unitId,
-            averageCost: unitCost || 0,
-          },
-        });
-      }
-
-      let newStock = inventory.currentStock;
-      let newAverageCost = inventory.averageCost;
-
-      if (type === "IN" || type === "RETURN") {
-        newStock = inventory.currentStock + quantity;
-        if (unitCost && unitCost > 0) {
-          const totalValue = inventory.currentStock * inventory.averageCost;
-          const newValue = quantity * unitCost;
-          newAverageCost = (totalValue + newValue) / newStock;
-        }
-      } else if (type === "OUT" || type === "WASTE") {
-        newStock = Math.max(0, inventory.currentStock - quantity);
-      } else if (type === "ADJUSTMENT") {
-        newStock = quantity;
-      }
-
       const updateData: any = {
         currentStock: newStock,
         averageCost: newAverageCost,
+        lastStockCheck: new Date(),
       };
 
       if (type === "IN") {
         updateData.lastRestocked = new Date();
       }
-      updateData.lastStockCheck = new Date();
 
       await tx.inventory.update({
         where: { productId },
@@ -184,7 +261,7 @@ async function postHandler(request: AuthenticatedRequest) {
       include: {
         product: {
           include: {
-            unit: true,
+            baseUnit: true,
           },
         },
         unit: true,
@@ -198,6 +275,17 @@ async function postHandler(request: AuthenticatedRequest) {
     );
   } catch (error: any) {
     console.error("Error creating stock movement:", error);
+
+    if (
+      error?.message?.includes("conversion") ||
+      error?.message?.includes("Insufficient stock") ||
+      error?.message?.includes("negative stock")
+    ) {
+      return errorResponse("UNIT_CONVERSION_ERROR", error.message, 400, [
+        { field: "quantity", message: error.message },
+      ]);
+    }
+
     return errorResponse(
       "CREATE_STOCK_MOVEMENT_ERROR",
       "Failed to create stock movement",
@@ -209,4 +297,3 @@ async function postHandler(request: AuthenticatedRequest) {
 
 export const GET = withAuth(getHandler, ["admin"]);
 export const POST = withAuth(postHandler, ["admin"]);
-
