@@ -97,7 +97,7 @@ export default function CategoriesPage() {
           <div className="flex gap-4">
             <Link
               href="/admin"
-              className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
             >
               ត្រលប់
             </Link>
@@ -113,7 +113,7 @@ export default function CategoriesPage() {
                 });
                 setIsModalOpen(true);
               }}
-              className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
             >
               បន្ថែមប្រភេទ
             </button>
