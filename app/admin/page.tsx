@@ -239,7 +239,7 @@ export default function AdminPage() {
             )}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 bg-slate-700 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors"
+              className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary transition-colors"
             >
               <span>ចេញ</span>
             </button>
@@ -325,3 +325,4 @@ export default function AdminPage() {
     </main>
   );
 }
+
