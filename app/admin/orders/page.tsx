@@ -316,7 +316,7 @@ export default function OrdersPage() {
         (o) => o.status === "new" || o.status === "on_process"
       );
 
-      if (activeOrder && activeOrder.status !== "done") {
+      if (activeOrder && activeOrder.status !== "completed") {
         // If table is occupied, load order directly without asking
         if (table.status === "occupied") {
           setSelectedTable(table);
@@ -461,7 +461,7 @@ export default function OrdersPage() {
         toast.error("សូមជ្រើសរើសតុមុន");
         return;
       }
-      if (orderData?.status === "done") {
+      if (orderData?.status === "completed") {
         toast.error(
           "ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចបន្ថែមមុខម្ហូបបានទេ"
         );
@@ -481,7 +481,7 @@ export default function OrdersPage() {
 
   const updateQuantity = useCallback(
     (itemId: string, delta: number) => {
-      if (orderData?.status === "done") {
+      if (orderData?.status === "completed") {
         toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចកែប្រែបានទេ");
         return;
       }
@@ -499,7 +499,7 @@ export default function OrdersPage() {
 
   const removeFromCart = useCallback(
     (itemId: string) => {
-      if (orderData?.status === "done") {
+      if (orderData?.status === "completed") {
         toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចលុបបានទេ");
         return;
       }
@@ -509,7 +509,7 @@ export default function OrdersPage() {
   );
 
   const clearCart = useCallback(() => {
-    if (orderData?.status === "done") {
+    if (orderData?.status === "completed") {
       toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចលុបបានទេ");
       return;
     }
@@ -586,7 +586,7 @@ export default function OrdersPage() {
         throw new Error("Order not found");
       }
       return orderService.update(currentOrder.id, {
-        status: "done",
+        status: "completed",
       });
     },
     onSuccess: (data) => {
@@ -623,7 +623,7 @@ export default function OrdersPage() {
 
   const canCancelOrder = useMemo(() => {
     if (!orderData) return false;
-    if (orderData.status === "done") return false;
+    if (orderData.status === "completed") return false;
     return orderItems.length === 0 || total === 0;
   }, [orderData, orderItems.length, total]);
 
@@ -650,7 +650,7 @@ export default function OrdersPage() {
       return;
     }
 
-    if (orderData?.status === "done") {
+    if (orderData?.status === "completed") {
       toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ!");
       return;
     }
@@ -1055,7 +1055,7 @@ export default function OrdersPage() {
                           disabled={
                             price === 0 ||
                             addItemMutation.isPending ||
-                            orderData?.status === "done"
+                            orderData?.status === "completed"
                           }
                           className="w-full px-3 py-2.5 bg-slate-800 text-white text-xs sm:text-sm rounded-lg active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation"
                         >
@@ -1126,7 +1126,7 @@ export default function OrdersPage() {
           <div className="flex-1 overflow-y-auto p-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-slate-800">មុខម្ហូប</h3>
-              {orderItems.length > 0 && orderData?.status !== "done" && (
+              {orderItems.length > 0 && orderData?.status !== "completed" && (
                 <button
                   onClick={clearCart}
                   className="text-xs text-red-600 hover:text-red-700 font-medium"
@@ -1199,7 +1199,7 @@ export default function OrdersPage() {
                               onClick={() => removeFromCart(item.id)}
                               disabled={
                                 deleteItemMutation.isPending ||
-                                orderData?.status === "done"
+                                orderData?.status === "completed"
                               }
                               className="text-red-500 active:text-red-600 md:hover:text-red-600 text-sm disabled:opacity-50 touch-manipulation p-1 flex-shrink-0"
                             >
@@ -1285,7 +1285,7 @@ export default function OrdersPage() {
               </div>
             </div>
 
-            {orderData?.status === "done" && (
+            {orderData?.status === "completed" && (
               <div className="p-3 bg-green-50 border border-green-200 rounded-lg mb-4">
                 <div className="flex items-center gap-2">
                   <svg
@@ -1318,7 +1318,7 @@ export default function OrdersPage() {
                   onChange={(e) =>
                     setDiscountType(e.target.value as "percentage" | "amount")
                   }
-                  disabled={orderData?.status === "done"}
+                  disabled={orderData?.status === "completed"}
                   className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
                 >
                   <option value="percentage">%</option>
@@ -1333,7 +1333,7 @@ export default function OrdersPage() {
                     handleDiscountChange(parseFloat(e.target.value) || 0)
                   }
                   placeholder="0"
-                  disabled={orderData?.status === "done"}
+                  disabled={orderData?.status === "completed"}
                   className="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
                 />
               </div>
@@ -1406,12 +1406,12 @@ export default function OrdersPage() {
                 disabled={
                   !orderItems ||
                   orderItems.length === 0 ||
-                  orderData?.status === "done" ||
+                  orderData?.status === "completed" ||
                   completePaymentMutation.isPending
                 }
                 className="flex-1 py-3 bg-slate-800 text-white rounded-lg font-semibold active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base"
               >
-                {orderData?.status === "done"
+                {orderData?.status === "completed"
                   ? "បានបង់រួចរាល់"
                   : completePaymentMutation.isPending
                   ? "កំពុងដំណើរការ..."
