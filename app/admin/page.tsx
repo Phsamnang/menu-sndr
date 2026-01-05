@@ -160,39 +160,9 @@ export default function AdminPage() {
           allowedRoles: ["admin"],
         },
         {
-          href: "/admin/settings",
-          title: "ការកំណត់ប្រព័ន្ធ",
-          description: "គ្រប់គ្រងការកំណត់ប្រព័ន្ធ",
-          allowedRoles: ["admin"],
-        },
-        {
           href: "/admin/exchange-rates",
           title: "អត្រាប្តូរប្រាក់",
           description: "គ្រប់គ្រងអត្រាប្តូរប្រាក់",
-          allowedRoles: ["admin"],
-        },
-        {
-          href: "/admin/notifications",
-          title: "ការជូនដំណឹង",
-          description: "មើលការជូនដំណឹង",
-          allowedRoles: ["admin"],
-        },
-        {
-          href: "/admin/audit-logs",
-          title: "កំណត់ត្រា",
-          description: "មើលកំណត់ត្រាប្រព័ន្ធ",
-          allowedRoles: ["admin"],
-        },
-        {
-          href: "/admin/shifts",
-          title: "ការផ្លាស់ប្តូរ",
-          description: "គ្រប់គ្រងការផ្លាស់ប្តូរបុគ្គលិក",
-          allowedRoles: ["admin"],
-        },
-        {
-          href: "/admin/cash-sessions",
-          title: "សម័យប្រាក់សម្រាប់",
-          description: "គ្រប់គ្រងសម័យប្រាក់សម្រាប់",
           allowedRoles: ["admin"],
         },
       ],
@@ -325,4 +295,3 @@ export default function AdminPage() {
     </main>
   );
 }
-
