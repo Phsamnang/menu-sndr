@@ -7,10 +7,12 @@ export interface OrderItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  status?: string;
   menuItem: {
     id: string;
     name: string;
     image: string;
+    isCook?: boolean;
     category: {
       displayName: string;
     };

@@ -2,12 +2,17 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import OptimizedImage from "@/components/OptimizedImage";
 import InvoicePrint from "@/components/InvoicePrint";
 import { apiClientJson } from "@/utils/api-client";
-import { orderService } from "@/services/order.service";
+import {
+  orderService,
+  type OrderItem,
+  type Order,
+} from "@/services/order.service";
 import { shopInfoService } from "@/services/shop-info.service";
 import CreateOrderModal from "./components/CreateOrderModal";
 import ViewOrderModal from "./components/ViewOrderModal";
@@ -54,38 +59,8 @@ interface MenuItem {
   };
 }
 
-interface OrderItem {
-  id: string;
-  menuItemId: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  menuItem: {
-    id: string;
-    name: string;
-    image: string;
-    category: {
-      displayName: string;
-    };
-  };
-}
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  tableId: string | null;
-  customerName: string | null;
-  status: string;
-  discountType: string | null;
-  discountValue: number | null;
-  subtotal: number;
-  discountAmount: number;
-  total: number;
-  items: OrderItem[];
-  createdAt?: string;
-}
-
 export default function OrdersPage() {
+  const router = useRouter();
   const [selectedTable, setSelectedTable] = useState<TableItem | null>(null);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -303,8 +278,9 @@ export default function OrdersPage() {
       });
     },
     onSuccess: (data) => {
-      setCurrentOrder(data);
       queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["activeOrders"] });
+      router.push(`/admin/orders/${data.id}`);
     },
   });
 
@@ -317,21 +293,8 @@ export default function OrdersPage() {
       );
 
       if (activeOrder && activeOrder.status !== "completed") {
-        // If table is occupied, load order directly without asking
-        if (table.status === "occupied") {
-          setSelectedTable(table);
-          setSelectedCategory(null);
-          setSearchQuery("");
-          setCustomerName("");
-          setDiscountValue(0);
-          setItemQuantities({});
-          setCurrentOrder(activeOrder);
-        } else {
-          // Show confirmation popup to view order details for other statuses
-          setPendingTable(table);
-          setPendingOrder(activeOrder);
-          setShowViewOrderConfirm(true);
-        }
+        // Navigate to order detail page
+        router.push(`/admin/orders/${activeOrder.id}`);
       } else if (table.status === "available") {
         // Show confirmation popup before creating new order
         setPendingTable(table);
@@ -343,23 +306,17 @@ export default function OrdersPage() {
         );
       }
     },
-    [ordersByTable]
+    [ordersByTable, router]
   );
 
   const handleConfirmViewOrder = useCallback(() => {
     if (!pendingTable || !pendingOrder) return;
 
-    setSelectedTable(pendingTable);
-    setSelectedCategory(null);
-    setSearchQuery("");
-    setCustomerName("");
-    setDiscountValue(0);
-    setItemQuantities({});
-    setCurrentOrder(pendingOrder);
+    router.push(`/admin/orders/${pendingOrder.id}`);
     setShowViewOrderConfirm(false);
     setPendingTable(null);
     setPendingOrder(null);
-  }, [pendingTable, pendingOrder]);
+  }, [pendingTable, pendingOrder, router]);
 
   const handleCancelViewOrder = useCallback(() => {
     setShowViewOrderConfirm(false);
@@ -503,9 +460,14 @@ export default function OrdersPage() {
         toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចលុបបានទេ");
         return;
       }
+      const item = orderItems.find((i: OrderItem) => i.id === itemId);
+      if (item && item.menuItem.isCook && item.status === "served") {
+        toast.error("មិនអាចលុបមុខម្ហូបដែលត្រូវការចម្អិន និងបានដឹកជញ្ជូនរួចហើយ");
+        return;
+      }
       deleteItemMutation.mutate(itemId);
     },
-    [orderData?.status, deleteItemMutation]
+    [orderData?.status, orderItems, deleteItemMutation]
   );
 
   const clearCart = useCallback(() => {
@@ -640,7 +602,7 @@ export default function OrdersPage() {
     setShowCancelOrderConfirm(false);
   }, [cancelOrderMutation]);
 
-  const handleCancelCancelOrder = useCallback(() => {
+  const handleCloseCancelOrderModal = useCallback(() => {
     setShowCancelOrderConfirm(false);
   }, []);
 
@@ -1080,24 +1042,53 @@ export default function OrdersPage() {
               <h2 className="text-lg md:text-xl font-bold text-slate-800">
                 ការបញ្ជាទិញ
               </h2>
-              <button
-                onClick={() => setShowCart(false)}
-                className="lg:hidden text-slate-400 active:text-slate-600"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div className="flex items-center gap-2">
+                {currentOrder?.id && (
+                  <Link
+                    href={`/admin/orders/${currentOrder.id}`}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="មើលព័ត៌មានលម្អិត"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  </Link>
+                )}
+                <button
+                  onClick={() => setShowCart(false)}
+                  className="lg:hidden text-slate-400 active:text-slate-600"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
             <div className="space-y-3">
               <div>
@@ -1199,7 +1190,9 @@ export default function OrdersPage() {
                               onClick={() => removeFromCart(item.id)}
                               disabled={
                                 deleteItemMutation.isPending ||
-                                orderData?.status === "completed"
+                                orderData?.status === "completed" ||
+                                (item.menuItem.isCook &&
+                                  item.status === "served")
                               }
                               className="text-red-500 active:text-red-600 md:hover:text-red-600 text-sm disabled:opacity-50 touch-manipulation p-1 flex-shrink-0"
                             >
@@ -1219,6 +1212,36 @@ export default function OrdersPage() {
                             </button>
                           </div>
                           <div className="space-y-1">
+                            {item.status && (
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs text-slate-600">
+                                  ស្ថានភាព:
+                                </span>
+                                <span
+                                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                    item.status === "pending"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : item.status === "preparing"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : item.status === "ready"
+                                      ? "bg-purple-100 text-purple-800"
+                                      : item.status === "served"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-slate-100 text-slate-800"
+                                  }`}
+                                >
+                                  {item.status === "pending"
+                                    ? "រង់ចាំ"
+                                    : item.status === "preparing"
+                                    ? "កំពុងរៀបចំ"
+                                    : item.status === "ready"
+                                    ? "រួចរាល់"
+                                    : item.status === "served"
+                                    ? "បានដឹកជញ្ជូន"
+                                    : item.status}
+                                </span>
+                              </div>
+                            )}
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-xs text-slate-600">
                                 តម្លៃ:
@@ -1460,7 +1483,7 @@ export default function OrdersPage() {
         orderNumber={orderData?.orderNumber || ""}
         isCancelling={cancelOrderMutation.isPending}
         onConfirm={handleConfirmCancelOrder}
-        onCancel={handleCancelCancelOrder}
+        onCancel={handleCloseCancelOrderModal}
       />
     </div>
   );
