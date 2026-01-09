@@ -344,15 +344,9 @@ export default function OrdersPage() {
   const handleConfirmCreateOrder = useCallback(() => {
     if (!pendingTable) return;
 
-    setSelectedTable(pendingTable);
-    setSelectedCategory(null);
-    setSearchQuery("");
-    setCustomerName("");
-    setDiscountValue(0);
-    setItemQuantities({});
     setShowCreateOrderConfirm(false);
 
-    // Create new order
+    // Create new order - navigation happens in createOrderMutation.onSuccess
     createOrderMutation.mutate(pendingTable.id);
     setPendingTable(null);
   }, [pendingTable, createOrderMutation]);
@@ -658,852 +652,115 @@ export default function OrdersPage() {
     }
   }, [orderData, orderItems]);
 
-  if (!selectedTable) {
-    if (tablesLoading) {
-      return <TableSelectionSkeleton />;
-    }
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-800">
-              ជ្រើសរើសតុ
-            </h1>
-            <Link
-              href="/admin"
-              className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 text-sm md:text-base w-full sm:w-auto text-center"
-            >
-              ត្រលប់
-            </Link>
-          </div>
-
-          <div className="mb-6">
-            <p className="text-slate-600 mb-4">
-              សូមជ្រើសរើសតុដើម្បីចាប់ផ្តើមការបញ្ជាទិញ
-            </p>
-          </div>
-
-          {tables.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-              <svg
-                className="w-12 h-12 md:w-16 md:h-16 text-slate-300 mx-auto mb-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                />
-              </svg>
-              <p className="text-slate-500 text-base md:text-lg">មិនមានតុទេ</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(tablesByType).map(([typeName, typeTables]) => (
-                <div key={typeName} className="space-y-3">
-                  <div className="flex items-center gap-3 px-2">
-                    <div className="h-1 w-12 bg-gradient-to-r from-slate-800 to-slate-600 rounded-full"></div>
-                    <h2 className="text-lg sm:text-xl font-bold text-slate-800">
-                      {typeName}
-                    </h2>
-                    <div className="flex-1 h-1 bg-gradient-to-r from-slate-300 to-transparent rounded-full"></div>
-                    <span className="text-xs sm:text-sm font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
-                      {typeTables.length}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-                    {typeTables.map((table) => {
-                      const isAvailable = table.status === "available";
-                      const tableOrders = ordersByTable[table.id] || [];
-                      const hasActiveOrder = tableOrders.some(
-                        (o) => o.status === "new" || o.status === "on_process"
-                      );
-                      const canSelect = isAvailable || hasActiveOrder;
-
-                      return (
-                        <button
-                          key={table.id}
-                          onClick={() => handleTableSelect(table)}
-                          disabled={
-                            !canSelect && table.status === "maintenance"
-                          }
-                          className={`rounded-lg shadow-md p-3 md:p-6 transition-all border-2 ${
-                            canSelect || hasActiveOrder
-                              ? "hover:shadow-xl cursor-pointer active:scale-95 md:hover:scale-105"
-                              : table.status === "maintenance"
-                              ? "opacity-75 cursor-not-allowed"
-                              : "hover:shadow-xl cursor-pointer active:scale-95 md:hover:scale-105"
-                          } ${getTableStatusColor(table.status)}`}
-                        >
-                          <div className="text-center">
-                            <h3
-                              className={`font-semibold mb-2 text-sm md:text-base ${
-                                isAvailable
-                                  ? "text-slate-900"
-                                  : "text-slate-700"
-                              }`}
-                            >
-                              {table.name || `តុ ${table.number}`}
-                            </h3>
-                            <span
-                              className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
-                                isAvailable
-                                  ? "bg-green-200 text-green-800"
-                                  : table.status === "occupied"
-                                  ? "bg-red-200 text-red-800"
-                                  : table.status === "reserved"
-                                  ? "bg-yellow-200 text-yellow-800"
-                                  : "bg-gray-200 text-gray-800"
-                              }`}
-                            >
-                              {getTableStatusLabel(table.status)}
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <CreateOrderModal
-          isOpen={showCreateOrderConfirm}
-          table={pendingTable}
-          isCreating={createOrderMutation.isPending}
-          onConfirm={handleConfirmCreateOrder}
-          onCancel={handleCancelCreateOrder}
-        />
-
-        <ViewOrderModal
-          isOpen={showViewOrderConfirm}
-          table={pendingTable}
-          order={pendingOrder}
-          onConfirm={handleConfirmViewOrder}
-          onCancel={handleCancelViewOrder}
-        />
-      </div>
-    );
+  if (tablesLoading) {
+    return <TableSelectionSkeleton />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="flex flex-col lg:flex-row h-screen relative">
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 lg:pb-6 relative z-10">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
-              <div className="w-full sm:w-auto">
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-3 sm:mb-0">
-                  ការបញ្ជាទិញ
-                </h1>
-                <div className="mt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                  <div className="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs sm:text-sm font-medium text-center sm:text-left">
-                    តុ: {selectedTable.number} -{" "}
-                    {selectedTable.tableType.displayName}
-                  </div>
-                  <button
-                    onClick={handleClearTable}
-                    className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs sm:text-sm hover:bg-red-600 transition-colors"
-                  >
-                    ផ្លាស់ប្តូរតុ
-                  </button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-800">
+            ជ្រើសរើសតុ
+          </h1>
+          <Link
+            href="/admin"
+            className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 text-sm md:text-base w-full sm:w-auto text-center"
+          >
+            ត្រលប់
+          </Link>
+        </div>
+
+        <div className="mb-6">
+          <p className="text-slate-600 mb-4">
+            សូមជ្រើសរើសតុដើម្បីចាប់ផ្តើមការបញ្ជាទិញ
+          </p>
+        </div>
+
+        {tables.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+            <svg
+              className="w-12 h-12 md:w-16 md:h-16 text-slate-300 mx-auto mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+              />
+            </svg>
+            <p className="text-slate-500 text-base md:text-lg">មិនមានតុទេ</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(tablesByType).map(([typeName, typeTables]) => (
+              <div key={typeName} className="space-y-3">
+                <div className="flex items-center gap-3 px-2">
+                  <div className="h-1 w-12 bg-gradient-to-r from-slate-800 to-slate-600 rounded-full"></div>
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-800">
+                    {typeName}
+                  </h2>
+                  <div className="flex-1 h-1 bg-gradient-to-r from-slate-300 to-transparent rounded-full"></div>
+                  <span className="text-xs sm:text-sm font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                    {typeTables.length}
+                  </span>
                 </div>
-              </div>
-              <div className="flex gap-2 w-full sm:w-auto">
-                {currentOrder?.id && (
-                  <Link
-                    href={`/admin/orders/${currentOrder.id}`}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm flex items-center gap-2 flex-1 sm:flex-initial justify-center"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      />
-                    </svg>
-                    ទៅការបញ្ជាទិញ
-                  </Link>
-                )}
-                <button
-                  onClick={() => setShowCart(!showCart)}
-                  className="lg:hidden px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 text-sm flex items-center gap-2 flex-1 sm:flex-initial justify-center"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                    />
-                  </svg>
-                  កន្ត្រក់ ({orderItems.length})
-                </button>
-                <Link
-                  href="/admin"
-                  className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 text-sm flex-1 sm:flex-initial text-center"
-                >
-                  ត្រលប់
-                </Link>
-              </div>
-            </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+                  {typeTables.map((table) => {
+                    const isAvailable = table.status === "available";
+                    const tableOrders = ordersByTable[table.id] || [];
+                    const hasActiveOrder = tableOrders.some(
+                      (o) => o.status === "new" || o.status === "on_process"
+                    );
+                    const canSelect = isAvailable || hasActiveOrder;
 
-            <div className="mb-4 md:mb-6 flex gap-2 md:gap-4 items-center">
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  placeholder="ស្វែងរកមុខម្ហូប..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2.5 md:py-3 pl-10 text-sm md:text-base border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
-                />
-                <svg
-                  className="absolute left-3 top-2.5 md:top-3.5 w-4 h-4 md:w-5 md:h-5 text-slate-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-
-            <div className="mb-4 md:mb-6">
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className={`flex-shrink-0 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-sm md:text-base font-medium transition-all ${
-                    selectedCategory === null
-                      ? "bg-slate-800 text-white"
-                      : "bg-white text-slate-700 active:bg-slate-100"
-                  }`}
-                >
-                  ទាំងអស់
-                </button>
-                {categoriesList.map((catName) => {
-                  const category = categories.find((c) => c.name === catName);
-                  return (
-                    <button
-                      key={catName}
-                      onClick={() => setSelectedCategory(catName)}
-                      className={`flex-shrink-0 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-sm md:text-base font-medium transition-all ${
-                        selectedCategory === catName
-                          ? "bg-slate-800 text-white"
-                          : "bg-white text-slate-700 active:bg-slate-100"
-                      }`}
-                    >
-                      {category?.displayName || catName}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {menuLoading ? (
-              <MenuGridSkeleton />
-            ) : filteredMenu.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-                <svg
-                  className="w-16 h-16 text-slate-300 mx-auto mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                <p className="text-slate-500">រកមិនឃើញមុខម្ហូបទេ</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-                {filteredMenu.map((item) => {
-                  const tableTypeName = selectedTable.tableType.name;
-                  const price = item.prices[tableTypeName] || 0;
-
-                  return (
-                    <div
-                      key={item.id}
-                      className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden active:shadow-md md:hover:shadow-md transition-shadow relative z-10"
-                      style={{ pointerEvents: "auto" }}
-                    >
-                      <div className="relative h-32 md:h-40 bg-slate-100">
-                        {item.image ? (
-                          <OptimizedImage
-                            src={item.image}
-                            alt={item.name}
-                            width={200}
-                            height={160}
-                            className="w-full h-full object-cover"
-                            quality={85}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <svg
-                              className="w-12 h-12 text-slate-300"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-3">
-                        <h3 className="font-semibold text-slate-900 mb-1 text-sm line-clamp-2">
-                          {item.name}
-                        </h3>
-                        {item.description && (
-                          <p className="text-xs text-slate-600 mb-2 line-clamp-2">
-                            {item.description}
-                          </p>
-                        )}
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-bold text-orange-500">
-                            {price.toLocaleString("km-KH")}៛
+                    return (
+                      <button
+                        key={table.id}
+                        onClick={() => handleTableSelect(table)}
+                        disabled={!canSelect && table.status === "maintenance"}
+                        className={`rounded-lg shadow-md p-3 md:p-6 transition-all border-2 ${
+                          canSelect || hasActiveOrder
+                            ? "hover:shadow-xl cursor-pointer active:scale-95 md:hover:scale-105"
+                            : table.status === "maintenance"
+                            ? "opacity-75 cursor-not-allowed"
+                            : "hover:shadow-xl cursor-pointer active:scale-95 md:hover:scale-105"
+                        } ${getTableStatusColor(table.status)}`}
+                      >
+                        <div className="text-center">
+                          <h3
+                            className={`font-semibold mb-2 text-sm md:text-base ${
+                              isAvailable ? "text-slate-900" : "text-slate-700"
+                            }`}
+                          >
+                            {table.name || `តុ ${table.number}`}
+                          </h3>
+                          <span
+                            className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
+                              isAvailable
+                                ? "bg-green-200 text-green-800"
+                                : table.status === "occupied"
+                                ? "bg-red-200 text-red-800"
+                                : table.status === "reserved"
+                                ? "bg-yellow-200 text-yellow-800"
+                                : "bg-gray-200 text-gray-800"
+                            }`}
+                          >
+                            {getTableStatusLabel(table.status)}
                           </span>
                         </div>
-                        <div className="mb-2">
-                          <label className="block text-xs text-slate-600 mb-1">
-                            ចំនួន
-                          </label>
-                          <input
-                            type="number"
-                            value={
-                              itemQuantityInputs[item.id] !== undefined
-                                ? itemQuantityInputs[item.id]
-                                : itemQuantities[item.id] || ""
-                            }
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setItemQuantityInputs((prev) => ({
-                                ...prev,
-                                [item.id]: value,
-                              }));
-                            }}
-                            onBlur={(e) => {
-                              const value = e.target.value;
-                              const numValue = parseInt(value, 10);
-                              if (
-                                value === "" ||
-                                isNaN(numValue) ||
-                                numValue < 1
-                              ) {
-                                const finalValue = 1;
-                                setItemQuantities((prev) => ({
-                                  ...prev,
-                                  [item.id]: finalValue,
-                                }));
-                                setItemQuantityInputs((prev) => {
-                                  const next = { ...prev };
-                                  delete next[item.id];
-                                  return next;
-                                });
-                              } else {
-                                setItemQuantity(item.id, numValue);
-                                setItemQuantityInputs((prev) => {
-                                  const next = { ...prev };
-                                  delete next[item.id];
-                                  return next;
-                                });
-                              }
-                            }}
-                            onFocus={(e) => e.target.select()}
-                            onClick={(e) => e.stopPropagation()}
-                            placeholder="1"
-                            className="w-full px-2 py-2 text-center text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-500"
-                          />
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addToCart(item);
-                          }}
-                          disabled={
-                            price === 0 ||
-                            addItemMutation.isPending ||
-                            orderData?.status === "completed"
-                          }
-                          className="w-full px-3 py-2.5 bg-slate-800 text-white text-xs sm:text-sm rounded-lg active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation relative z-20"
-                          style={{ pointerEvents: "auto" }}
-                        >
-                          + បន្ថែមទៅកន្ត្រក់
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div
-          className={`fixed lg:static inset-x-0 bottom-0 lg:inset-auto lg:w-96 bg-white border-t lg:border-l border-slate-200 flex flex-col z-30 lg:z-auto transition-transform duration-300 ease-in-out ${
-            showCart ? "translate-y-0" : "translate-y-full lg:translate-y-0"
-          } lg:translate-y-0 max-h-[85vh] lg:max-h-none shadow-2xl lg:shadow-none`}
-          style={{ pointerEvents: "auto" }}
-        >
-          <div className="p-4 border-b border-slate-200 flex-shrink-0">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg md:text-xl font-bold text-slate-800">
-                ការបញ្ជាទិញ
-              </h2>
-              <div className="flex items-center gap-2">
-                {currentOrder?.id && (
-                  <Link
-                    href={`/admin/orders/${currentOrder.id}`}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="មើលព័ត៌មានលម្អិត"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      />
-                    </svg>
-                  </Link>
-                )}
-                <button
-                  onClick={() => setShowCart(false)}
-                  className="lg:hidden text-slate-400 active:text-slate-600"
-                >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">
-                  តុ
-                </label>
-                <div className="px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-xs sm:text-sm">
-                  {selectedTable.name || selectedTable.number}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">
-                  ឈ្មោះអតិថិជន
-                </label>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => handleCustomerNameChange(e.target.value)}
-                  placeholder="ឈ្មោះអតិថិជន..."
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
-                />
-              </div>
-            </div>
+            ))}
           </div>
-
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-slate-800">មុខម្ហូប</h3>
-              {orderItems.length > 0 && orderData?.status !== "completed" && (
-                <button
-                  onClick={clearCart}
-                  className="text-xs text-red-600 hover:text-red-700 font-medium"
-                >
-                  លុបទាំងអស់
-                </button>
-              )}
-            </div>
-
-            {orderItems.length === 0 ? (
-              <div className="text-center py-8 md:py-12">
-                <svg
-                  className="w-12 h-12 md:w-16 md:h-16 text-slate-300 mx-auto mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                  />
-                </svg>
-                <p className="text-slate-500 text-xs sm:text-sm">កន្ត្រក់ទទេ</p>
-              </div>
-            ) : (
-              <div className="space-y-2 md:space-y-3">
-                {orderItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="bg-slate-50 rounded-lg p-2.5 md:p-3 border border-slate-200"
-                  >
-                    <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
-                      <div className="flex gap-2 md:gap-3 flex-1 min-w-0">
-                        <div className="w-16 h-16 md:w-16 md:h-16 bg-slate-200 rounded overflow-hidden flex-shrink-0">
-                          {item.menuItem.image ? (
-                            <OptimizedImage
-                              src={item.menuItem.image}
-                              alt={item.menuItem.name}
-                              width={64}
-                              height={64}
-                              className="w-full h-full object-cover"
-                              quality={75}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <svg
-                                className="w-8 h-8 text-slate-300"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <h4 className="font-medium text-slate-900 text-sm sm:text-base flex-1 min-w-0">
-                              {item.menuItem.name}
-                            </h4>
-                            <button
-                              onClick={() => removeFromCart(item.id)}
-                              disabled={
-                                deleteItemMutation.isPending ||
-                                orderData?.status === "completed" ||
-                                (item.menuItem.isCook &&
-                                  item.status === "served")
-                              }
-                              className="text-red-500 active:text-red-600 md:hover:text-red-600 text-sm disabled:opacity-50 touch-manipulation p-1 flex-shrink-0"
-                            >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                            </button>
-                          </div>
-                          <div className="space-y-1">
-                            {item.status && (
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="text-xs text-slate-600">
-                                  ស្ថានភាព:
-                                </span>
-                                <span
-                                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                    item.status === "pending"
-                                      ? "bg-yellow-100 text-yellow-800"
-                                      : item.status === "preparing"
-                                      ? "bg-blue-100 text-blue-800"
-                                      : item.status === "ready"
-                                      ? "bg-purple-100 text-purple-800"
-                                      : item.status === "served"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-slate-100 text-slate-800"
-                                  }`}
-                                >
-                                  {item.status === "pending"
-                                    ? "រង់ចាំ"
-                                    : item.status === "preparing"
-                                    ? "កំពុងរៀបចំ"
-                                    : item.status === "ready"
-                                    ? "រួចរាល់"
-                                    : item.status === "served"
-                                    ? "បានដឹកជញ្ជូន"
-                                    : item.status}
-                                </span>
-                              </div>
-                            )}
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs text-slate-600">
-                                តម្លៃ:
-                              </span>
-                              <span className="text-xs sm:text-sm text-slate-700 font-medium">
-                                {item.unitPrice.toLocaleString("km-KH")}៛
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs text-slate-600">
-                                ចំនួន:
-                              </span>
-                              <span className="text-xs sm:text-sm font-medium text-slate-900">
-                                {item.quantity}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200">
-                              <span className="text-xs sm:text-sm font-semibold text-slate-900">
-                                សរុប:
-                              </span>
-                              <span className="text-sm sm:text-base font-bold text-orange-500">
-                                {item.totalPrice.toLocaleString("km-KH")}៛
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="border-t border-slate-200 p-4 space-y-4 flex-shrink-0 bg-white">
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs sm:text-sm">
-                <span className="text-slate-600">សរុបមុនបញ្ចុះតម្លៃ:</span>
-                <span className="font-medium text-slate-900">
-                  {subtotal.toLocaleString("km-KH")}៛
-                </span>
-              </div>
-              {discountAmount > 0 && (
-                <div className="flex justify-between text-xs sm:text-sm text-green-600">
-                  <span>
-                    បញ្ចុះតម្លៃ
-                    {discountType === "percentage"
-                      ? ` (${discountValue}%)`
-                      : ""}
-                    :
-                  </span>
-                  <span className="font-medium">
-                    -{discountAmount.toLocaleString("km-KH")}៛
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between font-bold text-base sm:text-lg border-t-2 border-indigo-200 pt-2">
-                <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  សរុប:
-                </span>
-                <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent text-lg sm:text-xl">
-                  {total.toLocaleString("km-KH")}៛
-                </span>
-              </div>
-            </div>
-
-            {orderData?.status === "completed" && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-lg mb-4">
-                <div className="flex items-center gap-2">
-                  <svg
-                    className="w-5 h-5 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span className="text-sm font-semibold text-green-800">
-                    ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">
-                បញ្ចុះតម្លៃ
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={discountType}
-                  onChange={(e) =>
-                    setDiscountType(e.target.value as "percentage" | "amount")
-                  }
-                  disabled={orderData?.status === "completed"}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
-                >
-                  <option value="percentage">%</option>
-                  <option value="amount">៛</option>
-                </select>
-                <input
-                  type="number"
-                  min="0"
-                  step={discountType === "percentage" ? "1" : "100"}
-                  value={discountValue}
-                  onChange={(e) =>
-                    handleDiscountChange(parseFloat(e.target.value) || 0)
-                  }
-                  placeholder="0"
-                  disabled={orderData?.status === "completed"}
-                  className="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">
-                វិធីសាស្ត្រទូទាត់
-              </label>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                disabled={orderData?.status === "done"}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
-              >
-                <option value="cash">សាច់ប្រាក់</option>
-                <option value="card">កាត</option>
-                <option value="bank_transfer">ផ្ទេរប្រាក់</option>
-              </select>
-            </div>
-
-            {canCancelOrder && (
-              <button
-                onClick={handleCancelOrder}
-                disabled={cancelOrderMutation.isPending}
-                className="w-full py-3 bg-red-600 text-white rounded-lg font-semibold active:bg-red-700 md:hover:bg-red-700 transition-colors disabled:bg-red-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base flex items-center justify-center gap-2 mb-2"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-                {cancelOrderMutation.isPending
-                  ? "កំពុងលុប..."
-                  : "លុបការបញ្ជាទិញ"}
-              </button>
-            )}
-
-            <div className="flex gap-2">
-              <button
-                onClick={handlePrintInvoice}
-                disabled={!orderItems || orderItems.length === 0}
-                className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-semibold active:bg-blue-700 md:hover:bg-blue-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base flex items-center justify-center gap-2"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                  />
-                </svg>
-                បោះពុម្ពវិក្កយបត្រ
-              </button>
-              <button
-                onClick={handlePlaceOrder}
-                disabled={
-                  !orderItems ||
-                  orderItems.length === 0 ||
-                  orderData?.status === "completed" ||
-                  completePaymentMutation.isPending
-                }
-                className="flex-1 py-3 bg-slate-800 text-white rounded-lg font-semibold active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base"
-              >
-                {orderData?.status === "completed"
-                  ? "បានបង់រួចរាល់"
-                  : completePaymentMutation.isPending
-                  ? "កំពុងដំណើរការ..."
-                  : "បញ្ចប់ការទូទាត់"}
-              </button>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
-
-      {showInvoice && orderData && (
-        <InvoicePrint
-          order={{
-            ...orderData,
-            createdAt: orderData.createdAt || new Date().toISOString(),
-          }}
-          tableName={
-            selectedTable
-              ? `${selectedTable.number} - ${selectedTable.tableType.displayName}`
-              : undefined
-          }
-          paymentMethod={paymentMethod}
-          shopInfo={shopInfo}
-        />
-      )}
 
       <CreateOrderModal
         isOpen={showCreateOrderConfirm}
@@ -1519,15 +776,6 @@ export default function OrdersPage() {
         order={pendingOrder}
         onConfirm={handleConfirmViewOrder}
         onCancel={handleCancelViewOrder}
-      />
-
-      <CancelOrderModal
-        isOpen={showCancelOrderConfirm}
-        table={selectedTable}
-        orderNumber={orderData?.orderNumber || ""}
-        isCancelling={cancelOrderMutation.isPending}
-        onConfirm={handleConfirmCancelOrder}
-        onCancel={handleCloseCancelOrderModal}
       />
     </div>
   );

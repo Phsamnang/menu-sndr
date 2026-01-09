@@ -17,9 +17,12 @@ async function getHandler(
     return successResponse(payments, "Payments fetched successfully");
   } catch (error: any) {
     console.error("Error fetching payments:", error);
-    return errorResponse("FETCH_PAYMENTS_ERROR", "Failed to fetch payments", 500, [
-      { message: error?.message || String(error) },
-    ]);
+    return errorResponse(
+      "FETCH_PAYMENTS_ERROR",
+      "Failed to fetch payments",
+      500,
+      [{ message: error?.message || String(error) }]
+    );
   }
 }
 
@@ -38,8 +41,12 @@ async function postHandler(
         "Amount and method are required",
         400,
         [
-          ...(!amount ? [{ field: "amount", message: "Amount is required" }] : []),
-          ...(!method ? [{ field: "method", message: "Payment method is required" }] : []),
+          ...(!amount
+            ? [{ field: "amount", message: "Amount is required" }]
+            : []),
+          ...(!method
+            ? [{ field: "method", message: "Payment method is required" }]
+            : []),
         ]
       );
     }
@@ -50,6 +57,8 @@ async function postHandler(
         grandTotal: true,
         paidAmount: true,
         paymentStatus: true,
+        status: true,
+        tableId: true,
       },
     });
 
@@ -63,6 +72,22 @@ async function postHandler(
       newPaymentStatus = "paid";
     } else if (newPaidAmount > 0) {
       newPaymentStatus = "partial";
+    }
+
+    // Determine if order status should be changed to "completed"
+    const shouldCompleteOrder =
+      newPaymentStatus === "paid" &&
+      order.status !== "completed" &&
+      order.status !== "cancelled";
+
+    const orderUpdateData: any = {
+      paidAmount: newPaidAmount,
+      paymentStatus: newPaymentStatus,
+    };
+
+    if (shouldCompleteOrder) {
+      orderUpdateData.status = "completed";
+      orderUpdateData.completedAt = new Date();
     }
 
     const [payment, updatedOrder] = await Promise.all([
@@ -80,19 +105,38 @@ async function postHandler(
       }),
       prisma.order.update({
         where: { id },
-        data: {
-          paidAmount: newPaidAmount,
-          paymentStatus: newPaymentStatus,
-        },
+        data: orderUpdateData,
       }),
+      // Create status history entry if status changed to completed
+      shouldCompleteOrder
+        ? prisma.orderStatusHistory.create({
+            data: {
+              orderId: id,
+              fromStatus: order.status,
+              toStatus: "completed",
+              changedBy: request.user?.userId || null,
+              notes: "Order automatically completed after full payment",
+            },
+          })
+        : Promise.resolve(null),
+      // Update table status to available if order is completed
+      shouldCompleteOrder && order.tableId
+        ? prisma.table.update({
+            where: { id: order.tableId },
+            data: { status: "available" },
+          })
+        : Promise.resolve(null),
     ]);
 
     return successResponse(payment, "Payment created successfully", 201);
   } catch (error: any) {
     console.error("Error creating payment:", error);
-    return errorResponse("CREATE_PAYMENT_ERROR", "Failed to create payment", 500, [
-      { message: error?.message || String(error) },
-    ]);
+    return errorResponse(
+      "CREATE_PAYMENT_ERROR",
+      "Failed to create payment",
+      500,
+      [{ message: error?.message || String(error) }]
+    );
   }
 }
 
@@ -109,4 +153,3 @@ export async function POST(
 ) {
   return withAuth((req) => postHandler(req, context), ["admin"])(request);
 }
-

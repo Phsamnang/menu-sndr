@@ -6,6 +6,14 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL environment variable is not set");
 }
 
+// Append timezone parameter to connection string if not already present
+const timezone = "Asia/Phnom_Penh";
+let urlWithTimezone = databaseUrl;
+if (!urlWithTimezone.includes("timezone=")) {
+  const separator = urlWithTimezone.includes("?") ? "&" : "?";
+  urlWithTimezone = `${urlWithTimezone}${separator}timezone=${encodeURIComponent(timezone)}`;
+}
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
@@ -13,6 +21,6 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: databaseUrl,
+    url: urlWithTimezone,
   },
 });

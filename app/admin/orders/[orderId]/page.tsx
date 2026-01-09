@@ -228,6 +228,25 @@ export default function OrderDetailPage() {
     },
   });
 
+  const cancelOrderMutation = useMutation({
+    mutationFn: async () => {
+      if (!orderId) {
+        throw new Error("Order not found");
+      }
+      await orderService.delete(orderId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["activeOrders"] });
+      toast.success("ការបញ្ជាទិញត្រូវបានលុប!");
+      // Navigate back to orders page
+      window.location.href = "/admin/orders";
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "មានបញ្ហាក្នុងការលុបការបញ្ជាទិញ");
+    },
+  });
+
   const setItemQuantity = (itemId: string, quantity: number) => {
     setItemQuantities((prev) => ({
       ...prev,
@@ -321,6 +340,30 @@ export default function OrderDetailPage() {
     orderData?.total,
     completePaymentMutation,
   ]);
+
+  const handleFinishOrder = useCallback(() => {
+    if (orderData?.status === "completed") {
+      toast.error("ការបញ្ជាទិញនេះបានបញ្ចប់រួចរាល់ហើយ!");
+      return;
+    }
+
+    const confirmMessage = "តើអ្នកចង់បញ្ចប់ការបញ្ជាទិញនេះទេ?";
+    if (confirm(confirmMessage)) {
+      completePaymentMutation.mutate();
+    }
+  }, [orderData?.status, completePaymentMutation]);
+
+  const handleCancelOrder = useCallback(() => {
+    if (orderData?.status === "completed") {
+      toast.error("មិនអាចលុបការបញ្ជាទិញដែលបានបញ្ចប់រួចហើយ!");
+      return;
+    }
+
+    const confirmMessage = "តើអ្នកចង់លុបការបញ្ជាទិញនេះទេ?";
+    if (confirm(confirmMessage)) {
+      cancelOrderMutation.mutate();
+    }
+  }, [orderData?.status, cancelOrderMutation]);
 
   const handlePrintInvoice = useCallback(async () => {
     if (!orderData || !orderItems || orderItems.length === 0) {
@@ -635,7 +678,10 @@ export default function OrderDetailPage() {
           removeFromCart={removeFromCart}
           handlePrintInvoice={handlePrintInvoice}
           handlePlaceOrder={handlePlaceOrder}
+          handleFinishOrder={handleFinishOrder}
+          handleCancelOrder={handleCancelOrder}
           completePaymentMutation={completePaymentMutation}
+          cancelOrderMutation={cancelOrderMutation}
         />
       </div>
     </div>

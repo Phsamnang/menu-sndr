@@ -1,3 +1,6 @@
+// All DateTime fields in this schema use the timezone "Asia/Phnom_Penh"
+// The database connection is configured to use this timezone for all operations
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -5,6 +8,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Timezone: Asia/Phnom_Penh (configured via connection string parameter)
 }
 
 model Category {
@@ -174,7 +178,6 @@ model Role {
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
   users          User[]
-  adminMenuItems AdminMenuItemRole[]
 
   @@index([name])
 }
@@ -200,38 +203,6 @@ model User {
   @@index([email])
   @@index([roleId])
   @@index([isActive])
-}
-
-model AdminMenuItem {
-  id          String              @id @default(cuid())
-  href        String              @unique
-  iconName    String
-  title       String
-  description String
-  iconColor   String?
-  order       Int                 @default(0)
-  parentId    String?
-  isActive    Boolean             @default(true)
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-  roles       AdminMenuItemRole[]
-
-  @@index([href])
-  @@index([order])
-  @@index([parentId])
-}
-
-model AdminMenuItemRole {
-  id             String        @id @default(cuid())
-  adminMenuItemId String
-  roleId         String
-  adminMenuItem  AdminMenuItem @relation(fields: [adminMenuItemId], references: [id], onDelete: Cascade)
-  role           Role          @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  createdAt      DateTime      @default(now())
-
-  @@unique([adminMenuItemId, roleId])
-  @@index([adminMenuItemId])
-  @@index([roleId])
 }
 
 model ShopInfo {

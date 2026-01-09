@@ -26,7 +26,12 @@ interface OrderCartSidebarProps {
   removeFromCart: (itemId: string) => void;
   handlePrintInvoice: () => void;
   handlePlaceOrder: () => void;
+  handleFinishOrder: () => void;
+  handleCancelOrder: () => void;
   completePaymentMutation: {
+    isPending: boolean;
+  };
+  cancelOrderMutation: {
     isPending: boolean;
   };
 }
@@ -51,7 +56,10 @@ export default function OrderCartSidebar({
   removeFromCart,
   handlePrintInvoice,
   handlePlaceOrder,
+  handleFinishOrder,
+  handleCancelOrder,
   completePaymentMutation,
+  cancelOrderMutation,
 }: OrderCartSidebarProps) {
   return (
     <div className="lg:w-96 bg-white border-l border-slate-200 flex flex-col max-h-screen">
@@ -362,44 +370,106 @@ export default function OrderCartSidebar({
           </select>
         </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={handlePrintInvoice}
-            disabled={!orderItems || orderItems.length === 0}
-            className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-semibold active:bg-blue-700 md:hover:bg-blue-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base flex items-center justify-center gap-2"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        {total === 0 && orderData?.status !== "completed" ? (
+          <div className="space-y-2">
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-2">
+              <p className="text-xs text-yellow-800 text-center">
+                សរុបគឺ 0៛ - អ្នកអាចបញ្ចប់ ឬលុបការបញ្ជាទិញ
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleFinishOrder}
+                disabled={
+                  orderData?.status === "completed" ||
+                  completePaymentMutation.isPending
+                }
+                className="flex-1 py-3 bg-green-600 text-white rounded-lg font-semibold active:bg-green-700 md:hover:bg-green-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base flex items-center justify-center gap-2"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                {completePaymentMutation.isPending
+                  ? "កំពុងដំណើរការ..."
+                  : "បញ្ចប់ការបញ្ជាទិញ"}
+              </button>
+              <button
+                onClick={handleCancelOrder}
+                disabled={
+                  orderData?.status === "completed" ||
+                  cancelOrderMutation.isPending
+                }
+                className="flex-1 py-3 bg-red-600 text-white rounded-lg font-semibold active:bg-red-700 md:hover:bg-red-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base flex items-center justify-center gap-2"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+                {cancelOrderMutation.isPending
+                  ? "កំពុងដំណើរការ..."
+                  : "លុបការបញ្ជាទិញ"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              onClick={handlePrintInvoice}
+              disabled={!orderItems || orderItems.length === 0}
+              className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-semibold active:bg-blue-700 md:hover:bg-blue-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base flex items-center justify-center gap-2"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-              />
-            </svg>
-            បោះពុម្ព
-          </button>
-          <button
-            onClick={handlePlaceOrder}
-            disabled={
-              !orderItems ||
-              orderItems.length === 0 ||
-              orderData?.status === "completed" ||
-              completePaymentMutation.isPending
-            }
-            className="flex-1 py-3 bg-slate-800 text-white rounded-lg font-semibold active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base"
-          >
-            {orderData?.status === "completed"
-              ? "បានបង់រួចរាល់"
-              : completePaymentMutation.isPending
-              ? "កំពុងដំណើរការ..."
-              : "បញ្ចប់ការទូទាត់"}
-          </button>
-        </div>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                />
+              </svg>
+              បោះពុម្ព
+            </button>
+            <button
+              onClick={handlePlaceOrder}
+              disabled={
+                !orderItems ||
+                orderItems.length === 0 ||
+                orderData?.status === "completed" ||
+                completePaymentMutation.isPending
+              }
+              className="flex-1 py-3 bg-slate-800 text-white rounded-lg font-semibold active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base"
+            >
+              {orderData?.status === "completed"
+                ? "បានបង់រួចរាល់"
+                : completePaymentMutation.isPending
+                ? "កំពុងដំណើរការ..."
+                : "បញ្ចប់ការទូទាត់"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
