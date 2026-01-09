@@ -222,6 +222,7 @@ export default function OrdersPage() {
   // Sync customer name and discount from order data
   useEffect(() => {
     if (orderData) {
+      setCurrentOrder(orderData);
       setCustomerName(orderData.customerName || "");
       setDiscountValue(orderData.discountValue || 0);
       if (orderData.discountType) {
@@ -231,11 +232,25 @@ export default function OrdersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderData?.id]);
 
+  // Set current order when table is selected and has an active order
   useEffect(() => {
-    if (orderItems.length > 0 && window.innerWidth < 1024) {
-      setShowCart(true);
+    if (selectedTable) {
+      const tableOrders = ordersByTable[selectedTable.id] || [];
+      const activeOrder = tableOrders.find(
+        (o) => o.status === "new" || o.status === "on_process"
+      );
+      if (activeOrder && activeOrder.status !== "completed") {
+        setCurrentOrder(activeOrder);
+      }
     }
-  }, [orderItems.length]);
+  }, [selectedTable, ordersByTable]);
+
+  // Don't auto-open cart on mobile - let user control it
+  // useEffect(() => {
+  //   if (orderItems.length > 0 && window.innerWidth < 1024) {
+  //     setShowCart(true);
+  //   }
+  // }, [orderItems.length]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -278,6 +293,7 @@ export default function OrdersPage() {
       });
     },
     onSuccess: (data) => {
+      setCurrentOrder(data);
       queryClient.invalidateQueries({ queryKey: ["tables"] });
       queryClient.invalidateQueries({ queryKey: ["activeOrders"] });
       router.push(`/admin/orders/${data.id}`);
@@ -293,7 +309,8 @@ export default function OrdersPage() {
       );
 
       if (activeOrder && activeOrder.status !== "completed") {
-        // Navigate to order detail page
+        // Set current order and navigate to order detail page
+        setCurrentOrder(activeOrder);
         router.push(`/admin/orders/${activeOrder.id}`);
       } else if (table.status === "available") {
         // Show confirmation popup before creating new order
@@ -777,14 +794,8 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      {showCart && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setShowCart(false)}
-        />
-      )}
-      <div className="flex flex-col lg:flex-row h-screen">
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 lg:pb-6">
+      <div className="flex flex-col lg:flex-row h-screen relative">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 lg:pb-6 relative z-10">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-6">
               <div className="w-full sm:w-auto">
@@ -805,6 +816,33 @@ export default function OrdersPage() {
                 </div>
               </div>
               <div className="flex gap-2 w-full sm:w-auto">
+                {currentOrder?.id && (
+                  <Link
+                    href={`/admin/orders/${currentOrder.id}`}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm flex items-center gap-2 flex-1 sm:flex-initial justify-center"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                    ទៅការបញ្ជាទិញ
+                  </Link>
+                )}
                 <button
                   onClick={() => setShowCart(!showCart)}
                   className="lg:hidden px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 text-sm flex items-center gap-2 flex-1 sm:flex-initial justify-center"
@@ -917,7 +955,8 @@ export default function OrdersPage() {
                   return (
                     <div
                       key={item.id}
-                      className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden active:shadow-md md:hover:shadow-md transition-shadow"
+                      className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden active:shadow-md md:hover:shadow-md transition-shadow relative z-10"
+                      style={{ pointerEvents: "auto" }}
                     >
                       <div className="relative h-32 md:h-40 bg-slate-100">
                         {item.image ? (
@@ -1013,13 +1052,17 @@ export default function OrdersPage() {
                           />
                         </div>
                         <button
-                          onClick={() => addToCart(item)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(item);
+                          }}
                           disabled={
                             price === 0 ||
                             addItemMutation.isPending ||
                             orderData?.status === "completed"
                           }
-                          className="w-full px-3 py-2.5 bg-slate-800 text-white text-xs sm:text-sm rounded-lg active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation"
+                          className="w-full px-3 py-2.5 bg-slate-800 text-white text-xs sm:text-sm rounded-lg active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation relative z-20"
+                          style={{ pointerEvents: "auto" }}
                         >
                           + បន្ថែមទៅកន្ត្រក់
                         </button>
@@ -1033,9 +1076,10 @@ export default function OrdersPage() {
         </div>
 
         <div
-          className={`fixed lg:static inset-x-0 bottom-0 lg:inset-auto lg:w-96 bg-white border-t lg:border-l border-slate-200 flex flex-col z-50 lg:z-auto transition-transform duration-300 ease-in-out ${
+          className={`fixed lg:static inset-x-0 bottom-0 lg:inset-auto lg:w-96 bg-white border-t lg:border-l border-slate-200 flex flex-col z-30 lg:z-auto transition-transform duration-300 ease-in-out ${
             showCart ? "translate-y-0" : "translate-y-full lg:translate-y-0"
-          } lg:translate-y-0 max-h-[85vh] lg:max-h-none shadow-lg lg:shadow-none`}
+          } lg:translate-y-0 max-h-[85vh] lg:max-h-none shadow-2xl lg:shadow-none`}
+          style={{ pointerEvents: "auto" }}
         >
           <div className="p-4 border-b border-slate-200 flex-shrink-0">
             <div className="flex justify-between items-center mb-4">
