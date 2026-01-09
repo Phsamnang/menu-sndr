@@ -11,7 +11,12 @@ const getEnvVar = (key: string, defaultValue?: string): string => {
   return value || defaultValue!;
 };
 
-const NEXTAUTH_SECRET = getEnvVar("NEXTAUTH_SECRET");
+const NEXTAUTH_SECRET = getEnvVar(
+  "NEXTAUTH_SECRET",
+  process.env.NODE_ENV === "development"
+    ? "development-secret-key-change-in-production"
+    : undefined
+);
 const NEXTAUTH_URL = getEnvVar(
   "NEXTAUTH_URL",
   process.env.NODE_ENV === "development" ? "http://localhost:3000" : undefined
