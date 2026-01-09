@@ -296,7 +296,15 @@ export default function OrdersPage() {
       setCurrentOrder(data);
       queryClient.invalidateQueries({ queryKey: ["tables"] });
       queryClient.invalidateQueries({ queryKey: ["activeOrders"] });
+      // Close modal and clear pending table after successful creation
+      setShowCreateOrderConfirm(false);
+      setPendingTable(null);
       router.push(`/admin/orders/${data.id}`);
+    },
+    onError: () => {
+      // Close modal on error as well
+      setShowCreateOrderConfirm(false);
+      setPendingTable(null);
     },
   });
 
@@ -344,11 +352,8 @@ export default function OrdersPage() {
   const handleConfirmCreateOrder = useCallback(() => {
     if (!pendingTable) return;
 
-    setShowCreateOrderConfirm(false);
-
-    // Create new order - navigation happens in createOrderMutation.onSuccess
+    // Keep modal open and create order - modal will close in onSuccess/onError
     createOrderMutation.mutate(pendingTable.id);
-    setPendingTable(null);
   }, [pendingTable, createOrderMutation]);
 
   const handleCancelCreateOrder = useCallback(() => {
