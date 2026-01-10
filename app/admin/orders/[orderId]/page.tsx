@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import OptimizedImage from "@/components/OptimizedImage";
@@ -53,6 +53,7 @@ export default function OrderDetailPage() {
   const [customerName, setCustomerName] = useState<string>("");
   const [showSidebar, setShowSidebar] = useState<boolean>(false);
   const queryClient = useQueryClient();
+  const isUpdatingDiscountRef = useRef(false);
 
   const { data: orderData, isLoading } = useQuery<Order | null>({
     queryKey: ["orderDetail", orderId],
@@ -102,10 +103,19 @@ export default function OrderDetailPage() {
 
   useEffect(() => {
     if (orderData) {
-      setCustomerName(orderData.customerName || "");
-      setDiscountValue(orderData.discountValue || 0);
+      setCustomerName((prev) => {
+        const newName = orderData.customerName || "";
+        return prev !== newName ? newName : prev;
+      });
+      setDiscountValue((prev) => {
+        const newValue = orderData.discountValue || 0;
+        return prev !== newValue ? newValue : prev;
+      });
       if (orderData.discountType) {
-        setDiscountType(orderData.discountType as "percentage" | "amount");
+        setDiscountType((prev) => {
+          const newType = orderData.discountType as "percentage" | "amount";
+          return prev !== newType ? newType : prev;
+        });
       }
     }
   }, [orderData]);
@@ -298,14 +308,24 @@ export default function OrderDetailPage() {
   useEffect(() => {
     if (
       orderData &&
+      !isUpdatingDiscountRef.current &&
+      !updateDiscountMutation.isPending &&
       debouncedDiscountValue !== (orderData.discountValue || 0)
     ) {
-      updateDiscountMutation.mutate({
-        value: debouncedDiscountValue,
-        type: discountType,
-      });
+      isUpdatingDiscountRef.current = true;
+      updateDiscountMutation.mutate(
+        {
+          value: debouncedDiscountValue,
+          type: discountType,
+        },
+        {
+          onSettled: () => {
+            isUpdatingDiscountRef.current = false;
+          },
+        }
+      );
     }
-  }, [debouncedDiscountValue, discountType, orderData, updateDiscountMutation]);
+  }, [debouncedDiscountValue, discountType, orderData?.discountValue, updateDiscountMutation]);
 
   const handleCustomerNameChange = useCallback(
     (name: string) => {
@@ -450,8 +470,8 @@ export default function OrderDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="flex flex-col lg:flex-row h-screen">
-        <div className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 w-full min-w-0">
+      <div className="flex flex-col lg:flex-row h-screen overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 w-full min-w-0 pb-20 lg:pb-6 relative z-10">
           <div className="max-w-7xl mx-auto w-full">
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center mb-3 sm:mb-4 md:mb-6">
               <div className="flex-1 min-w-0">
@@ -564,7 +584,7 @@ export default function OrderDetailPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-2.5 md:gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3 md:gap-4 pb-4">
                 {filteredMenu.map((item) => {
                   const price = tableTypeName
                     ? item.prices[tableTypeName] || 0
@@ -574,7 +594,7 @@ export default function OrderDetailPage() {
                       key={item.id}
                       className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden active:shadow-md md:hover:shadow-md transition-shadow"
                     >
-                      <div className="relative h-16 sm:h-20 md:h-24 bg-slate-100">
+                      <div className="relative h-16 sm:h-20 md:h-24 lg:h-28 bg-slate-100">
                         {item.image ? (
                           <OptimizedImage
                             src={item.image}
@@ -587,7 +607,7 @@ export default function OrderDetailPage() {
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <svg
-                              className="w-6 h-6 sm:w-8 sm:h-8 text-slate-300"
+                              className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-slate-300"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -602,22 +622,17 @@ export default function OrderDetailPage() {
                           </div>
                         )}
                       </div>
-                      <div className="p-1.5 sm:p-2">
-                        <h3 className="font-semibold text-slate-900 mb-0.5 text-[11px] sm:text-xs line-clamp-2 leading-tight">
+                      <div className="p-1.5 sm:p-2 md:p-2.5">
+                        <h3 className="font-semibold text-slate-900 mb-0.5 sm:mb-1 text-xs sm:text-sm line-clamp-2 leading-tight">
                           {item.name}
                         </h3>
-                        {item.description && (
-                          <p className="text-[9px] sm:text-[10px] text-slate-600 mb-1 sm:mb-1.5 line-clamp-1">
-                            {item.description}
-                          </p>
-                        )}
                         <div className="flex items-center justify-between mb-1 sm:mb-1.5">
-                          <span className="text-[11px] sm:text-xs font-bold text-orange-500">
+                          <span className="text-xs sm:text-sm font-bold text-orange-500">
                             {price.toLocaleString("km-KH")}៛
                           </span>
                         </div>
                         <div className="mb-1 sm:mb-1.5">
-                          <label className="block text-[9px] sm:text-[10px] text-slate-600 mb-0.5">
+                          <label className="block text-[10px] sm:text-xs text-slate-600 mb-0.5">
                             ចំនួន
                           </label>
                           <input
@@ -664,7 +679,7 @@ export default function OrderDetailPage() {
                             onFocus={(e) => e.target.select()}
                             onClick={(e) => e.stopPropagation()}
                             placeholder="1"
-                            className="w-full px-1 py-1 sm:px-1.5 text-center text-[11px] sm:text-xs border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-slate-500 min-h-[32px] sm:min-h-[36px]"
+                            className="w-full px-1.5 sm:px-2 py-1.5 sm:py-2 text-center text-xs sm:text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-500 min-h-[40px] sm:min-h-[44px] touch-manipulation"
                           />
                         </div>
                         <button
@@ -674,7 +689,7 @@ export default function OrderDetailPage() {
                             addItemMutation.isPending ||
                             orderData?.status === "completed"
                           }
-                          className="w-full px-1.5 py-1.5 sm:px-2 sm:py-1.5 bg-slate-800 text-white text-[10px] sm:text-xs rounded-lg active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation min-h-[36px] sm:min-h-[40px] font-medium"
+                          className="w-full px-2 sm:px-2.5 py-1.5 sm:py-2 bg-slate-800 text-white text-xs sm:text-sm rounded-lg active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation min-h-[40px] sm:min-h-[44px] font-medium"
                         >
                           + បន្ថែម
                         </button>
