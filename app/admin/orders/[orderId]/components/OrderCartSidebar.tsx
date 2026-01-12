@@ -1,70 +1,297 @@
 "use client";
 
-import { type OrderItem, type Order } from "@/services/order.service";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import {
+  type OrderItem,
+  type Order,
+  orderService,
+} from "@/services/order.service";
 import OptimizedImage from "@/components/OptimizedImage";
 
 interface OrderCartSidebarProps {
+  orderId: string;
   orderData: Order | null;
   orderItems: OrderItem[];
-  customerName: string;
-  discountType: "percentage" | "amount";
-  discountValue: number;
-  debouncedDiscountValue: number;
-  discountAmount: number;
-  subtotal: number;
-  total: number;
-  paymentMethod: string;
-  deleteItemMutation: {
-    isPending: boolean;
-    mutate: (itemId: string) => void;
-  };
-  handleCustomerNameChange: (name: string) => void;
-  handleDiscountChange: (value: number) => void;
-  setDiscountType: (type: "percentage" | "amount") => void;
-  setDiscountValue: (value: number) => void;
-  setPaymentMethod: (method: string) => void;
-  removeFromCart: (itemId: string) => void;
-  handlePrintInvoice: () => void;
-  handlePlaceOrder: () => void;
-  handleFinishOrder: () => void;
-  handleCancelOrder: () => void;
-  completePaymentMutation: {
-    isPending: boolean;
-  };
-  cancelOrderMutation: {
-    isPending: boolean;
-  };
   showSidebar?: boolean;
   onCloseSidebar?: () => void;
 }
 
 export default function OrderCartSidebar({
+  orderId,
   orderData,
   orderItems,
-  customerName,
-  discountType,
-  discountValue,
-  debouncedDiscountValue,
-  discountAmount,
-  subtotal,
-  total,
-  paymentMethod,
-  deleteItemMutation,
-  handleCustomerNameChange,
-  handleDiscountChange,
-  setDiscountType,
-  setDiscountValue,
-  setPaymentMethod,
-  removeFromCart,
-  handlePrintInvoice,
-  handlePlaceOrder,
-  handleFinishOrder,
-  handleCancelOrder,
-  completePaymentMutation,
-  cancelOrderMutation,
   showSidebar = true,
   onCloseSidebar,
 }: OrderCartSidebarProps) {
+  const queryClient = useQueryClient();
+  const isUpdatingDiscountRef = useRef(false);
+
+  const [customerName, setCustomerName] = useState<string>("");
+  const [discountType, setDiscountType] = useState<"percentage" | "amount">(
+    "percentage"
+  );
+  const [discountValue, setDiscountValue] = useState<number>(0);
+  const [debouncedDiscountValue, setDebouncedDiscountValue] =
+    useState<number>(0);
+  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+
+  // Initialize state from orderData
+  useEffect(() => {
+    if (orderData) {
+      setCustomerName((prev) => {
+        const newName = orderData.customerName || "";
+        return prev !== newName ? newName : prev;
+      });
+      setDiscountValue((prev) => {
+        const newValue = orderData.discountValue || 0;
+        return prev !== newValue ? newValue : prev;
+      });
+      if (orderData.discountType) {
+        setDiscountType((prev) => {
+          const newType = orderData.discountType as "percentage" | "amount";
+          return prev !== newType ? newType : prev;
+        });
+      }
+    }
+  }, [orderData]);
+
+  // Debounce discount value
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedDiscountValue(discountValue);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [discountValue]);
+
+  // Mutations
+  const deleteItemMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      if (!orderId) {
+        throw new Error("Order not found");
+      }
+      return orderService.deleteItem(orderId, itemId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orderDetail", orderId] });
+    },
+  });
+
+  const updateDiscountMutation = useMutation({
+    mutationFn: async ({
+      value,
+      type,
+    }: {
+      value: number;
+      type: "percentage" | "amount";
+    }) => {
+      if (!orderId) {
+        throw new Error("Order not found");
+      }
+      return orderService.update(orderId, {
+        discountType: value > 0 ? type : null,
+        discountValue: value || 0,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orderDetail", orderId] });
+    },
+  });
+
+  const updateCustomerNameMutation = useMutation({
+    mutationFn: async (name: string) => {
+      if (!orderId) {
+        throw new Error("Order not found");
+      }
+      return orderService.update(orderId, {
+        customerName: name || null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orderDetail", orderId] });
+    },
+  });
+
+  const completePaymentMutation = useMutation({
+    mutationFn: async () => {
+      if (!orderId) {
+        throw new Error("Order not found");
+      }
+      return orderService.update(orderId, {
+        status: "completed",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orderDetail", orderId] });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["activeOrders"] });
+      toast.success("ការទូទាត់បានបញ្ចប់!");
+    },
+  });
+
+  const cancelOrderMutation = useMutation({
+    mutationFn: async () => {
+      if (!orderId) {
+        throw new Error("Order not found");
+      }
+      await orderService.delete(orderId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["activeOrders"] });
+      toast.success("ការបញ្ជាទិញត្រូវបានលុប!");
+      window.location.href = "/admin/orders";
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "មានបញ្ហាក្នុងការលុបការបញ្ជាទិញ");
+    },
+  });
+
+  // Update discount on server when debounced value changes
+  useEffect(() => {
+    if (
+      orderData &&
+      !isUpdatingDiscountRef.current &&
+      !updateDiscountMutation.isPending &&
+      debouncedDiscountValue !== (orderData.discountValue || 0)
+    ) {
+      isUpdatingDiscountRef.current = true;
+      updateDiscountMutation.mutate(
+        {
+          value: debouncedDiscountValue,
+          type: discountType,
+        },
+        {
+          onSettled: () => {
+            isUpdatingDiscountRef.current = false;
+          },
+        }
+      );
+    }
+  }, [debouncedDiscountValue, discountType, orderData, updateDiscountMutation]);
+
+  // Handler functions
+  const removeFromCart = useCallback(
+    (itemId: string) => {
+      if (orderData?.status === "completed") {
+        toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចលុបបានទេ");
+        return;
+      }
+      const item = orderItems.find((i: OrderItem) => i.id === itemId);
+      if (item && item.menuItem.isCook && item.status === "served") {
+        toast.error("មិនអាចលុបមុខម្ហូបដែលត្រូវការចម្អិន និងបានដឹកជញ្ជូនរួចហើយ");
+        return;
+      }
+      deleteItemMutation.mutate(itemId);
+    },
+    [orderData?.status, orderItems, deleteItemMutation]
+  );
+
+  const handleDiscountChange = useCallback((value: number) => {
+    setDiscountValue(value);
+  }, []);
+
+  const handleCustomerNameChange = useCallback(
+    (name: string) => {
+      setCustomerName(name);
+      if (orderData) {
+        updateCustomerNameMutation.mutate(name);
+      }
+    },
+    [orderData, updateCustomerNameMutation]
+  );
+
+  const handlePlaceOrder = useCallback(() => {
+    if (!orderItems || orderItems.length === 0) {
+      toast.error("សូមបន្ថែមមុខម្ហូបទៅកន្ត្រក់");
+      return;
+    }
+
+    if (orderData?.status === "completed") {
+      toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ!");
+      return;
+    }
+
+    const total = orderData?.total || 0;
+    const confirmMessage = `សូមបញ្ជាក់ការទូទាត់\nសរុប: ${total.toLocaleString(
+      "km-KH"
+    )}៛\n\nតើអ្នកចង់បញ្ចប់ការទូទាត់ទេ?`;
+    if (confirm(confirmMessage)) {
+      completePaymentMutation.mutate();
+    }
+  }, [
+    orderItems,
+    orderData?.status,
+    orderData?.total,
+    completePaymentMutation,
+  ]);
+
+  const handleFinishOrder = useCallback(() => {
+    if (orderData?.status === "completed") {
+      toast.error("ការបញ្ជាទិញនេះបានបញ្ចប់រួចរាល់ហើយ!");
+      return;
+    }
+
+    const confirmMessage = "តើអ្នកចង់បញ្ចប់ការបញ្ជាទិញនេះទេ?";
+    if (confirm(confirmMessage)) {
+      completePaymentMutation.mutate();
+    }
+  }, [orderData?.status, completePaymentMutation]);
+
+  const handleCancelOrder = useCallback(() => {
+    if (orderData?.status === "completed") {
+      toast.error("មិនអាចលុបការបញ្ជាទិញដែលបានបញ្ចប់រួចហើយ!");
+      return;
+    }
+
+    const confirmMessage = "តើអ្នកចង់លុបការបញ្ជាទិញនេះទេ?";
+    if (confirm(confirmMessage)) {
+      cancelOrderMutation.mutate();
+    }
+  }, [orderData?.status, cancelOrderMutation]);
+
+  const handlePrintInvoice = useCallback(async () => {
+    if (!orderData || !orderItems || orderItems.length === 0) {
+      toast.error("មិនមានការបញ្ជាទិញទេ");
+      return;
+    }
+    try {
+      const cacheBuster = Date.now();
+      const imageUrl = `${window.location.origin}/api/admin/orders/${orderData.id}/invoice-image?t=${cacheBuster}`;
+      const printUrl = `com.samathosoft.webprint://#imageurl#${imageUrl}#/imageurl#`;
+      window.location.href = printUrl;
+    } catch (error) {
+      console.error("Error printing invoice:", error);
+      toast.error("មានបញ្ហាក្នុងការបោះពុម្ពវិក្កយបត្រ");
+    }
+  }, [orderData, orderItems]);
+
+  // Computed values
+  const subtotal = useMemo(() => orderData?.subtotal || 0, [orderData]);
+
+  const localDiscountAmount = useMemo(() => {
+    if (discountValue <= 0) return 0;
+    if (discountType === "percentage") {
+      return (subtotal * discountValue) / 100;
+    } else {
+      return Math.min(discountValue, subtotal);
+    }
+  }, [discountValue, discountType, subtotal]);
+
+  const discountAmount = useMemo(() => {
+    if (
+      orderData &&
+      debouncedDiscountValue === (orderData.discountValue || 0)
+    ) {
+      return orderData.discountAmount || 0;
+    }
+    return localDiscountAmount;
+  }, [orderData, debouncedDiscountValue, localDiscountAmount]);
+
+  const total = useMemo(() => {
+    return subtotal - discountAmount;
+  }, [subtotal, discountAmount]);
   return (
     <>
       {/* Mobile overlay backdrop */}

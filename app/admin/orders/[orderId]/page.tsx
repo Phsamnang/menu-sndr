@@ -1,59 +1,22 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import toast from "react-hot-toast";
-import OptimizedImage from "@/components/OptimizedImage";
 import { apiClientJson } from "@/utils/api-client";
-import {
-  orderService,
-  type OrderItem,
-  type Order,
-} from "@/services/order.service";
+import { type Order } from "@/services/order.service";
 import OrderCartSidebar from "./components/OrderCartSidebar";
-
-interface Category {
-  id: string;
-  name: string;
-  displayName: string;
-}
-
-interface MenuItem {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-  category: string;
-  prices: {
-    [tableType: string]: number;
-  };
-}
+import MenuItemGrid from "./components/MenuItemGrid";
+import { type Category, type MenuItem } from "@/lib/types";
 
 export default function OrderDetailPage() {
   const params = useParams();
   const orderId = params.orderId as string;
-  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
-  const [itemQuantities, setItemQuantities] = useState<Record<string, number>>(
-    {}
-  );
-  const [itemQuantityInputs, setItemQuantityInputs] = useState<
-    Record<string, string>
-  >({});
-  const [discountType, setDiscountType] = useState<"percentage" | "amount">(
-    "percentage"
-  );
-  const [discountValue, setDiscountValue] = useState<number>(0);
-  const [debouncedDiscountValue, setDebouncedDiscountValue] =
-    useState<number>(0);
-  const [customerName, setCustomerName] = useState<string>("");
   const [showSidebar, setShowSidebar] = useState<boolean>(false);
-  const queryClient = useQueryClient();
-  const isUpdatingDiscountRef = useRef(false);
 
   const { data: orderData, isLoading } = useQuery<Order | null>({
     queryKey: ["orderDetail", orderId],
@@ -102,37 +65,11 @@ export default function OrderDetailPage() {
   const orderItems = useMemo(() => orderData?.items || [], [orderData?.items]);
 
   useEffect(() => {
-    if (orderData) {
-      setCustomerName((prev) => {
-        const newName = orderData.customerName || "";
-        return prev !== newName ? newName : prev;
-      });
-      setDiscountValue((prev) => {
-        const newValue = orderData.discountValue || 0;
-        return prev !== newValue ? newValue : prev;
-      });
-      if (orderData.discountType) {
-        setDiscountType((prev) => {
-          const newType = orderData.discountType as "percentage" | "amount";
-          return prev !== newType ? newType : prev;
-        });
-      }
-    }
-  }, [orderData]);
-
-  useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedDiscountValue(discountValue);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [discountValue]);
 
   const filteredMenu = useMemo(() => {
     let filtered = menuData;
@@ -156,280 +93,6 @@ export default function OrderDetailPage() {
   const categoriesList = useMemo(() => {
     return Array.from(new Set(menuData.map((item) => item.category)));
   }, [menuData]);
-
-  const addItemMutation = useMutation({
-    mutationFn: async ({
-      menuItemId,
-      quantity,
-    }: {
-      menuItemId: string;
-      quantity: number;
-    }) => {
-      if (!orderId) {
-        throw new Error("Order not found");
-      }
-      return orderService.addItem(orderId, { menuItemId, quantity });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orderDetail", orderId] });
-    },
-  });
-
-  const deleteItemMutation = useMutation({
-    mutationFn: async (itemId: string) => {
-      if (!orderId) {
-        throw new Error("Order not found");
-      }
-      return orderService.deleteItem(orderId, itemId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orderDetail", orderId] });
-    },
-  });
-
-  const updateDiscountMutation = useMutation({
-    mutationFn: async ({
-      value,
-      type,
-    }: {
-      value: number;
-      type: "percentage" | "amount";
-    }) => {
-      if (!orderId) {
-        throw new Error("Order not found");
-      }
-      return orderService.update(orderId, {
-        discountType: value > 0 ? type : null,
-        discountValue: value || 0,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orderDetail", orderId] });
-    },
-  });
-
-  const updateCustomerNameMutation = useMutation({
-    mutationFn: async (name: string) => {
-      if (!orderId) {
-        throw new Error("Order not found");
-      }
-      return orderService.update(orderId, {
-        customerName: name || null,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orderDetail", orderId] });
-    },
-  });
-
-  const completePaymentMutation = useMutation({
-    mutationFn: async () => {
-      if (!orderId) {
-        throw new Error("Order not found");
-      }
-      return orderService.update(orderId, {
-        status: "completed",
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orderDetail", orderId] });
-      queryClient.invalidateQueries({ queryKey: ["tables"] });
-      queryClient.invalidateQueries({ queryKey: ["activeOrders"] });
-      toast.success("ការទូទាត់បានបញ្ចប់!");
-    },
-  });
-
-  const cancelOrderMutation = useMutation({
-    mutationFn: async () => {
-      if (!orderId) {
-        throw new Error("Order not found");
-      }
-      await orderService.delete(orderId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tables"] });
-      queryClient.invalidateQueries({ queryKey: ["activeOrders"] });
-      toast.success("ការបញ្ជាទិញត្រូវបានលុប!");
-      // Navigate back to orders page
-      window.location.href = "/admin/orders";
-    },
-    onError: (error: any) => {
-      toast.error(error?.message || "មានបញ្ហាក្នុងការលុបការបញ្ជាទិញ");
-    },
-  });
-
-  const setItemQuantity = (itemId: string, quantity: number) => {
-    setItemQuantities((prev) => ({
-      ...prev,
-      [itemId]: quantity > 0 ? quantity : 1,
-    }));
-  };
-
-  const addToCart = useCallback(
-    (item: MenuItem) => {
-      if (orderData?.status === "completed") {
-        toast.error(
-          "ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចបន្ថែមមុខម្ហូបបានទេ"
-        );
-        return;
-      }
-      const quantity = itemQuantities[item.id] || 1;
-      addItemMutation.mutate({ menuItemId: item.id, quantity });
-      setItemQuantities((prev) => {
-        const newQty = { ...prev };
-        delete newQty[item.id];
-        return newQty;
-      });
-    },
-    [itemQuantities, orderData?.status, addItemMutation]
-  );
-
-  const removeFromCart = useCallback(
-    (itemId: string) => {
-      if (orderData?.status === "completed") {
-        toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចលុបបានទេ");
-        return;
-      }
-      const item = orderItems.find((i: OrderItem) => i.id === itemId);
-      if (item && item.menuItem.isCook && item.status === "served") {
-        toast.error("មិនអាចលុបមុខម្ហូបដែលត្រូវការចម្អិន និងបានដឹកជញ្ជូនរួចហើយ");
-        return;
-      }
-      deleteItemMutation.mutate(itemId);
-    },
-    [orderData?.status, orderItems, deleteItemMutation]
-  );
-
-  const handleDiscountChange = useCallback((value: number) => {
-    setDiscountValue(value);
-  }, []);
-
-  // Update discount on server when debounced value changes
-  useEffect(() => {
-    if (
-      orderData &&
-      !isUpdatingDiscountRef.current &&
-      !updateDiscountMutation.isPending &&
-      debouncedDiscountValue !== (orderData.discountValue || 0)
-    ) {
-      isUpdatingDiscountRef.current = true;
-      updateDiscountMutation.mutate(
-        {
-          value: debouncedDiscountValue,
-          type: discountType,
-        },
-        {
-          onSettled: () => {
-            isUpdatingDiscountRef.current = false;
-          },
-        }
-      );
-    }
-  }, [debouncedDiscountValue, discountType, orderData?.discountValue, updateDiscountMutation]);
-
-  const handleCustomerNameChange = useCallback(
-    (name: string) => {
-      setCustomerName(name);
-      if (orderData) {
-        updateCustomerNameMutation.mutate(name);
-      }
-    },
-    [orderData, updateCustomerNameMutation]
-  );
-
-  const handlePlaceOrder = useCallback(() => {
-    if (!orderItems || orderItems.length === 0) {
-      toast.error("សូមបន្ថែមមុខម្ហូបទៅកន្ត្រក់");
-      return;
-    }
-
-    if (orderData?.status === "completed") {
-      toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ!");
-      return;
-    }
-
-    const total = orderData?.total || 0;
-    const confirmMessage = `សូមបញ្ជាក់ការទូទាត់\nសរុប: ${total.toLocaleString(
-      "km-KH"
-    )}៛\n\nតើអ្នកចង់បញ្ចប់ការទូទាត់ទេ?`;
-    if (confirm(confirmMessage)) {
-      completePaymentMutation.mutate();
-    }
-  }, [
-    orderItems,
-    orderData?.status,
-    orderData?.total,
-    completePaymentMutation,
-  ]);
-
-  const handleFinishOrder = useCallback(() => {
-    if (orderData?.status === "completed") {
-      toast.error("ការបញ្ជាទិញនេះបានបញ្ចប់រួចរាល់ហើយ!");
-      return;
-    }
-
-    const confirmMessage = "តើអ្នកចង់បញ្ចប់ការបញ្ជាទិញនេះទេ?";
-    if (confirm(confirmMessage)) {
-      completePaymentMutation.mutate();
-    }
-  }, [orderData?.status, completePaymentMutation]);
-
-  const handleCancelOrder = useCallback(() => {
-    if (orderData?.status === "completed") {
-      toast.error("មិនអាចលុបការបញ្ជាទិញដែលបានបញ្ចប់រួចហើយ!");
-      return;
-    }
-
-    const confirmMessage = "តើអ្នកចង់លុបការបញ្ជាទិញនេះទេ?";
-    if (confirm(confirmMessage)) {
-      cancelOrderMutation.mutate();
-    }
-  }, [orderData?.status, cancelOrderMutation]);
-
-  const handlePrintInvoice = useCallback(async () => {
-    if (!orderData || !orderItems || orderItems.length === 0) {
-      toast.error("មិនមានការបញ្ជាទិញទេ");
-      return;
-    }
-    try {
-      const cacheBuster = Date.now();
-      const imageUrl = `${window.location.origin}/api/admin/orders/${orderData.id}/invoice-image?t=${cacheBuster}`;
-      const printUrl = `com.samathosoft.webprint://#imageurl#${imageUrl}#/imageurl#`;
-      window.location.href = printUrl;
-    } catch (error) {
-      console.error("Error printing invoice:", error);
-      toast.error("មានបញ្ហាក្នុងការបោះពុម្ពវិក្កយបត្រ");
-    }
-  }, [orderData, orderItems]);
-
-  const subtotal = useMemo(() => orderData?.subtotal || 0, [orderData]);
-
-  // Calculate discount locally for immediate feedback
-  const localDiscountAmount = useMemo(() => {
-    if (discountValue <= 0) return 0;
-    if (discountType === "percentage") {
-      return (subtotal * discountValue) / 100;
-    } else {
-      return Math.min(discountValue, subtotal);
-    }
-  }, [discountValue, discountType, subtotal]);
-
-  // Use server value when available, otherwise use local calculation
-  const discountAmount = useMemo(() => {
-    // If discount value matches server and we have server data, use it
-    if (
-      orderData &&
-      debouncedDiscountValue === (orderData.discountValue || 0)
-    ) {
-      return orderData.discountAmount || 0;
-    }
-    // Otherwise use local calculation for immediate feedback
-    return localDiscountAmount;
-  }, [orderData, debouncedDiscountValue, localDiscountAmount]);
-
-  const total = useMemo(() => {
-    return subtotal - discountAmount;
-  }, [subtotal, discountAmount]);
 
   if (isLoading) {
     return (
@@ -584,148 +247,20 @@ export default function OrderDetailPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3 md:gap-4 pb-4">
-                {filteredMenu.map((item) => {
-                  const price = tableTypeName
-                    ? item.prices[tableTypeName] || 0
-                    : 0;
-                  return (
-                    <div
-                      key={item.id}
-                      className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden active:shadow-md md:hover:shadow-md transition-shadow"
-                    >
-                      <div className="relative h-16 sm:h-20 md:h-24 lg:h-28 bg-slate-100">
-                        {item.image ? (
-                          <OptimizedImage
-                            src={item.image}
-                            alt={item.name}
-                            width={150}
-                            height={120}
-                            className="w-full h-full object-cover"
-                            quality={85}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <svg
-                              className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-slate-300"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-1.5 sm:p-2 md:p-2.5">
-                        <h3 className="font-semibold text-slate-900 mb-0.5 sm:mb-1 text-xs sm:text-sm line-clamp-2 leading-tight">
-                          {item.name}
-                        </h3>
-                        <div className="flex items-center justify-between mb-1 sm:mb-1.5">
-                          <span className="text-xs sm:text-sm font-bold text-orange-500">
-                            {price.toLocaleString("km-KH")}៛
-                          </span>
-                        </div>
-                        <div className="mb-1 sm:mb-1.5">
-                          <label className="block text-[10px] sm:text-xs text-slate-600 mb-0.5">
-                            ចំនួន
-                          </label>
-                          <input
-                            type="number"
-                            value={
-                              itemQuantityInputs[item.id] !== undefined
-                                ? itemQuantityInputs[item.id]
-                                : itemQuantities[item.id] || ""
-                            }
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setItemQuantityInputs((prev) => ({
-                                ...prev,
-                                [item.id]: value,
-                              }));
-                            }}
-                            onBlur={(e) => {
-                              const value = e.target.value;
-                              const numValue = parseInt(value, 10);
-                              if (
-                                value === "" ||
-                                isNaN(numValue) ||
-                                numValue < 1
-                              ) {
-                                const finalValue = 1;
-                                setItemQuantities((prev) => ({
-                                  ...prev,
-                                  [item.id]: finalValue,
-                                }));
-                                setItemQuantityInputs((prev) => {
-                                  const next = { ...prev };
-                                  delete next[item.id];
-                                  return next;
-                                });
-                              } else {
-                                setItemQuantity(item.id, numValue);
-                                setItemQuantityInputs((prev) => {
-                                  const next = { ...prev };
-                                  delete next[item.id];
-                                  return next;
-                                });
-                              }
-                            }}
-                            onFocus={(e) => e.target.select()}
-                            onClick={(e) => e.stopPropagation()}
-                            placeholder="1"
-                            className="w-full px-1.5 sm:px-2 py-1.5 sm:py-2 text-center text-xs sm:text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-500 min-h-[40px] sm:min-h-[44px] touch-manipulation"
-                          />
-                        </div>
-                        <button
-                          onClick={() => addToCart(item)}
-                          disabled={
-                            price === 0 ||
-                            addItemMutation.isPending ||
-                            orderData?.status === "completed"
-                          }
-                          className="w-full px-2 sm:px-2.5 py-1.5 sm:py-2 bg-slate-800 text-white text-xs sm:text-sm rounded-lg active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation min-h-[40px] sm:min-h-[44px] font-medium"
-                        >
-                          + បន្ថែម
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <MenuItemGrid
+                items={filteredMenu}
+                tableTypeName={tableTypeName}
+                orderId={orderId}
+                orderData={orderData}
+              />
             )}
           </div>
         </div>
 
         <OrderCartSidebar
+          orderId={orderId}
           orderData={orderData}
           orderItems={orderItems}
-          customerName={customerName}
-          discountType={discountType}
-          discountValue={discountValue}
-          debouncedDiscountValue={debouncedDiscountValue}
-          discountAmount={discountAmount}
-          subtotal={subtotal}
-          total={total}
-          paymentMethod={paymentMethod}
-          deleteItemMutation={deleteItemMutation}
-          handleCustomerNameChange={handleCustomerNameChange}
-          handleDiscountChange={handleDiscountChange}
-          setDiscountType={setDiscountType}
-          setDiscountValue={setDiscountValue}
-          setPaymentMethod={setPaymentMethod}
-          removeFromCart={removeFromCart}
-          handlePrintInvoice={handlePrintInvoice}
-          handlePlaceOrder={handlePlaceOrder}
-          handleFinishOrder={handleFinishOrder}
-          handleCancelOrder={handleCancelOrder}
-          completePaymentMutation={completePaymentMutation}
-          cancelOrderMutation={cancelOrderMutation}
           showSidebar={showSidebar}
           onCloseSidebar={() => setShowSidebar(false)}
         />
