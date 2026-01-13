@@ -22,42 +22,7 @@ import {
   OrdersPageSkeleton,
   MenuGridSkeleton,
 } from "./components/OrdersPageSkeleton";
-
-interface Category {
-  id: string;
-  name: string;
-  displayName: string;
-}
-
-interface TableType {
-  id: string;
-  name: string;
-  displayName: string;
-  order: number;
-}
-
-interface TableItem {
-  id: string;
-  number: string;
-  name: string | null;
-  status: string;
-  tableType: {
-    id: string;
-    name: string;
-    displayName: string;
-  };
-}
-
-interface MenuItem {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-  category: string;
-  prices: {
-    [tableType: string]: number;
-  };
-}
+import { Category, TableItem, MenuItem } from "@/lib/types";
 
 export default function OrdersPage() {
   const router = useRouter();

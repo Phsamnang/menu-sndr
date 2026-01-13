@@ -2,5 +2,7 @@
 export * from "./category";
 export * from "./menu-item";
 export * from "./table-type";
+export * from "./table";
 export * from "./price";
 export * from "./menu-item-detail";
+export * from "./order";

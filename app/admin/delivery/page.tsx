@@ -6,42 +6,7 @@ import Link from "next/link";
 import OptimizedImage from "@/components/OptimizedImage";
 import { apiClientJson } from "@/utils/api-client";
 import { useDeliveryStream } from "@/hooks/useDeliveryStream";
-
-interface OrderItem {
-  id: string;
-  menuItemId: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  status: string;
-  menuItem: {
-    id: string;
-    name: string;
-    image: string;
-    isCook: boolean;
-    category: {
-      displayName: string;
-    };
-  };
-}
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  tableId: string | null;
-  customerName: string | null;
-  status: string;
-  createdAt: string;
-  items: OrderItem[];
-  table?: {
-    id: string;
-    number: string;
-    name: string | null;
-    tableType: {
-      displayName: string;
-    };
-  };
-}
+import { Order, OrderItem } from "@/lib/types";
 
 export default function DeliveryPage() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);

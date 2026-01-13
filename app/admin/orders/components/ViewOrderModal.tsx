@@ -1,35 +1,4 @@
-interface TableItem {
-  id: string;
-  number: string;
-  name: string | null;
-  status: string;
-  tableType: {
-    id: string;
-    name: string;
-    displayName: string;
-  };
-}
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  tableId: string | null;
-  customerName: string | null;
-  status: string;
-  discountType: string | null;
-  discountValue: number | null;
-  subtotal: number;
-  discountAmount: number;
-  total: number;
-  items: Array<{
-    id: string;
-    menuItemId: string;
-    quantity: number;
-    unitPrice: number;
-    totalPrice: number;
-  }>;
-  createdAt?: string;
-}
+import { TableItem, Order } from "@/lib/types";
 
 interface ViewOrderModalProps {
   isOpen: boolean;
