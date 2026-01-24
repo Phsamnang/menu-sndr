@@ -63,11 +63,11 @@ export default function AdminPage() {
       ],
     },
     {
-      title: "ការបញ្ជាទិញ",
+      title: "លក់",
       items: [
         {
           href: "/admin/orders",
-          title: "ការបញ្ជាទិញ",
+          title: "លក់",
           description: "គ្រប់គ្រងការបញ្ជាទិញ",
           allowedRoles: ["admin", "order"],
         },
