@@ -86,7 +86,11 @@ async function getHandler(
     const finalTotal = order.total + taxAmount;
     const tableName = order.table?.name || order.table?.number;
 
-    const invoiceHTML = `
+    const baseUrl = new URL(request.url).origin;
+    const orderUrl = `${baseUrl}/admin/orders/${id}`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(orderUrl)}`;
+
+const invoiceHTML = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -257,6 +261,17 @@ async function getHandler(
       margin-top: 4px;
       font-size: 27pt;
     }
+    .qr-code {
+      margin-top: 8px;
+      text-align: center;
+      padding-top: 4px;
+    }
+    .qr-code img {
+      width: 150px;
+      height: 150px;
+      display: block;
+      margin: 0 auto;
+    }
   </style>
 </head>
 <body>
@@ -396,6 +411,10 @@ async function getHandler(
       </div>
       <p class="thank-you">សូមអរគុណ!</p>
     </div>
+
+    <div class="qr-code">
+      <img src="${qrCodeUrl}" alt="QR Code" />
+    </div>
   </div>
 </body>
 </html>
@@ -408,9 +427,31 @@ async function getHandler(
 
     try {
       const page = await browser.newPage();
+      
+      await page.setRequestInterception(true);
+      page.on('request', (request) => {
+        request.continue();
+      });
 
       await page.setViewport({ width: 450, height: 800, deviceScaleFactor: 1 });
       await page.setContent(invoiceHTML, { waitUntil: "networkidle0" });
+      
+      await page.waitForSelector('.qr-code img', { timeout: 15000 }).catch(() => {
+        console.log('QR code image selector not found');
+      });
+      
+      await page.waitForFunction(
+        () => {
+          const img = document.querySelector('.qr-code img') as HTMLImageElement;
+          if (!img) return false;
+          return img.complete && img.naturalHeight > 0;
+        },
+        { timeout: 15000 }
+      ).catch(() => {
+        console.log('QR code image may not be fully loaded');
+      });
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       const contentHeight = await page.evaluate(() => {
         const body = document.body;
