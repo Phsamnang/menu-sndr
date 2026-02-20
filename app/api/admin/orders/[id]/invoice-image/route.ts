@@ -83,11 +83,26 @@ async function getHandler(
 
     const taxRate = 10;
     const taxAmount = 0;
-    const paymentMethod = "cash";
+    const paymentMethod = (order as any).paymentMethod ?? "cash";
     const finalTotal = order.total + taxAmount;
     const tableName = order.table?.name || order.table?.number;
 
-    const baseUrl = new URL(request.url).origin;
+    const getBaseUrl = () => {
+      if (process.env.NEXTAUTH_URL) {
+        return process.env.NEXTAUTH_URL;
+      }
+      
+      const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+      const protocol = request.headers.get("x-forwarded-proto") || (request.url.startsWith("https") ? "https" : "http");
+      
+      if (host) {
+        return `${protocol}://${host}`;
+      }
+      
+      return new URL(request.url).origin;
+    };
+    
+    const baseUrl = getBaseUrl();
     const orderUrl = `${baseUrl}/admin/orders/${id}`;
     const qrCodeDataUrl = await QRCode.toDataURL(orderUrl, {
       width: 150,
@@ -430,16 +445,24 @@ const invoiceHTML = `
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--single-process",
+        "--no-zygote",
+        "--disable-extensions",
+        "--disable-software-rasterizer",
       ],
     });
 
     try {
       const page = await browser.newPage();
-      
+
       await page.setViewportSize({ width: 450, height: 800 });
-      await page.setContent(invoiceHTML, { waitUntil: "networkidle" });
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Use domcontentloaded instead of networkidle to avoid font-load timeout on servers
+      await page.setContent(invoiceHTML, { waitUntil: "domcontentloaded" });
+
+      // Give fonts a moment to load (or fall back gracefully)
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       const contentHeight = await page.evaluate(() => {
         const body = document.body;
