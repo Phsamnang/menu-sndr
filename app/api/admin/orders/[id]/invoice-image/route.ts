@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import puppeteer from "puppeteer";
+import { chromium } from "playwright";
+import QRCode from "qrcode";
 
 async function getHandler(
   request: NextRequest,
@@ -88,7 +89,10 @@ async function getHandler(
 
     const baseUrl = new URL(request.url).origin;
     const orderUrl = `${baseUrl}/admin/orders/${id}`;
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(orderUrl)}`;
+    const qrCodeDataUrl = await QRCode.toDataURL(orderUrl, {
+      width: 150,
+      margin: 1,
+    });
 
 const invoiceHTML = `
 <!DOCTYPE html>
@@ -413,76 +417,29 @@ const invoiceHTML = `
     </div>
 
     <div class="qr-code">
-      <img src="${qrCodeUrl}" alt="QR Code" />
+      <img src="${qrCodeDataUrl}" alt="QR Code" />
     </div>
   </div>
 </body>
 </html>
     `;
 
-    const browser = await puppeteer.launch({
+    const browser = await chromium.launch({
       headless: true,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
-        "--disable-accelerated-2d-canvas",
-        "--no-first-run",
-        "--no-zygote",
-        "--disable-gpu",
-        "--disable-software-rasterizer",
-        "--disable-extensions",
-        "--disable-background-networking",
-        "--disable-background-timer-throttling",
-        "--disable-backgrounding-occluded-windows",
-        "--disable-breakpad",
-        "--disable-client-side-phishing-detection",
-        "--disable-component-update",
-        "--disable-default-apps",
-        "--disable-features=TranslateUI",
-        "--disable-hang-monitor",
-        "--disable-ipc-flooding-protection",
-        "--disable-popup-blocking",
-        "--disable-prompt-on-repost",
-        "--disable-renderer-backgrounding",
-        "--disable-sync",
-        "--disable-translate",
-        "--metrics-recording-only",
-        "--no-default-browser-check",
-        "--safebrowsing-disable-auto-update",
-        "--enable-automation",
-        "--password-store=basic",
-        "--use-mock-keychain",
       ],
     });
 
     try {
       const page = await browser.newPage();
       
-      await page.setRequestInterception(true);
-      page.on('request', (request) => {
-        request.continue();
-      });
-
-      await page.setViewport({ width: 450, height: 800, deviceScaleFactor: 1 });
-      await page.setContent(invoiceHTML, { waitUntil: "networkidle0" });
+      await page.setViewportSize({ width: 450, height: 800 });
+      await page.setContent(invoiceHTML, { waitUntil: "networkidle" });
       
-      await page.waitForSelector('.qr-code img', { timeout: 15000 }).catch(() => {
-        console.log('QR code image selector not found');
-      });
-      
-      await page.waitForFunction(
-        () => {
-          const img = document.querySelector('.qr-code img') as HTMLImageElement;
-          if (!img) return false;
-          return img.complete && img.naturalHeight > 0;
-        },
-        { timeout: 15000 }
-      ).catch(() => {
-        console.log('QR code image may not be fully loaded');
-      });
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       const contentHeight = await page.evaluate(() => {
         const body = document.body;
@@ -498,10 +455,9 @@ const invoiceHTML = `
         );
       });
 
-      await page.setViewport({
+      await page.setViewportSize({
         width: 450,
         height: Math.max(contentHeight + 20, 200),
-        deviceScaleFactor: 1,
       });
 
       const screenshot = await page.screenshot({
