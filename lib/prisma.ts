@@ -9,9 +9,27 @@ const globalForPrisma = globalThis as unknown as {
 // and documented in the Prisma schema
 const TIMEZONE = "Asia/Phnom_Penh";
 
+// Get database URL from environment
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL environment variable is not set");
+}
+
+// Append timezone parameter to connection string if not already present
+let urlWithTimezone = databaseUrl;
+if (!urlWithTimezone.includes("timezone=")) {
+  const separator = urlWithTimezone.includes("?") ? "&" : "?";
+  urlWithTimezone = `${urlWithTimezone}${separator}timezone=${encodeURIComponent(TIMEZONE)}`;
+}
+
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
+    datasources: {
+      db: {
+        url: urlWithTimezone,
+      },
+    },
     log: process.env.NODE_ENV === "development" ? ["query"] : [],
   });
 

@@ -7,8 +7,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
   // Timezone: Asia/Phnom_Penh (configured via connection string parameter)
+  // Note: Connection URL is configured in prisma.config.ts for Prisma 7+
 }
 
 model Category {
