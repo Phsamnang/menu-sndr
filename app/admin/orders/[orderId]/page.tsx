@@ -96,15 +96,15 @@ export default function OrderDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-3 sm:p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
             <div className="animate-pulse">
-              <div className="h-8 bg-slate-200 rounded w-1/3 mb-4"></div>
-              <div className="h-4 bg-slate-200 rounded w-1/2 mb-8"></div>
-              <div className="space-y-4">
-                <div className="h-20 bg-slate-200 rounded"></div>
-                <div className="h-20 bg-slate-200 rounded"></div>
+              <div className="h-7 sm:h-8 bg-slate-200 rounded w-2/3 sm:w-1/3 mb-3 sm:mb-4"></div>
+              <div className="h-4 bg-slate-200 rounded w-3/4 sm:w-1/2 mb-6 sm:mb-8"></div>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="h-16 sm:h-20 bg-slate-200 rounded"></div>
+                <div className="h-16 sm:h-20 bg-slate-200 rounded"></div>
               </div>
             </div>
           </div>
@@ -115,13 +115,13 @@ export default function OrderDetailPage() {
 
   if (!orderData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-3 sm:p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-lg shadow-md p-6 text-center">
-            <p className="text-slate-600 mb-4">មិនរកឃើញការបញ្ជាទិញ</p>
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 text-center">
+            <p className="text-slate-600 mb-4 text-sm sm:text-base">មិនរកឃើញការបញ្ជាទិញ</p>
             <Link
               href="/admin/orders"
-              className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700"
+              className="px-4 py-2.5 bg-slate-800 text-white rounded-lg active:bg-slate-700 md:hover:bg-slate-700 text-sm sm:text-base min-h-[44px] inline-flex items-center justify-center touch-manipulation"
             >
               ត្រលប់
             </Link>
@@ -133,28 +133,28 @@ export default function OrderDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="flex flex-col lg:flex-row h-screen overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 w-full min-w-0 pb-20 lg:pb-6 relative z-10">
+      <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden">
+        <div className="flex-1 p-3 sm:p-4 md:p-6 w-full min-w-0 pb-24 lg:pb-6 lg:overflow-y-auto relative z-10">
           <div className="max-w-7xl mx-auto w-full">
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center mb-3 sm:mb-4 md:mb-6">
-              <div className="flex-1 min-w-0">
-                <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-slate-800 mb-1 sm:mb-2 truncate">
+            <div className="flex flex-col gap-3 sm:gap-2 sm:flex-row sm:justify-between sm:items-start mb-4 sm:mb-4 md:mb-6">
+              <div className="flex-1 min-w-0 space-y-2 sm:space-y-2">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 break-words">
                   ការបញ្ជាទិញ #{orderData.orderNumber}
                 </h1>
                 {orderData.table && (
-                  <div className="px-2 py-1 sm:px-3 sm:py-1.5 bg-slate-800 text-white rounded-lg text-[10px] sm:text-xs md:text-sm font-medium inline-block">
+                  <div className="px-3 py-1.5 sm:px-3 sm:py-1.5 bg-slate-800 text-white rounded-lg text-xs sm:text-xs md:text-sm font-medium inline-block break-words">
                     តុ: {orderData.table.number} -{" "}
                     {orderData.table.tableType.displayName}
                   </div>
                 )}
               </div>
-              <div className="flex gap-2 flex-shrink-0">
+              <div className="flex gap-2 flex-shrink-0 self-start sm:self-center">
                 <button
                   onClick={() => setShowSidebar(!showSidebar)}
-                  className="lg:hidden px-3 py-2 sm:px-4 bg-slate-800 text-white rounded-lg active:bg-slate-900 transition-colors text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 min-h-[44px]"
+                  className="lg:hidden px-4 py-2.5 sm:px-4 bg-slate-800 text-white rounded-lg active:bg-slate-900 transition-colors text-sm sm:text-sm flex items-center gap-2 min-h-[44px] touch-manipulation"
                 >
                   <svg
-                    className="w-4 h-4 sm:w-5 sm:h-5"
+                    className="w-5 h-5 sm:w-5 sm:h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -167,30 +167,30 @@ export default function OrderDetailPage() {
                     />
                   </svg>
                   <span className="hidden sm:inline">កន្ត្រក់</span>
-                  <span className="bg-white text-slate-800 rounded-full px-1.5 py-0.5 text-[10px] sm:text-xs font-bold min-w-[20px] text-center">
+                  <span className="bg-white text-slate-800 rounded-full px-2 py-0.5 text-xs font-bold min-w-[22px] text-center">
                     {orderItems.length}
                   </span>
                 </button>
                 <Link
                   href="/admin/orders"
-                  className="px-3 py-2 sm:px-4 bg-slate-600 text-white rounded-lg active:bg-slate-700 md:hover:bg-slate-700 text-xs sm:text-sm min-h-[44px] flex items-center justify-center"
+                  className="px-4 py-2.5 sm:px-4 bg-slate-600 text-white rounded-lg active:bg-slate-700 md:hover:bg-slate-700 text-sm sm:text-sm min-h-[44px] flex items-center justify-center touch-manipulation"
                 >
                   ត្រលប់
                 </Link>
               </div>
             </div>
 
-            <div className="mb-3 sm:mb-4 md:mb-6 flex gap-2 items-center">
+            <div className="mb-4 sm:mb-4 md:mb-6 flex gap-2 items-center">
               <div className="flex-1 relative">
                 <input
                   type="text"
                   placeholder="ស្វែងរកមុខម្ហូប..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-3 py-2 sm:px-4 sm:py-2.5 md:py-3 pl-9 sm:pl-10 text-sm md:text-base border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 min-h-[44px]"
+                  className="w-full px-4 py-3 sm:px-4 sm:py-2.5 md:py-3 pl-10 sm:pl-10 text-sm sm:text-sm md:text-base border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 min-h-[44px] touch-manipulation"
                 />
                 <svg
-                  className="absolute left-2.5 sm:left-3 top-2.5 sm:top-3 md:top-3.5 w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 text-slate-400"
+                  className="absolute left-3 sm:left-3 top-3 sm:top-3 md:top-3.5 w-5 h-5 sm:w-5 sm:h-5 md:w-5 md:h-5 text-slate-400 pointer-events-none"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -205,11 +205,11 @@ export default function OrderDetailPage() {
               </div>
             </div>
 
-            <div className="mb-3 sm:mb-4 md:mb-6">
-              <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-2 sm:mx-0 px-2 sm:px-0">
+            <div className="mb-4 sm:mb-4 md:mb-6">
+              <div className="flex gap-2 sm:gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-3 sm:mx-0 px-3 sm:px-0">
                 <button
                   onClick={() => setSelectedCategory(null)}
-                  className={`flex-shrink-0 px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-1.5 md:py-2 rounded-full text-xs sm:text-sm md:text-base font-medium transition-all min-h-[36px] sm:min-h-[40px] ${
+                  className={`flex-shrink-0 px-3 sm:px-3 md:px-4 py-2 sm:py-1.5 md:py-2 rounded-full text-xs sm:text-sm md:text-base font-medium transition-all min-h-[40px] sm:min-h-[40px] touch-manipulation whitespace-nowrap ${
                     selectedCategory === null
                       ? "bg-slate-800 text-white"
                       : "bg-white text-slate-700 active:bg-slate-100"
@@ -223,7 +223,7 @@ export default function OrderDetailPage() {
                     <button
                       key={catName}
                       onClick={() => setSelectedCategory(catName)}
-                      className={`flex-shrink-0 px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-1.5 md:py-2 rounded-full text-xs sm:text-sm md:text-base font-medium transition-all min-h-[36px] sm:min-h-[40px] ${
+                      className={`flex-shrink-0 px-3 sm:px-3 md:px-4 py-2 sm:py-1.5 md:py-2 rounded-full text-xs sm:text-sm md:text-base font-medium transition-all min-h-[40px] sm:min-h-[40px] touch-manipulation whitespace-nowrap ${
                         selectedCategory === catName
                           ? "bg-slate-800 text-white"
                           : "bg-white text-slate-700 active:bg-slate-100"

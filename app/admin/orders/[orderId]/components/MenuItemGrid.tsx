@@ -71,16 +71,26 @@ export default function MenuItemGrid({
     },
     [itemQuantities, orderData?.status, addItemMutation]
   );
+  if (!items || items.length === 0) {
+    return (
+      <div className="text-center py-8 sm:py-12 bg-white rounded-lg shadow-sm">
+        <p className="text-slate-500 text-sm sm:text-base">
+          រកមិនឃើញមុខម្ហូបទេ
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3 md:gap-4 pb-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-2.5 md:gap-3 lg:gap-4 pb-4 w-full">
       {items.map((item) => {
         const price = tableTypeName ? item.prices[tableTypeName] || 0 : 0;
         return (
           <div
             key={item.id}
-            className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden active:shadow-md md:hover:shadow-md transition-shadow"
+            className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden active:shadow-md md:hover:shadow-md transition-shadow flex flex-col w-full"
           >
-            <div className="relative h-16 sm:h-20 md:h-24 lg:h-28 bg-slate-100">
+            <div className="relative h-20 sm:h-20 md:h-24 lg:h-28 bg-slate-100 flex-shrink-0">
               {item.image ? (
                 <OptimizedImage
                   src={item.image}
@@ -108,16 +118,16 @@ export default function MenuItemGrid({
                 </div>
               )}
             </div>
-            <div className="p-1.5 sm:p-2 md:p-2.5">
-              <h3 className="font-semibold text-slate-900 mb-0.5 sm:mb-1 text-xs sm:text-sm line-clamp-2 leading-tight">
+            <div className="p-2 sm:p-2 md:p-2.5 flex-1 flex flex-col min-h-0">
+              <h3 className="font-semibold text-slate-900 mb-1 sm:mb-1 text-xs sm:text-sm line-clamp-2 leading-tight min-h-[2.5em] flex-shrink-0">
                 {item.name}
               </h3>
-              <div className="flex items-center justify-between mb-1 sm:mb-1.5">
+              <div className="flex items-center justify-between mb-1.5 sm:mb-1.5 flex-shrink-0">
                 <span className="text-xs sm:text-sm font-bold text-orange-500">
                   {price.toLocaleString("km-KH")}៛
                 </span>
               </div>
-              <div className="mb-1 sm:mb-1.5">
+              <div className="mb-1.5 sm:mb-1.5 flex-shrink-0">
                 <label className="block text-[10px] sm:text-xs text-slate-600 mb-0.5">
                   ចំនួន
                 </label>
@@ -158,7 +168,7 @@ export default function MenuItemGrid({
                   onFocus={(e) => e.target.select()}
                   onClick={(e) => e.stopPropagation()}
                   placeholder="1"
-                  className="w-full px-1.5 sm:px-2 py-1.5 sm:py-2 text-center text-xs sm:text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-500 min-h-[40px] sm:min-h-[44px] touch-manipulation"
+                  className="w-full px-1.5 sm:px-2 py-1.5 sm:py-2 text-center text-xs sm:text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-500 min-h-[36px] sm:min-h-[40px] touch-manipulation"
                 />
               </div>
               <button
@@ -168,7 +178,7 @@ export default function MenuItemGrid({
                   addItemMutation.isPending ||
                   orderData?.status === "completed"
                 }
-                className="w-full px-2 sm:px-2.5 py-1.5 sm:py-2 bg-slate-800 text-white text-xs sm:text-sm rounded-lg active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation min-h-[40px] sm:min-h-[44px] font-medium"
+                className="w-full px-2 sm:px-2.5 py-1.5 sm:py-2 bg-slate-800 text-white text-xs sm:text-sm rounded-lg active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation min-h-[36px] sm:min-h-[40px] font-medium flex-shrink-0 mt-auto"
               >
                 + បន្ថែម
               </button>

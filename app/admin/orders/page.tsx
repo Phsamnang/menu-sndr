@@ -627,30 +627,30 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-3 sm:p-4 md:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-800">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6 md:mb-8">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800">
             ជ្រើសរើសតុ
           </h1>
           <Link
             href="/admin"
-            className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 text-sm md:text-base w-full sm:w-auto text-center"
+            className="px-4 py-2.5 sm:py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 active:bg-slate-800 text-sm md:text-base w-full sm:w-auto text-center transition-colors touch-manipulation min-h-[44px] flex items-center justify-center"
           >
             ត្រលប់
           </Link>
         </div>
 
-        <div className="mb-6">
-          <p className="text-slate-600 mb-4">
+        <div className="mb-4 sm:mb-6">
+          <p className="text-slate-600 text-sm sm:text-base mb-2 sm:mb-4">
             សូមជ្រើសរើសតុដើម្បីចាប់ផ្តើមការបញ្ជាទិញ
           </p>
         </div>
 
         {tables.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+          <div className="text-center py-8 sm:py-12 bg-white rounded-lg shadow-sm">
             <svg
-              className="w-12 h-12 md:w-16 md:h-16 text-slate-300 mx-auto mb-4"
+              className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 text-slate-300 mx-auto mb-3 sm:mb-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -662,23 +662,23 @@ export default function OrdersPage() {
                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
               />
             </svg>
-            <p className="text-slate-500 text-base md:text-lg">មិនមានតុទេ</p>
+            <p className="text-slate-500 text-sm sm:text-base md:text-lg">មិនមានតុទេ</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {Object.entries(tablesByType).map(([typeName, typeTables]) => (
-              <div key={typeName} className="space-y-3">
-                <div className="flex items-center gap-3 px-2">
-                  <div className="h-1 w-12 bg-gradient-to-r from-slate-800 to-slate-600 rounded-full"></div>
-                  <h2 className="text-lg sm:text-xl font-bold text-slate-800">
+              <div key={typeName} className="space-y-2 sm:space-y-3">
+                <div className="flex items-center gap-2 sm:gap-3 px-1 sm:px-2">
+                  <div className="h-0.5 sm:h-1 w-8 sm:w-12 bg-gradient-to-r from-slate-800 to-slate-600 rounded-full"></div>
+                  <h2 className="text-base sm:text-lg md:text-xl font-bold text-slate-800 truncate">
                     {typeName}
                   </h2>
-                  <div className="flex-1 h-1 bg-gradient-to-r from-slate-300 to-transparent rounded-full"></div>
-                  <span className="text-xs sm:text-sm font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                  <div className="flex-1 h-0.5 sm:h-1 bg-gradient-to-r from-slate-300 to-transparent rounded-full min-w-0"></div>
+                  <span className="text-xs sm:text-sm font-semibold text-slate-500 bg-slate-100 px-2 sm:px-2.5 py-0.5 rounded-full flex-shrink-0">
                     {typeTables.length}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
                   {typeTables.map((table) => {
                     const isAvailable = table.status === "available";
                     const tableOrders = ordersByTable[table.id] || [];
@@ -692,32 +692,29 @@ export default function OrdersPage() {
                         key={table.id}
                         onClick={() => handleTableSelect(table)}
                         disabled={!canSelect && table.status === "maintenance"}
-                        className={`rounded-lg shadow-md p-3 md:p-6 transition-all border-2 ${
-                          canSelect || hasActiveOrder
-                            ? "hover:shadow-xl cursor-pointer active:scale-95 md:hover:scale-105"
-                            : table.status === "maintenance"
+                        className={`rounded-lg shadow-md p-3 sm:p-4 md:p-5 lg:p-6 transition-all border-2 touch-manipulation min-h-[80px] sm:min-h-[100px] md:min-h-[120px] flex flex-col items-center justify-center ${canSelect || hasActiveOrder
+                          ? "hover:shadow-xl cursor-pointer active:scale-95 md:hover:scale-105"
+                          : table.status === "maintenance"
                             ? "opacity-75 cursor-not-allowed"
                             : "hover:shadow-xl cursor-pointer active:scale-95 md:hover:scale-105"
-                        } ${getTableStatusColor(table.status)}`}
+                          } ${getTableStatusColor(table.status)}`}
                       >
-                        <div className="text-center">
+                        <div className="text-center w-full">
                           <h3
-                            className={`font-semibold mb-2 text-sm md:text-base ${
-                              isAvailable ? "text-slate-900" : "text-slate-700"
-                            }`}
+                            className={`font-semibold mb-1.5 sm:mb-2 text-xs sm:text-sm md:text-base leading-tight ${isAvailable ? "text-slate-900" : "text-slate-700"
+                              }`}
                           >
                             {table.name || `តុ ${table.number}`}
                           </h3>
                           <span
-                            className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
-                              isAvailable
-                                ? "bg-green-200 text-green-800"
-                                : table.status === "occupied"
+                            className={`inline-block px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium ${isAvailable
+                              ? "bg-green-200 text-green-800"
+                              : table.status === "occupied"
                                 ? "bg-red-200 text-red-800"
                                 : table.status === "reserved"
-                                ? "bg-yellow-200 text-yellow-800"
-                                : "bg-gray-200 text-gray-800"
-                            }`}
+                                  ? "bg-yellow-200 text-yellow-800"
+                                  : "bg-gray-200 text-gray-800"
+                              }`}
                           >
                             {getTableStatusLabel(table.status)}
                           </span>

@@ -302,20 +302,22 @@ export default function OrderCartSidebar({
         />
       )}
       <div
-        className={`lg:w-96 bg-white border-l border-slate-200 flex flex-col max-h-screen relative z-50 transition-transform duration-300 ease-in-out ${
-          showSidebar ? "translate-x-0" : "translate-x-full lg:translate-x-0"
-        } fixed lg:static inset-y-0 right-0 w-full max-w-sm lg:max-w-none flex`}
+        className={`lg:w-96 bg-white border-l border-slate-200 flex flex-col relative z-50 transition-transform duration-300 ease-in-out ${
+          showSidebar 
+            ? "translate-x-0 lg:translate-x-0" 
+            : "translate-x-full lg:translate-x-0"
+        } fixed lg:static inset-y-0 right-0 w-full max-w-sm lg:max-w-none lg:h-screen`}
         style={{ touchAction: "pan-y" }}
       >
-        <div className="p-4 border-b border-slate-200 flex-shrink-0">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg md:text-xl font-bold text-slate-800">
+        <div className="p-3 sm:p-4 border-b border-slate-200 flex-shrink-0">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h2 className="text-base sm:text-lg md:text-xl font-bold text-slate-800">
               ការបញ្ជាទិញ
             </h2>
             {onCloseSidebar && (
               <button
                 onClick={onCloseSidebar}
-                className="lg:hidden p-2 text-slate-400 active:text-slate-600 rounded-lg transition-colors"
+                className="lg:hidden p-2.5 text-slate-400 active:text-slate-600 rounded-lg transition-colors touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="Close sidebar"
               >
                 <svg
@@ -334,9 +336,9 @@ export default function OrderCartSidebar({
               </button>
             )}
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2.5 sm:space-y-3">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">
+              <label className="block text-xs font-medium text-slate-600 mb-1.5 sm:mb-1">
                 ឈ្មោះអតិថិជន
               </label>
               <input
@@ -344,18 +346,18 @@ export default function OrderCartSidebar({
                 value={customerName}
                 onChange={(e) => handleCustomerNameChange(e.target.value)}
                 placeholder="ឈ្មោះអតិថិជន..."
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                className="w-full px-3 sm:px-3 py-2.5 sm:py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 min-h-[44px] touch-manipulation"
               />
             </div>
           </div>
         </div>
 
         <div
-          className="flex-1 overflow-y-auto p-4"
+          className="flex-1 overflow-y-auto p-3 sm:p-4"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-slate-800">មុខម្ហូប</h3>
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
+            <h3 className="font-semibold text-slate-800 text-sm sm:text-base">មុខម្ហូប</h3>
           </div>
 
           {orderItems.length === 0 ? (
@@ -499,7 +501,7 @@ export default function OrderCartSidebar({
           )}
         </div>
 
-        <div className="border-t border-slate-200 p-4 space-y-4 flex-shrink-0 bg-white">
+        <div className="border-t border-slate-200 p-3 sm:p-4 space-y-3 sm:space-y-4 flex-shrink-0 bg-white">
           <div className="space-y-2">
             <div className="flex justify-between text-xs sm:text-sm">
               <span className="text-slate-600">សរុបមុនបញ្ចុះតម្លៃ:</span>
@@ -576,7 +578,7 @@ export default function OrderCartSidebar({
                   setDiscountValue(0);
                 }}
                 disabled={orderData?.status === "completed"}
-                className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed shadow-sm"
+                className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed shadow-sm min-h-[44px] touch-manipulation"
               >
                 <option value="percentage">%</option>
                 <option value="amount">៛</option>
@@ -594,7 +596,7 @@ export default function OrderCartSidebar({
                 }}
                 placeholder="0"
                 disabled={orderData?.status === "completed"}
-                className="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed shadow-sm"
+                className="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed shadow-sm min-h-[44px] touch-manipulation"
               />
             </div>
             {discountValue > 0 && (
@@ -640,7 +642,7 @@ export default function OrderCartSidebar({
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
               disabled={orderData?.status === "completed"}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed min-h-[44px] touch-manipulation"
             >
               <option value="cash">សាច់ប្រាក់</option>
               <option value="card">កាត</option>
