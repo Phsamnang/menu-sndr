@@ -1,7 +1,14 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  flexRender,
+  type ColumnDef,
+} from "@tanstack/react-table";
+import { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import OptimizedImage from "@/components/OptimizedImage";
 import { apiClientJson } from "@/utils/api-client";
@@ -43,15 +50,21 @@ export default function DeliveryPage() {
     },
   });
 
-  const handleMarkServed = (orderId: string, itemId: string) => {
-    updateStatusMutation.mutate({ orderId, itemId, status: "served" });
-  };
-
-  const handleMarkAllServed = (orderId: string, itemIds: string[]) => {
-    itemIds.forEach((itemId) => {
+  const handleMarkServed = useCallback(
+    (orderId: string, itemId: string) => {
       updateStatusMutation.mutate({ orderId, itemId, status: "served" });
-    });
-  };
+    },
+    [updateStatusMutation]
+  );
+
+  const handleMarkAllServed = useCallback(
+    (orderId: string, itemIds: string[]) => {
+      itemIds.forEach((itemId) => {
+        updateStatusMutation.mutate({ orderId, itemId, status: "served" });
+      });
+    },
+    [updateStatusMutation]
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -104,11 +117,164 @@ export default function DeliveryPage() {
     ? groupedByStatus[statusFilter] || []
     : allItems;
 
-  const ordersWithItems = orders.filter((order) => {
-    if (statusFilter) {
-      return order.items.some((item) => item.status === statusFilter);
-    }
-    return order.items.length > 0;
+  // Define columns for TanStack Table
+  const columns = useMemo<ColumnDef<typeof filteredItems[number]>[]>(
+    () => [
+      {
+        accessorKey: "menuItem",
+        header: "រូបភាព",
+        cell: (info) => {
+          const menuItem = info.getValue() as OrderItem["menuItem"];
+          return (
+            <div className="w-16 h-16 bg-slate-100 rounded overflow-hidden flex-shrink-0">
+              {menuItem.image ? (
+                <OptimizedImage
+                  src={menuItem.image}
+                  alt={menuItem.name}
+                  width={64}
+                  height={64}
+                  className="w-full h-full object-cover"
+                  quality={75}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-slate-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "menuItem",
+        header: "មុខម្ហូប",
+        cell: (info) => {
+          const menuItem = info.getValue() as OrderItem["menuItem"];
+          return (
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-slate-900">
+                  {menuItem.name}
+                </span>
+                {menuItem.isCook && (
+                  <span className="px-1.5 py-0.5 bg-orange-100 text-orange-800 text-xs rounded">
+                    🔥
+                  </span>
+                )}
+              </div>
+              <div className="text-sm text-slate-600">
+                {menuItem.category.displayName}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "quantity",
+        header: "ចំនួន",
+        cell: (info) => (
+          <span className="font-bold text-slate-900">
+            {info.getValue() as number}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "ស្ថានភាព",
+        cell: (info) => {
+          const status = info.getValue() as string;
+          return (
+            <div
+              className={`inline-block px-2 py-1 rounded text-xs font-medium border ${getStatusColor(
+                status
+              )}`}
+            >
+              {getStatusLabel(status)}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "order",
+        header: "លេខការបញ្ជាទិញ",
+        cell: (info) => {
+          const order = info.getValue() as Order;
+          return (
+            <div className="text-sm font-medium text-slate-900">
+              {order.orderNumber}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "order",
+        header: "តុ",
+        cell: (info) => {
+          const order = info.getValue() as Order;
+          return (
+            <div className="text-sm text-slate-600">
+              {order.table
+                ? `តុ ${order.table.number} - ${order.table.tableType.displayName}`
+                : "-"}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "order",
+        header: "អតិថិជន",
+        cell: (info) => {
+          const order = info.getValue() as Order;
+          return (
+            <div className="text-sm text-slate-600">
+              {order.customerName || "-"}
+            </div>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: "សកម្មភាព",
+        cell: (info) => {
+          const item = info.row.original;
+          return (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMarkServed(item.order.id, item.id);
+              }}
+              disabled={
+                updateStatusMutation.isPending || item.status === "served"
+              }
+              className="px-3 py-2 btn-primary rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {item.status === "served" ? "បានដឹក" : "ដឹក"}
+            </button>
+          );
+        },
+      },
+    ],
+    [handleMarkServed, updateStatusMutation.isPending]
+  );
+
+  // Set up TanStack Table
+  const table = useReactTable({
+    data: filteredItems,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
   });
 
   return (
@@ -158,11 +324,11 @@ export default function DeliveryPage() {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-16">
+          <div className="text-center py-16 bg-white rounded-lg shadow-sm">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-slate-800"></div>
             <p className="text-slate-600 mt-4">កំពុងផ្ទុក...</p>
           </div>
-        ) : ordersWithItems.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-lg shadow-sm">
             <svg
               className="w-16 h-16 text-slate-300 mx-auto mb-4"
@@ -182,128 +348,50 @@ export default function DeliveryPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {ordersWithItems.map((order) => (
-              <div
-                key={order.id}
-                className="bg-white rounded-lg shadow-md border border-slate-200 overflow-hidden"
-              >
-                <div className="p-4 bg-slate-50 border-b border-slate-200">
-                  <div className="flex justify-between items-center flex-wrap gap-2">
-                    <div>
-                      <div className="font-bold text-slate-900 text-lg">
-                        លេខការបញ្ជាទិញ: {order.orderNumber}
-                      </div>
-                      {order.table && (
-                        <div className="text-sm text-slate-600">
-                          តុ: {order.table.number} -{" "}
-                          {order.table.tableType.displayName}
-                        </div>
-                      )}
-                      {order.customerName && (
-                        <div className="text-sm text-slate-600">
-                          អតិថិជន: {order.customerName}
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      onClick={() =>
-                        handleMarkAllServed(
-                          order.id,
-                          order.items.map((item) => item.id)
-                        )
-                      }
-                      disabled={updateStatusMutation.isPending}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      ដឹកទាំងអស់ ({order.items.length})
-                    </button>
-                  </div>
-                </div>
-
-                <div className="p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {order.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="border border-slate-200 rounded-lg p-3 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex gap-3">
-                          <div className="w-16 h-16 bg-slate-100 rounded overflow-hidden flex-shrink-0">
-                            {item.menuItem.image ? (
-                              <OptimizedImage
-                                src={item.menuItem.image}
-                                alt={item.menuItem.name}
-                                width={64}
-                                height={64}
-                                className="w-full h-full object-cover"
-                                quality={75}
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <svg
-                                  className="w-6 h-6 text-slate-300"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                  />
-                                </svg>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between mb-1">
-                              <h3 className="font-bold text-slate-900 text-sm truncate">
-                                {item.menuItem.name}
-                              </h3>
-                              {item.menuItem.isCook && (
-                                <span className="ml-2 px-1.5 py-0.5 bg-orange-100 text-orange-800 text-xs rounded">
-                                  🔥
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-slate-600 mb-1">
-                              {item.menuItem.category.displayName}
-                            </p>
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-xs text-slate-600">
-                                ចំនួន:
-                              </span>
-                              <span className="font-bold text-slate-900 text-sm">
-                                {item.quantity}
-                              </span>
-                            </div>
-                            <div
-                              className={`inline-block px-2 py-0.5 rounded text-xs font-medium border ${getStatusColor(
-                                item.status
-                              )}`}
-                            >
-                              {getStatusLabel(item.status)}
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleMarkServed(order.id, item.id)}
-                          disabled={
-                            updateStatusMutation.isPending ||
-                            item.status === "served"
-                          }
-                          className="w-full mt-2 px-3 py-2 btn-primary rounded-lg font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider"
                         >
-                          {item.status === "served" ? "បានដឹក" : "ដឹក"}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody className="bg-white divide-y divide-slate-100">
+                  {table.getRowModel().rows.map((row) => (
+                    <tr
+                      key={row.id}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td
+                          key={cell.id}
+                          className="px-6 py-4 text-sm text-slate-900"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

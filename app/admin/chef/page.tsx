@@ -1,7 +1,14 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  flexRender,
+  type ColumnDef,
+} from "@tanstack/react-table";
+import { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import OptimizedImage from "@/components/OptimizedImage";
 import { apiClientJson } from "@/utils/api-client";
@@ -42,13 +49,12 @@ export default function ChefPage() {
     },
   });
 
-  const handleStatusChange = (
-    orderId: string,
-    itemId: string,
-    newStatus: string
-  ) => {
-    updateStatusMutation.mutate({ orderId, itemId, status: newStatus });
-  };
+  const handleStatusChange = useCallback(
+    (orderId: string, itemId: string, newStatus: string) => {
+      updateStatusMutation.mutate({ orderId, itemId, status: newStatus });
+    },
+    [updateStatusMutation]
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -101,6 +107,197 @@ export default function ChefPage() {
     ? groupedByStatus[statusFilter] || []
     : allItems;
 
+  // Define columns for TanStack Table
+  type ItemWithOrder = (OrderItem & { order: Order }) | typeof allItems[number];
+
+  const columns = useMemo<ColumnDef<typeof filteredItems[number]>[]>(
+    () => [
+      {
+        accessorKey: "menuItem",
+        header: "រូបភាព",
+        cell: (info) => {
+          const menuItem = info.getValue() as OrderItem["menuItem"];
+          return (
+            <div className="w-16 h-16 bg-slate-100 rounded overflow-hidden flex-shrink-0">
+              {menuItem.image ? (
+                <OptimizedImage
+                  src={menuItem.image}
+                  alt={menuItem.name}
+                  width={64}
+                  height={64}
+                  className="w-full h-full object-cover"
+                  quality={75}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-slate-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "menuItem",
+        header: "មុខម្ហូប",
+        cell: (info) => {
+          const menuItem = info.getValue() as OrderItem["menuItem"];
+          return (
+            <div>
+              <div className="font-bold text-slate-900">{menuItem.name}</div>
+              <div className="text-sm text-slate-600">
+                {menuItem.category.displayName}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "quantity",
+        header: "ចំនួន",
+        cell: (info) => (
+          <span className="font-bold text-slate-900">
+            {info.getValue() as number}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "ស្ថានភាព",
+        cell: (info) => {
+          const status = info.getValue() as string;
+          return (
+            <div
+              className={`inline-block px-2 py-1 rounded text-xs font-medium border ${getStatusColor(
+                status
+              )}`}
+            >
+              {getStatusLabel(status)}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "order",
+        header: "លេខការបញ្ជាទិញ",
+        cell: (info) => {
+          const order = info.getValue() as Order;
+          return (
+            <div className="text-sm text-slate-600">
+              {order.orderNumber}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "order",
+        header: "តុ",
+        cell: (info) => {
+          const order = info.getValue() as Order;
+          return (
+            <div className="text-sm text-slate-600">
+              {order.table
+                ? `តុ ${order.table.number} - ${order.table.tableType.displayName}`
+                : "-"}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "order",
+        header: "អតិថិជន",
+        cell: (info) => {
+          const order = info.getValue() as Order;
+          return (
+            <div className="text-sm text-slate-600">
+              {order.customerName || "-"}
+            </div>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: "សកម្មភាព",
+        cell: (info) => {
+          const item = info.row.original;
+          return (
+            <div className="flex gap-2">
+              {item.status === "pending" && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStatusChange(item.order.id, item.id, "preparing");
+                  }}
+                  disabled={updateStatusMutation.isPending}
+                  className="px-3 py-2 btn-primary rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  ចាប់ផ្តើមចម្អិន
+                </button>
+              )}
+              {item.status === "preparing" && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStatusChange(item.order.id, item.id, "ready");
+                  }}
+                  disabled={updateStatusMutation.isPending}
+                  className="px-3 py-2 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  បានចម្អិនរួច
+                </button>
+              )}
+              {item.status === "ready" && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStatusChange(item.order.id, item.id, "served");
+                  }}
+                  disabled={updateStatusMutation.isPending}
+                  className="px-3 py-2 bg-gray-600 text-white rounded-lg font-medium text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  បានដឹក
+                </button>
+              )}
+              {(item.status === "pending" || item.status === "preparing") && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStatusChange(item.order.id, item.id, "cancelled");
+                  }}
+                  disabled={updateStatusMutation.isPending}
+                  className="px-3 py-2 bg-red-600 text-white rounded-lg font-medium text-sm hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  លុប
+                </button>
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    [handleStatusChange, updateStatusMutation.isPending]
+  );
+
+  // Set up TanStack Table
+  const table = useReactTable({
+    data: filteredItems,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
@@ -124,11 +321,10 @@ export default function ChefPage() {
         <div className="mb-6 flex flex-wrap gap-2">
           <button
             onClick={() => setStatusFilter(null)}
-            className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-              statusFilter === null
-                ? "bg-slate-800 text-white shadow-md"
-                : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"
-            }`}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${statusFilter === null
+              ? "bg-slate-800 text-white shadow-md"
+              : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"
+              }`}
           >
             ទាំងអស់ ({allItems.length})
           </button>
@@ -136,11 +332,10 @@ export default function ChefPage() {
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                statusFilter === status
-                  ? "bg-slate-800 text-white shadow-md"
-                  : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${statusFilter === status
+                ? "bg-slate-800 text-white shadow-md"
+                : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"
+                }`}
             >
               {getStatusLabel(status)} ({groupedByStatus[status]?.length || 0})
             </button>
@@ -148,7 +343,7 @@ export default function ChefPage() {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-16">
+          <div className="text-center py-16 bg-white rounded-lg shadow-sm">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-slate-800"></div>
             <p className="text-slate-600 mt-4">កំពុងផ្ទុក...</p>
           </div>
@@ -172,140 +367,50 @@ export default function ChefPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-lg shadow-md border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow"
-              >
-                <div className="p-4">
-                  <div className="flex gap-3 mb-3">
-                    <div className="w-20 h-20 bg-slate-100 rounded overflow-hidden flex-shrink-0">
-                      {item.menuItem.image ? (
-                        <OptimizedImage
-                          src={item.menuItem.image}
-                          alt={item.menuItem.name}
-                          width={80}
-                          height={80}
-                          className="w-full h-full object-cover"
-                          quality={75}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <svg
-                            className="w-8 h-8 text-slate-300"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-slate-900 text-lg mb-1 truncate">
-                        {item.menuItem.name}
-                      </h3>
-                      <p className="text-sm text-slate-600 mb-2">
-                        {item.menuItem.category.displayName}
-                      </p>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-sm text-slate-600">ចំនួន:</span>
-                        <span className="font-bold text-slate-900">
-                          {item.quantity}
-                        </span>
-                      </div>
-                      <div
-                        className={`inline-block px-2 py-1 rounded text-xs font-medium border ${getStatusColor(
-                          item.status
-                        )}`}
-                      >
-                        {getStatusLabel(item.status)}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mb-3 p-2 bg-slate-50 rounded">
-                    <div className="text-xs text-slate-600 mb-1">
-                      លេខការបញ្ជាទិញ: {item.order.orderNumber}
-                    </div>
-                    {item.order.table && (
-                      <div className="text-xs text-slate-600">
-                        តុ: {item.order.table.number} -{" "}
-                        {item.order.table.tableType.displayName}
-                      </div>
-                    )}
-                    {item.order.customerName && (
-                      <div className="text-xs text-slate-600">
-                        អតិថិជន: {item.order.customerName}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    {item.status === "pending" && (
-                      <button
-                        onClick={() =>
-                          handleStatusChange(
-                            item.order.id,
-                            item.id,
-                            "preparing"
-                          )
-                        }
-                        disabled={updateStatusMutation.isPending}
-                        className="flex-1 px-3 py-2 btn-primary rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        ចាប់ផ្តើមចម្អិន
-                      </button>
-                    )}
-                    {item.status === "preparing" && (
-                      <button
-                        onClick={() =>
-                          handleStatusChange(item.order.id, item.id, "ready")
-                        }
-                        disabled={updateStatusMutation.isPending}
-                        className="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        បានចម្អិនរួច
-                      </button>
-                    )}
-                    {item.status === "ready" && (
-                      <button
-                        onClick={() =>
-                          handleStatusChange(item.order.id, item.id, "served")
-                        }
-                        disabled={updateStatusMutation.isPending}
-                        className="flex-1 px-3 py-2 bg-gray-600 text-white rounded-lg font-medium text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        បានដឹក
-                      </button>
-                    )}
-                    {(item.status === "pending" ||
-                      item.status === "preparing") && (
-                      <button
-                        onClick={() =>
-                          handleStatusChange(
-                            item.order.id,
-                            item.id,
-                            "cancelled"
-                          )
-                        }
-                        disabled={updateStatusMutation.isPending}
-                        className="px-3 py-2 bg-red-600 text-white rounded-lg font-medium text-sm hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        លុប
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider"
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody className="bg-white divide-y divide-slate-100">
+                  {table.getRowModel().rows.map((row) => (
+                    <tr
+                      key={row.id}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td
+                          key={cell.id}
+                          className="px-6 py-4 text-sm text-slate-900"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
