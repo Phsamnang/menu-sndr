@@ -635,7 +635,7 @@ export default function OrdersPage() {
           </h1>
           <Link
             href="/admin"
-            className="px-3 xs:px-4 py-2 xs:py-2.5 bg-slate-600 text-white rounded-lg hover:bg-slate-700 active:bg-slate-800 text-xs xs:text-sm md:text-base w-full xs:w-auto text-center transition-colors touch-manipulation min-h-[44px] flex items-center justify-center"
+            className="px-3 xs:px-4 py-2 xs:py-2.5 btn-primary rounded-lg text-xs xs:text-sm md:text-base w-full xs:w-auto text-center touch-manipulation min-h-[44px] flex items-center justify-center"
           >
             ត្រលប់
           </Link>

@@ -3,35 +3,34 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
-import Link from "next/link";
 import { apiClientJson } from "@/utils/api-client";
 import { type Order } from "@/services/order.service";
-import OrderCartSidebar from "./components/OrderCartSidebar";
-import MenuItemGrid from "./components/MenuItemGrid";
-import { FloatingCartButton } from "./components/FloatingCartButton";
-import { CartBottomSheet } from "./components/CartBottomSheet";
+import CustomerOrderCartSidebar from "./components/CustomerOrderCartSidebar";
+import CustomerMenuItemGrid from "./components/CustomerMenuItemGrid";
+import { FloatingCartButton } from "@/app/admin/orders/[orderId]/components/FloatingCartButton";
+import { CartBottomSheet } from "@/app/admin/orders/[orderId]/components/CartBottomSheet";
 import { type Category, type MenuItem } from "@/lib/types";
 
-export default function OrderDetailPage() {
+export default function CustomerOrderPage() {
   const params = useParams();
   const orderId = params.orderId as string;
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
-  const [showSidebar, setShowSidebar] = useState<boolean>(false);
   const [showMobileCart, setShowMobileCart] = useState<boolean>(false);
 
   const { data: orderData, isLoading } = useQuery<Order | null>({
-    queryKey: ["orderDetail", orderId],
+    queryKey: ["customerOrder", orderId],
     queryFn: async () => {
       if (!orderId) return null;
-      const result = await apiClientJson<Order>(`/api/admin/orders/${orderId}`);
+      const result = await apiClientJson<Order>(`/api/orders/${orderId}`);
       if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch order");
       }
       return result.data;
     },
     enabled: !!orderId,
+    refetchInterval: 5000, // Refetch every 5 seconds to keep cart updated
   });
 
   const tableTypeName = useMemo(() => {
@@ -55,11 +54,11 @@ export default function OrderDetailPage() {
   });
 
   const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ["categories"],
+    queryKey: ["publicCategories"],
     queryFn: async () => {
-      const result = await apiClientJson<Category[]>("/api/admin/categories");
+      const result = await apiClientJson<Category[]>("/api/categories");
       if (!result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to fetch categories");
+        return [];
       }
       return result.data;
     },
@@ -125,13 +124,9 @@ export default function OrderDetailPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-2 xs:p-3 sm:p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-lg shadow-md p-3 xs:p-4 sm:p-6 text-center">
-            <p className="text-slate-600 mb-4 text-xs xs:text-sm sm:text-base">មិនរកឃើញការបញ្ជាទិញ</p>
-            <Link
-              href="/admin/orders"
-              className="px-4 py-2.5 xs:py-2.5 btn-primary rounded-lg text-xs xs:text-sm sm:text-base min-h-[44px] inline-flex items-center justify-center touch-manipulation"
-            >
-              ត្រលប់
-            </Link>
+            <p className="text-slate-600 mb-4 text-xs xs:text-sm sm:text-base">
+              មិនរកឃើញការបញ្ជាទិញ
+            </p>
           </div>
         </div>
       </div>
@@ -154,22 +149,6 @@ export default function OrderDetailPage() {
                     {orderData.table.tableType.displayName}
                   </div>
                 )}
-              </div>
-              <div className="flex gap-1.5 xs:gap-2 flex-shrink-0 self-start sm:self-center lg:hidden">
-                <Link
-                  href="/admin/orders"
-                  className="px-3 xs:px-4 py-2 xs:py-2.5 btn-primary rounded-lg text-xs xs:text-sm min-h-[44px] flex items-center justify-center touch-manipulation"
-                >
-                  ត្រលប់
-                </Link>
-              </div>
-              <div className="hidden lg:flex gap-1.5 xs:gap-2 flex-shrink-0">
-                <Link
-                  href="/admin/orders"
-                  className="px-3 xs:px-4 py-2 xs:py-2.5 btn-primary rounded-lg text-xs xs:text-sm min-h-[44px] flex items-center justify-center"
-                >
-                  ត្រលប់
-                </Link>
               </div>
             </div>
 
@@ -261,7 +240,7 @@ export default function OrderDetailPage() {
                 </p>
               </div>
             ) : (
-              <MenuItemGrid
+              <CustomerMenuItemGrid
                 items={filteredMenu}
                 tableTypeName={tableTypeName}
                 orderId={orderId}
@@ -273,7 +252,7 @@ export default function OrderDetailPage() {
 
         {/* Desktop sidebar */}
         <div className="hidden lg:block">
-          <OrderCartSidebar
+          <CustomerOrderCartSidebar
             orderId={orderId}
             orderData={orderData}
             orderItems={orderItems}
@@ -296,7 +275,7 @@ export default function OrderDetailPage() {
         isOpen={showMobileCart}
         onClose={() => setShowMobileCart(false)}
       >
-        <OrderCartSidebar
+        <CustomerOrderCartSidebar
           orderId={orderId}
           orderData={orderData}
           orderItems={orderItems}

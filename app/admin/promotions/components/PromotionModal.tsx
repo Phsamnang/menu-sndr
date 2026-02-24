@@ -336,7 +336,7 @@ export default function PromotionModal({
                 onClick={() => toggleDay(day.value)}
                 className={`px-3 py-1 rounded-lg text-sm border transition-colors ${
                   formData.applicableDays.includes(day.value)
-                    ? "bg-blue-500 text-white border-blue-500"
+                    ? "bg-primary text-white border-primary"
                     : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
                 }`}
               >

@@ -123,6 +123,8 @@ async function putHandler(
       updateData.status = status;
       if (status === "completed") {
         updateData.completedAt = new Date();
+        // Automatically set paymentStatus to "paid" when order is completed
+        updateData.paymentStatus = "paid";
       } else if (status === "cancelled") {
         updateData.cancelledAt = new Date();
         updateData.cancelReason = cancelReason || null;
@@ -131,7 +133,10 @@ async function putHandler(
 
     if (customerId !== undefined) updateData.customerId = customerId || null;
     if (orderType !== undefined) updateData.orderType = orderType;
-    if (paymentStatus !== undefined) updateData.paymentStatus = paymentStatus;
+    // Only set paymentStatus if status is not "completed" (already set above)
+    if (paymentStatus !== undefined && status !== "completed") {
+      updateData.paymentStatus = paymentStatus;
+    }
     if (paymentMethod !== undefined) updateData.paymentMethod = paymentMethod;
     if (paidAmount !== undefined) updateData.paidAmount = paidAmount;
     if (changeAmount !== undefined) updateData.changeAmount = changeAmount;

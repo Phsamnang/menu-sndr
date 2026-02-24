@@ -195,7 +195,7 @@ export default function InventoryPage() {
         <div className="flex gap-2">
           <button
             onClick={() => handleEdit(item)}
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="btn-primary-md"
           >
             កែប្រែ
           </button>

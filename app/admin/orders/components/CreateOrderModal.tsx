@@ -21,9 +21,9 @@ export default function CreateOrderModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center p-2 xs:p-3 sm:p-4">
       <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-xl max-w-md w-full p-4 xs:p-5 sm:p-6 mx-0 sm:mx-auto max-h-[90vh] overflow-y-auto">
         <div className="flex items-start sm:items-center gap-2 xs:gap-3 sm:gap-3 mb-4 xs:mb-5">
-          <div className="w-10 h-10 xs:w-12 xs:h-12 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 xs:w-12 xs:h-12 sm:w-12 sm:h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
             <svg
-              className="w-5 h-5 xs:w-6 xs:h-6 sm:w-6 sm:h-6 text-blue-600"
+              className="w-5 h-5 xs:w-6 xs:h-6 sm:w-6 sm:h-6 text-primary"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -59,7 +59,7 @@ export default function CreateOrderModal({
           <button
             onClick={onConfirm}
             disabled={isCreating}
-            className="w-full px-4 py-3 xs:py-3 sm:py-2.5 bg-slate-800 text-white rounded-lg font-medium active:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 touch-manipulation min-h-[44px] xs:min-h-[44px] sm:min-h-0 text-sm xs:text-sm sm:text-base"
+            className="w-full px-4 py-3 xs:py-3 sm:py-2.5 btn-primary rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 touch-manipulation min-h-[44px] xs:min-h-[44px] sm:min-h-0 text-sm xs:text-sm sm:text-base"
           >
             {isCreating && (
               <svg

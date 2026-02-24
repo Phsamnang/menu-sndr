@@ -82,7 +82,7 @@ const ADMIN_MENU_ITEMS = [
     title: "ការដឹកជញ្ជូន",
     description: "មុខម្ហូបរួចរាល់សម្រាប់ដឹក",
     order: 8,
-    iconColor: "text-blue-600",
+    iconColor: "text-primary",
     allowedRoles: ["admin", "waiter", "order"],
   },
   {

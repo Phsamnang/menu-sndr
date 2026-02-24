@@ -103,7 +103,7 @@ async function getHandler(
     };
     
     const baseUrl = getBaseUrl();
-    const orderUrl = `${baseUrl}/admin/orders/${id}`;
+    const orderUrl = `${baseUrl}/order/${id}`;
     const qrCodeDataUrl = await QRCode.toDataURL(orderUrl, {
       width: 150,
       margin: 1,

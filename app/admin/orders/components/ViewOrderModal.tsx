@@ -67,7 +67,7 @@ export default function ViewOrderModal({
             <span
               className={`font-medium ${
                 order.status === "new"
-                  ? "text-blue-600"
+                  ? "text-primary"
                   : order.status === "on_process"
                   ? "text-yellow-600"
                   : "text-slate-600"
@@ -93,7 +93,7 @@ export default function ViewOrderModal({
           </button>
           <button
             onClick={onConfirm}
-            className="w-full px-4 py-3 xs:py-3 sm:py-2.5 bg-slate-800 text-white rounded-lg font-medium active:bg-slate-900 transition-colors touch-manipulation min-h-[44px] xs:min-h-[44px] sm:min-h-0 text-sm xs:text-sm sm:text-base"
+            className="w-full px-4 py-3 xs:py-3 sm:py-2.5 btn-primary rounded-lg font-medium touch-manipulation min-h-[44px] xs:min-h-[44px] sm:min-h-0 text-sm xs:text-sm sm:text-base"
           >
             មើល
           </button>

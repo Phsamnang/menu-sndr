@@ -106,7 +106,7 @@ async function postHandler(request: AuthenticatedRequest) {
     const orderItems = [];
 
     if (items && items.length > 0) {
-      const menuItemIds = items.map((item) => item.menuItemId);
+      const menuItemIds = (items as Array<{ menuItemId: string; quantity: number; specialNotes?: string }>).map((item) => item.menuItemId);
       const menuItems = await prisma.menuItem.findMany({
         where: { id: { in: menuItemIds } },
         include: {
@@ -126,7 +126,7 @@ async function postHandler(request: AuthenticatedRequest) {
         });
       }
 
-      for (const item of items) {
+      for (const item of items as Array<{ menuItemId: string; quantity: number; specialNotes?: string }>) {
         const menuItem = menuItemMap.get(item.menuItemId);
 
         if (!menuItem) {

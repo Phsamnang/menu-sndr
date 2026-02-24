@@ -37,7 +37,7 @@ export function FloatingCartButton({
     >
       <div className="relative">
         {/* Main button */}
-        <div className="bg-slate-800 hover:bg-slate-900 active:bg-slate-950 text-white rounded-full shadow-lg active:shadow-md transition-all p-4 xs:p-5 flex flex-col items-center justify-center gap-1 min-h-[56px] xs:min-h-[60px] min-w-[56px] xs:min-w-[60px]">
+        <div className="bg-primary hover:bg-primary/90 active:bg-primary/80 text-white rounded-full shadow-lg active:shadow-md transition-all p-4 xs:p-5 flex flex-col items-center justify-center gap-1 min-h-[56px] xs:min-h-[60px] min-w-[56px] xs:min-w-[60px]">
           {/* Cart icon */}
           <svg
             className="w-6 h-6 xs:w-7 xs:h-7"
@@ -61,7 +61,7 @@ export function FloatingCartButton({
 
         {/* Animated pulse ring on new item */}
         {isAnimating && (
-          <div className="absolute inset-0 rounded-full bg-slate-800 animate-pulse" />
+          <div className="absolute inset-0 rounded-full bg-primary animate-pulse" />
         )}
 
         {/* Price tooltip */}

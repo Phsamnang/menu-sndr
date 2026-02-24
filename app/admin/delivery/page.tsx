@@ -58,7 +58,7 @@ export default function DeliveryPage() {
       case "pending":
         return "bg-yellow-100 text-yellow-800 border-yellow-300";
       case "preparing":
-        return "bg-blue-100 text-blue-800 border-blue-300";
+        return "status-primary";
       case "ready":
         return "bg-green-100 text-green-800 border-green-300";
       case "served":
@@ -294,7 +294,7 @@ export default function DeliveryPage() {
                             updateStatusMutation.isPending ||
                             item.status === "served"
                           }
-                          className="w-full mt-2 px-3 py-2 bg-blue-600 text-white rounded-lg font-medium text-xs hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full mt-2 px-3 py-2 btn-primary rounded-lg font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {item.status === "served" ? "បានដឹក" : "ដឹក"}
                         </button>

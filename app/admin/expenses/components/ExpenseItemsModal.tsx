@@ -383,7 +383,7 @@ export default function ExpenseItemsModal({
                 disabled={
                   addItemMutation.isPending || updateItemMutation.isPending
                 }
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 text-sm"
+                className="px-4 py-2 btn-primary rounded-lg disabled:opacity-50 text-sm"
               >
                 {editingItemId ? "ធ្វើបច្ចុប្បន្នភាព" : "បន្ថែម"}
               </button>
@@ -463,7 +463,7 @@ export default function ExpenseItemsModal({
                         className={`px-3 py-2 text-sm text-right font-semibold ${
                           item.currency === "KHR"
                             ? "text-green-700"
-                            : "text-blue-700"
+                            : "text-primary"
                         }`}
                       >
                         {item.currency === "KHR" ? "៛" : "$"}
@@ -473,7 +473,7 @@ export default function ExpenseItemsModal({
                         <span
                           className={`text-xs px-2 py-1 rounded ${
                             item.currency === "USD"
-                              ? "bg-blue-100 text-blue-800"
+                              ? "badge-primary"
                               : "bg-green-100 text-green-800"
                           }`}
                         >
@@ -500,7 +500,7 @@ export default function ExpenseItemsModal({
                         <div className="flex justify-center gap-2">
                           <button
                             onClick={() => handleEdit(item)}
-                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded transition-colors"
+                            className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"
                             title="កែប្រែ"
                           >
                             <FaEdit />
@@ -529,12 +529,12 @@ export default function ExpenseItemsModal({
         <div className="border-t pt-4">
           <div className="grid grid-cols-2 gap-6">
             {/* USD Summary */}
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-800 mb-3">USD Summary</h4>
+            <div className="bg-primary/5 rounded-lg p-4">
+              <h4 className="font-semibold text-primary mb-3">USD Summary</h4>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-700">សរុប:</span>
-                  <span className="text-lg font-bold text-blue-700">
+                  <span className="text-lg font-bold text-primary">
                     ${totalAmountUSD.toFixed(2)}
                   </span>
                 </div>

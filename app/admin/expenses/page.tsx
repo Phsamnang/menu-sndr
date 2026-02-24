@@ -197,7 +197,7 @@ export default function ExpensesPage() {
       key: "category",
       label: "ប្រភេទ",
       render: (item) => (
-        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+        <span className="badge-primary">
           {item.category}
         </span>
       ),
@@ -228,7 +228,7 @@ export default function ExpensesPage() {
         return (
           <div className="flex flex-col gap-1">
             {usdTotal > 0 && (
-              <span className="font-semibold text-blue-700">
+              <span className="font-semibold text-primary">
                 USD: ${usdTotal.toFixed(2)}
               </span>
             )}
@@ -309,7 +309,7 @@ export default function ExpensesPage() {
               e.stopPropagation();
               handleEdit(item);
             }}
-            className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+            className="btn-primary-sm"
           >
             កែប្រែ
           </button>
@@ -423,7 +423,7 @@ export default function ExpensesPage() {
             </div>
             <div className="text-right">
               <p className="text-slate-600">សរុប USD</p>
-              <p className="text-2xl font-bold text-blue-700">
+              <p className="text-2xl font-bold text-primary">
                 ${totalAmountUSD.toFixed(2)}
               </p>
             </div>

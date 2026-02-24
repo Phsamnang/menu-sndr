@@ -1,25 +1,26 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import OptimizedImage from "@/components/OptimizedImage";
-import { orderService, type Order } from "@/services/order.service";
+import { type Order } from "@/services/order.service";
 import { type MenuItem } from "@/lib/types";
+import { apiClientJson } from "@/utils/api-client";
 
-interface MenuItemGridProps {
+interface CustomerMenuItemGridProps {
   items: MenuItem[];
   tableTypeName?: string;
   orderId: string;
   orderData: Order | null;
 }
 
-export default function MenuItemGrid({
+export default function CustomerMenuItemGrid({
   items,
   tableTypeName,
   orderId,
   orderData,
-}: MenuItemGridProps) {
+}: CustomerMenuItemGridProps) {
   const [itemQuantities, setItemQuantities] = useState<Record<string, number>>(
     {}
   );
@@ -40,10 +41,21 @@ export default function MenuItemGrid({
       if (!orderId) {
         throw new Error("Order not found");
       }
-      return orderService.addItem(orderId, { menuItemId, quantity });
+      const result = await apiClientJson<Order>(
+        `/api/orders/${orderId}/items`,
+        {
+          method: "POST",
+          data: { menuItemId, quantity },
+          requireAuth: false,
+        }
+      );
+      if (!result.success || !result.data) {
+        throw new Error(result.error?.message || "Failed to add item");
+      }
+      return result.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orderDetail", orderId] });
+      queryClient.invalidateQueries({ queryKey: ["customerOrder", orderId] });
     },
   });
 
@@ -63,15 +75,14 @@ export default function MenuItemGrid({
         return;
       }
       const quantity = itemQuantities[item.id] || 1;
-      
+
       // Add animation
       setAddingItemId(item.id);
       setTimeout(() => setAddingItemId(null), 600);
-      
-      toast.success(
-        `បានបន្ថែម "${item.name}" (${quantity})`,
-        { duration: 2000 }
-      );
+
+      toast.success(`បានបន្ថែម "${item.name}" (${quantity})`, {
+        duration: 2000,
+      });
       addItemMutation.mutate({ menuItemId: item.id, quantity });
       setItemQuantities((prev) => {
         const newQty = { ...prev };
@@ -81,6 +92,7 @@ export default function MenuItemGrid({
     },
     [itemQuantities, orderData?.status, addItemMutation]
   );
+
   if (!items || items.length === 0) {
     return (
       <div className="text-center py-8 xs:py-10 sm:py-12 bg-white rounded-lg shadow-sm">
@@ -99,7 +111,9 @@ export default function MenuItemGrid({
           <div
             key={item.id}
             className={`bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden active:shadow-md xs:hover:shadow-md md:hover:shadow-md transition-all duration-300 flex flex-col w-full ${
-              addingItemId === item.id ? 'scale-95 shadow-lg ring-2 ring-green-400' : ''
+              addingItemId === item.id
+                ? "scale-95 shadow-lg ring-2 ring-green-400"
+                : ""
             }`}
           >
             <div className="relative h-16 xs:h-18 sm:h-20 md:h-24 lg:h-28 bg-slate-100 flex-shrink-0">

@@ -209,7 +209,7 @@ export default function AdminPage() {
             )}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary transition-colors"
+              className="flex items-center gap-2 btn-primary px-4 py-2 rounded-lg"
             >
               <span>ចេញ</span>
             </button>
@@ -224,10 +224,10 @@ export default function AdminPage() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-md p-6 hover:shadow-xl transition-all hover:scale-105"
+                    className="gradient-primary rounded-lg shadow-md p-6 hover:shadow-xl transition-all hover:scale-105"
                   >
                     <h2 className="text-2xl font-bold mb-2">{item.title}</h2>
-                    <p className="text-blue-100">{item.description}</p>
+                    <p className="text-primary-foreground/80">{item.description}</p>
                   </Link>
                 );
               })}

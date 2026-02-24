@@ -10,7 +10,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221 83% 53%;
+    --primary: 4 95% 23%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -29,6 +29,72 @@
     font-family: var(--font-kantumruy-pro), sans-serif;
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+  }
+}
+
+@layer components {
+  /* Primary Button Styles */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 transition-colors;
+  }
+  
+  .btn-primary-sm {
+    @apply px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 transition-colors;
+  }
+  
+  .btn-primary-md {
+    @apply px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors;
+  }
+  
+  .btn-primary-lg {
+    @apply px-4 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors;
+  }
+  
+  /* Primary Badge Styles */
+  .badge-primary {
+    @apply bg-primary/10 text-primary rounded px-2 py-1 text-sm font-medium;
+  }
+  
+  .badge-primary-border {
+    @apply bg-primary/10 text-primary border border-primary/30 rounded px-2 py-1 text-sm;
+  }
+  
+  /* Primary Text Styles */
+  .text-primary-color {
+    @apply text-primary;
+  }
+  
+  /* Primary Background Styles */
+  .bg-primary-light {
+    @apply bg-primary/10;
+  }
+  
+  .bg-primary-medium {
+    @apply bg-primary/20;
+  }
+  
+  /* Primary Border Styles */
+  .border-primary-color {
+    @apply border-primary;
+  }
+  
+  .border-primary-light {
+    @apply border-primary/30;
+  }
+  
+  /* Primary Icon Container */
+  .icon-primary {
+    @apply bg-primary/10 text-primary rounded-full p-3;
+  }
+  
+  /* Primary Gradient */
+  .gradient-primary {
+    @apply bg-gradient-to-br from-primary to-primary/90 text-white;
+  }
+  
+  /* Primary Status Badge (for preparing/active states) */
+  .status-primary {
+    @apply bg-primary/10 text-primary border-primary/30;
   }
 }
 

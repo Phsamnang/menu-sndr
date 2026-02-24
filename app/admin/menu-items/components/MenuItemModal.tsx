@@ -172,7 +172,7 @@ export default function MenuItemModal({
               disabled={uploading}
             />
             {uploading && (
-              <p className="text-sm text-blue-600 mt-2">
+              <p className="text-sm text-primary mt-2">
                 កំពុងផ្ទុកឡើង...
               </p>
             )}

@@ -185,7 +185,7 @@ export default function ReservationsPage() {
       render: (item) => {
         const statusColors: Record<string, string> = {
           pending: "bg-yellow-100 text-yellow-800",
-          confirmed: "bg-blue-100 text-blue-800",
+          confirmed: "badge-primary",
           seated: "bg-green-100 text-green-800",
           cancelled: "bg-red-100 text-red-800",
           no_show: "bg-gray-100 text-gray-800",
@@ -208,7 +208,7 @@ export default function ReservationsPage() {
         <div className="flex gap-2">
           <button
             onClick={() => handleEdit(item)}
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="btn-primary-md"
           >
             កែប្រែ
           </button>

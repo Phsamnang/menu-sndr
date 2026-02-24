@@ -18,7 +18,7 @@ export function Header() {
                 className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-slate-800"
                 style={{ filter: "brightness(0) saturate(100%)" }}
               />
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold bg-gradient-to-r from-primary via-primary/90 to-primary bg-clip-text text-transparent">
                 មីនុយភោជនីយដ្ឋាន
               </h1>
             </div>

@@ -98,7 +98,7 @@ export default function ProductsPage() {
       key: "category",
       label: "ប្រភេទ",
       render: (item) => (
-        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+        <span className="badge-primary">
           {item.category || "-"}
         </span>
       ),
@@ -147,7 +147,7 @@ export default function ProductsPage() {
               e.stopPropagation();
               handleEdit(item);
             }}
-            className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+            className="btn-primary-sm"
           >
             កែប្រែ
           </button>
