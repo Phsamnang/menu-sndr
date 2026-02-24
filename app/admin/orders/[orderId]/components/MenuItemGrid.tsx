@@ -98,7 +98,9 @@ export default function MenuItemGrid({
         return (
           <div
             key={item.id}
-            className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden active:shadow-md xs:hover:shadow-md md:hover:shadow-md transition-shadow flex flex-col w-full"
+            className={`bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden active:shadow-md xs:hover:shadow-md md:hover:shadow-md transition-all duration-300 flex flex-col w-full ${
+              addingItemId === item.id ? 'scale-95 shadow-lg ring-2 ring-green-400' : ''
+            }`}
           >
             <div className="relative h-16 xs:h-18 sm:h-20 md:h-24 lg:h-28 bg-slate-100 flex-shrink-0">
               {item.image ? (
@@ -127,6 +129,23 @@ export default function MenuItemGrid({
                   </svg>
                 </div>
               )}
+              {addingItemId === item.id && (
+                <div className="absolute inset-0 bg-green-500/80 flex items-center justify-center animate-pulse">
+                  <svg
+                    className="w-8 h-8 xs:w-10 xs:h-10 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+              )}
             </div>
             <div className="p-1.5 xs:p-2 sm:p-2.5 md:p-3 flex-1 flex flex-col min-h-0">
               <h3 className="font-semibold text-slate-900 mb-0.5 xs:mb-1 text-[10px] xs:text-xs sm:text-sm line-clamp-2 leading-tight min-h-[2em] flex-shrink-0">
@@ -138,9 +157,31 @@ export default function MenuItemGrid({
                 </span>
               </div>
               <div className="mb-1 xs:mb-1.5 flex-shrink-0">
-                <label className="block text-[9px] xs:text-[10px] sm:text-xs text-slate-600 mb-0.5">
-                  ចំនួន
-                </label>
+                <div className="flex items-center gap-1 mb-0.5">
+                  <label className="block text-[9px] xs:text-[10px] sm:text-xs text-slate-600 flex-1">
+                    ចំនួន
+                  </label>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const current = itemQuantities[item.id] || 1;
+                      if (current > 1) setItemQuantity(item.id, current - 1);
+                    }}
+                    className="px-1 py-0.5 text-slate-600 hover:bg-slate-100 rounded text-xs"
+                  >
+                    -
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const current = itemQuantities[item.id] || 1;
+                      setItemQuantity(item.id, current + 1);
+                    }}
+                    className="px-1 py-0.5 text-slate-600 hover:bg-slate-100 rounded text-xs"
+                  >
+                    +
+                  </button>
+                </div>
                 <input
                   type="number"
                   value={

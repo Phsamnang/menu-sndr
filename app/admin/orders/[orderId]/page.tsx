@@ -180,7 +180,7 @@ export default function OrderDetailPage() {
                   placeholder="ស្វែងរកមុខម្ហូប..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-3 xs:px-4 py-2 xs:py-3 sm:px-4 sm:py-2.5 md:py-3 pl-8 xs:pl-10 sm:pl-10 text-xs xs:text-sm sm:text-sm md:text-base border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 min-h-[44px] touch-manipulation"
+                  className="w-full px-3 xs:px-4 py-2 xs:py-3 sm:px-4 sm:py-2.5 md:py-3 pl-8 xs:pl-10 sm:pl-10 pr-10 text-xs xs:text-sm sm:text-sm md:text-base border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 min-h-[44px] touch-manipulation"
                 />
                 <svg
                   className="absolute left-2 xs:left-3 sm:left-3 top-2.5 xs:top-3 sm:top-3 md:top-3.5 w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-5 md:h-5 text-slate-400 pointer-events-none"
@@ -195,6 +195,27 @@ export default function OrderDetailPage() {
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                   />
                 </svg>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2 xs:right-3 sm:right-3 top-2.5 xs:top-3 sm:top-3 md:top-3.5 text-slate-400 hover:text-slate-600 touch-manipulation"
+                    aria-label="Clear search"
+                  >
+                    <svg
+                      className="w-4 h-4 xs:w-5 xs:h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
 

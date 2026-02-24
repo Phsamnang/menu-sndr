@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { OrderCartSidebar } from './OrderCartSidebar';
 
 interface CartBottomSheetProps {
   isOpen: boolean;

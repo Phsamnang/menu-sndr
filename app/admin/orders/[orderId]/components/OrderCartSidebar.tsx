@@ -183,6 +183,9 @@ export default function OrderCartSidebar({
         toast.error("មិនអាចលុបមុខម្ហូបដែលត្រូវការចម្អិន និងបានដឹកជញ្ជូនរួចហើយ");
         return;
       }
+      if (item) {
+        toast.success(`លុប "${item.menuItem.name}" ចេញពីកន្ត្រក់`, { duration: 1500 });
+      }
       deleteItemMutation.mutate(itemId);
     },
     [orderData?.status, orderItems, deleteItemMutation]
