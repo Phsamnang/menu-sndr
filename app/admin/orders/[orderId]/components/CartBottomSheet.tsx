@@ -57,20 +57,24 @@ export function CartBottomSheet({
         ref={bottomSheetRef}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto"
+        className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white rounded-t-3xl shadow-2xl flex flex-col"
         style={{
           animation: isOpen
             ? 'slideUp 0.3s ease-out'
             : 'slideDown 0.3s ease-out',
+          maxHeight: 'min(90vh, calc(100vh - 60px))',
+          top: 'auto',
         }}
       >
         {/* Drag handle */}
-        <div className="sticky top-0 flex justify-center pt-2 pb-1 bg-white rounded-t-2xl border-b border-slate-100">
-          <div className="w-12 h-1 bg-slate-300 rounded-full" />
+        <div className="flex justify-center pt-3 pb-2 bg-white rounded-t-3xl border-b border-slate-100 flex-shrink-0">
+          <div className="w-12 h-1.5 bg-slate-300 rounded-full" />
         </div>
 
-        {/* Content */}
-        <div className="pb-6">{children}</div>
+        {/* Content - scrollable container */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {children}
+        </div>
       </div>
 
       <style>{`

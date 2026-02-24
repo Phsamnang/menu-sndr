@@ -297,13 +297,9 @@ export default function OrderCartSidebar({
   }, [subtotal, discountAmount]);
   return (
     <>
-      {/* Mobile overlay backdrop */}
+      {/* Sidebar wrapper - visible on mobile and desktop */}
       <div
-        className={`lg:w-96 bg-white border-l border-slate-200 flex flex-col relative lg:z-0 ${
-          showSidebar 
-            ? "translate-x-0 lg:translate-x-0" 
-            : "translate-x-full lg:translate-x-0"
-        } fixed lg:static inset-y-0 right-0 w-full max-w-sm lg:max-w-none lg:h-screen hidden lg:flex`}
+        className={`w-full lg:w-96 bg-white border-l border-slate-200 flex flex-col relative h-full lg:h-screen`}
         style={{ touchAction: "pan-y" }}
       >
         <div className="p-2.5 xs:p-3 sm:p-4 border-b border-slate-200 flex-shrink-0">
