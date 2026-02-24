@@ -309,19 +309,19 @@ export default function OrderCartSidebar({
         } fixed lg:static inset-y-0 right-0 w-full max-w-sm lg:max-w-none lg:h-screen`}
         style={{ touchAction: "pan-y" }}
       >
-        <div className="p-3 sm:p-4 border-b border-slate-200 flex-shrink-0">
-          <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <h2 className="text-base sm:text-lg md:text-xl font-bold text-slate-800">
+        <div className="p-2.5 xs:p-3 sm:p-4 border-b border-slate-200 flex-shrink-0">
+          <div className="flex items-center justify-between mb-2 xs:mb-3 sm:mb-4">
+            <h2 className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-slate-800">
               ការបញ្ជាទិញ
             </h2>
             {onCloseSidebar && (
               <button
                 onClick={onCloseSidebar}
-                className="lg:hidden p-2.5 text-slate-400 active:text-slate-600 rounded-lg transition-colors touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="lg:hidden p-2 xs:p-2.5 text-slate-400 active:text-slate-600 rounded-lg transition-colors touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="Close sidebar"
               >
                 <svg
-                  className="w-6 h-6"
+                  className="w-5 h-5 xs:w-6 xs:h-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -336,9 +336,9 @@ export default function OrderCartSidebar({
               </button>
             )}
           </div>
-          <div className="space-y-2.5 sm:space-y-3">
+          <div className="space-y-2 xs:space-y-2.5 sm:space-y-3">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5 sm:mb-1">
+              <label className="block text-[10px] xs:text-xs sm:text-xs font-medium text-slate-600 mb-1 xs:mb-1.5 sm:mb-1">
                 ឈ្មោះអតិថិជន
               </label>
               <input
@@ -346,34 +346,34 @@ export default function OrderCartSidebar({
                 value={customerName}
                 onChange={(e) => handleCustomerNameChange(e.target.value)}
                 placeholder="ឈ្មោះអតិថិជន..."
-                className="w-full px-3 sm:px-3 py-2.5 sm:py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 min-h-[44px] touch-manipulation"
+                className="w-full px-2.5 xs:px-3 sm:px-3 py-2 xs:py-2.5 sm:py-2.5 border border-slate-300 rounded-lg text-xs xs:text-sm sm:text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 min-h-[44px] touch-manipulation"
               />
             </div>
           </div>
         </div>
 
         <div
-          className="flex-1 overflow-y-auto p-3 sm:p-4"
+          className="flex-1 overflow-y-auto p-2.5 xs:p-3 sm:p-4"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
-          <div className="flex justify-between items-center mb-3 sm:mb-4">
-            <h3 className="font-semibold text-slate-800 text-sm sm:text-base">មុខម្ហូប</h3>
+          <div className="flex justify-between items-center mb-2 xs:mb-3 sm:mb-4">
+            <h3 className="font-semibold text-slate-800 text-xs xs:text-sm sm:text-base">មុខម្ហូប</h3>
           </div>
 
           {orderItems.length === 0 ? (
-            <div className="text-center py-8 md:py-12">
-              <p className="text-slate-500 text-xs sm:text-sm">កន្ត្រក់ទទេ</p>
+            <div className="text-center py-8 xs:py-10 md:py-12">
+              <p className="text-slate-500 text-[10px] xs:text-xs sm:text-sm">កន្ត្រក់ទទេ</p>
             </div>
           ) : (
-            <div className="space-y-3 md:space-y-4">
+            <div className="space-y-2 xs:space-y-3 md:space-y-4">
               {orderItems.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-slate-50 rounded-lg p-3 md:p-4 border border-slate-200 relative"
+                  className="bg-slate-50 rounded-lg p-2 xs:p-3 md:p-4 border border-slate-200 relative"
                   style={{ touchAction: "manipulation" }}
                 >
-                  <div className="flex gap-3 md:gap-4">
-                    <div className="w-20 h-20 md:w-24 md:h-24 bg-slate-200 rounded overflow-hidden flex-shrink-0">
+                  <div className="flex gap-2 xs:gap-3 md:gap-4">
+                    <div className="w-16 h-16 xs:w-20 xs:h-20 md:w-24 md:h-24 bg-slate-200 rounded overflow-hidden flex-shrink-0">
                       {item.menuItem.image ? (
                         <OptimizedImage
                           src={item.menuItem.image}
@@ -402,8 +402,8 @@ export default function OrderCartSidebar({
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <h4 className="font-medium text-slate-900 text-sm sm:text-base flex-1 min-w-0 line-clamp-2">
+                      <div className="flex items-start justify-between gap-1.5 xs:gap-2 mb-1 xs:mb-1.5">
+                        <h4 className="font-medium text-slate-900 text-[10px] xs:text-xs sm:text-sm md:text-base flex-1 min-w-0 line-clamp-2">
                           {item.menuItem.name}
                         </h4>
                         <button
@@ -419,11 +419,11 @@ export default function OrderCartSidebar({
                             orderData?.status === "completed" ||
                             (item.menuItem.isCook && item.status === "served")
                           }
-                          className="text-red-500 active:text-red-600 md:hover:text-red-600 text-sm disabled:opacity-50 touch-manipulation p-2 md:p-1 flex-shrink-0 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center rounded-lg active:bg-red-50 md:hover:bg-red-50 transition-colors"
+                          className="text-red-500 active:text-red-600 xs:hover:text-red-600 md:hover:text-red-600 text-xs xs:text-sm disabled:opacity-50 touch-manipulation p-1.5 xs:p-2 md:p-1 flex-shrink-0 min-w-[40px] min-h-[40px] xs:min-w-[44px] xs:min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center rounded-lg active:bg-red-50 xs:hover:bg-red-50 md:hover:bg-red-50 transition-colors"
                           style={{ touchAction: "manipulation" }}
                         >
                           <svg
-                            className="w-5 h-5 md:w-5 md:h-5"
+                            className="w-4 h-4 xs:w-5 xs:h-5 md:w-5 md:h-5"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -437,14 +437,14 @@ export default function OrderCartSidebar({
                           </svg>
                         </button>
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-1 xs:space-y-1.5">
                         {item.status && (
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs text-slate-600">
+                          <div className="flex items-center justify-between gap-1.5 xs:gap-2">
+                            <span className="text-[9px] xs:text-xs text-slate-600">
                               ស្ថានភាព:
                             </span>
                             <span
-                              className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                              className={`text-[8px] xs:text-[10px] px-1.5 xs:px-2 py-0.5 rounded-full font-medium ${
                                 item.status === "pending"
                                   ? "bg-yellow-100 text-yellow-800"
                                   : item.status === "preparing"
@@ -468,27 +468,27 @@ export default function OrderCartSidebar({
                             </span>
                           </div>
                         )}
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs sm:text-sm text-slate-600">
+                        <div className="flex items-center justify-between gap-1.5 xs:gap-2">
+                          <span className="text-[9px] xs:text-xs sm:text-xs text-slate-600">
                             តម្លៃ:
                           </span>
-                          <span className="text-xs sm:text-sm text-slate-700 font-medium">
+                          <span className="text-[9px] xs:text-xs sm:text-xs text-slate-700 font-medium">
                             {item.unitPrice.toLocaleString("km-KH")}៛
                           </span>
                         </div>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs sm:text-sm text-slate-600">
+                        <div className="flex items-center justify-between gap-1.5 xs:gap-2">
+                          <span className="text-[9px] xs:text-xs sm:text-xs text-slate-600">
                             ចំនួន:
                           </span>
-                          <span className="text-xs sm:text-sm font-medium text-slate-900">
+                          <span className="text-[9px] xs:text-xs sm:text-xs font-medium text-slate-900">
                             {item.quantity}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-200">
-                          <span className="text-sm font-semibold text-slate-900">
+                        <div className="flex items-center justify-between gap-1.5 xs:gap-2 pt-1 xs:pt-1.5 border-t border-slate-200">
+                          <span className="text-xs xs:text-sm font-semibold text-slate-900">
                             សរុប:
                           </span>
-                          <span className="text-base font-bold text-orange-500">
+                          <span className="text-sm xs:text-base font-bold text-orange-500">
                             {item.totalPrice.toLocaleString("km-KH")}៛
                           </span>
                         </div>
@@ -501,16 +501,16 @@ export default function OrderCartSidebar({
           )}
         </div>
 
-        <div className="border-t border-slate-200 p-3 sm:p-4 space-y-3 sm:space-y-4 flex-shrink-0 bg-white">
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs sm:text-sm">
+        <div className="border-t border-slate-200 p-2.5 xs:p-3 sm:p-4 space-y-2 xs:space-y-3 sm:space-y-4 flex-shrink-0 bg-white">
+          <div className="space-y-1.5 xs:space-y-2">
+            <div className="flex justify-between text-[9px] xs:text-xs sm:text-sm">
               <span className="text-slate-600">សរុបមុនបញ្ចុះតម្លៃ:</span>
               <span className="font-medium text-slate-900">
                 {subtotal.toLocaleString("km-KH")}៛
               </span>
             </div>
             {discountAmount > 0 && (
-              <div className="flex justify-between text-xs sm:text-sm text-green-600">
+              <div className="flex justify-between text-[9px] xs:text-xs sm:text-sm text-green-600">
                 <span>
                   បញ្ចុះតម្លៃ
                   {discountType === "percentage" ? ` (${discountValue}%)` : ""}:
@@ -520,21 +520,21 @@ export default function OrderCartSidebar({
                 </span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-base sm:text-lg border-t-2 border-indigo-200 pt-2">
+            <div className="flex justify-between font-bold text-xs xs:text-sm sm:text-lg border-t-2 border-indigo-200 pt-1.5 xs:pt-2">
               <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                 សរុប:
               </span>
-              <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent text-lg sm:text-xl">
+              <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent text-sm xs:text-base sm:text-xl">
                 {total.toLocaleString("km-KH")}៛
               </span>
             </div>
           </div>
 
           {orderData?.status === "completed" && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center gap-2">
+            <div className="p-2 xs:p-2.5 sm:p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center gap-1.5 xs:gap-2">
                 <svg
-                  className="w-5 h-5 text-green-600"
+                  className="w-4 h-4 xs:w-5 xs:h-5 text-green-600 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -546,17 +546,17 @@ export default function OrderCartSidebar({
                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <span className="text-sm font-semibold text-green-800">
+                <span className="text-[10px] xs:text-xs sm:text-sm font-semibold text-green-800">
                   ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ
                 </span>
               </div>
             </div>
           )}
 
-          <div className="bg-gradient-to-br from-slate-50 to-slate-100 p-3 rounded-lg border border-slate-200">
-            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 mb-2">
+          <div className="bg-gradient-to-br from-slate-50 to-slate-100 p-2.5 xs:p-3 sm:p-3 rounded-lg border border-slate-200">
+            <label className="flex items-center gap-1.5 xs:gap-2 text-[9px] xs:text-xs sm:text-xs font-semibold text-slate-700 mb-1.5 xs:mb-2">
               <svg
-                className="w-4 h-4 text-slate-600"
+                className="w-3 h-3 xs:w-4 xs:h-4 text-slate-600 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -570,7 +570,7 @@ export default function OrderCartSidebar({
               </svg>
               បញ្ចុះតម្លៃ
             </label>
-            <div className="flex gap-2 mb-2">
+            <div className="flex gap-1.5 xs:gap-2 mb-1.5 xs:mb-2">
               <select
                 value={discountType}
                 onChange={(e) => {
@@ -578,7 +578,7 @@ export default function OrderCartSidebar({
                   setDiscountValue(0);
                 }}
                 disabled={orderData?.status === "completed"}
-                className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed shadow-sm min-h-[44px] touch-manipulation"
+                className="px-2 xs:px-3 py-2 xs:py-2.5 border border-slate-300 rounded-lg text-xs xs:text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed shadow-sm min-h-[40px] xs:min-h-[44px] touch-manipulation"
               >
                 <option value="percentage">%</option>
                 <option value="amount">៛</option>
@@ -596,26 +596,26 @@ export default function OrderCartSidebar({
                 }}
                 placeholder="0"
                 disabled={orderData?.status === "completed"}
-                className="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed shadow-sm min-h-[44px] touch-manipulation"
+                className="flex-1 px-2 xs:px-3 py-2 xs:py-2.5 border border-slate-300 rounded-lg text-xs xs:text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed shadow-sm min-h-[40px] xs:min-h-[44px] touch-manipulation"
               />
             </div>
             {discountValue > 0 && (
-              <div className="mt-2 pt-2 border-t border-slate-200">
-                <div className="flex items-center justify-between text-xs">
+              <div className="mt-1.5 xs:mt-2 pt-1.5 xs:pt-2 border-t border-slate-200">
+                <div className="flex items-center justify-between text-[8px] xs:text-[10px] sm:text-xs">
                   <span className="text-slate-600">បញ្ចុះតម្លៃ:</span>
                   <span className="font-semibold text-green-600">
                     -{discountAmount.toLocaleString("km-KH")}៛
                     {discountType === "percentage" && (
-                      <span className="text-slate-500 ml-1">
+                      <span className="text-slate-500 ml-0.5 xs:ml-1">
                         ({discountValue}%)
                       </span>
                     )}
                   </span>
                 </div>
                 {discountValue !== debouncedDiscountValue && (
-                  <div className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+                  <div className="mt-0.5 xs:mt-1 flex items-center gap-0.5 xs:gap-1 text-[8px] xs:text-[10px] text-slate-500">
                     <svg
-                      className="w-3 h-3 animate-spin"
+                      className="w-2.5 h-2.5 xs:w-3 xs:h-3 animate-spin flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -635,14 +635,14 @@ export default function OrderCartSidebar({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">
+            <label className="block text-[9px] xs:text-xs sm:text-xs font-medium text-slate-600 mb-1 xs:mb-1">
               វិធីសាស្ត្រទូទាត់
             </label>
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
               disabled={orderData?.status === "completed"}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed min-h-[44px] touch-manipulation"
+              className="w-full px-2 xs:px-3 py-2 xs:py-2.5 border border-slate-300 rounded-lg text-xs xs:text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:bg-slate-100 disabled:cursor-not-allowed min-h-[40px] xs:min-h-[44px] touch-manipulation"
             >
               <option value="cash">សាច់ប្រាក់</option>
               <option value="card">កាត</option>
@@ -651,23 +651,23 @@ export default function OrderCartSidebar({
           </div>
 
           {total === 0 && orderData?.status !== "completed" ? (
-            <div className="space-y-2">
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-2">
-                <p className="text-xs text-yellow-800 text-center">
+            <div className="space-y-1.5 xs:space-y-2">
+              <div className="p-2 xs:p-2.5 sm:p-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-1.5 xs:mb-2">
+                <p className="text-[9px] xs:text-xs sm:text-xs text-yellow-800 text-center">
                   សរុបគឺ 0៛ - អ្នកអាចបញ្ចប់ ឬលុបការបញ្ជាទិញ
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5 xs:gap-2">
                 <button
                   onClick={handleFinishOrder}
                   disabled={
                     orderData?.status === "completed" ||
                     completePaymentMutation.isPending
                   }
-                  className="flex-1 py-3 bg-green-600 text-white rounded-lg font-semibold active:bg-green-700 md:hover:bg-green-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base flex items-center justify-center gap-2"
+                  className="flex-1 py-2 xs:py-3 sm:py-3 bg-green-600 text-white rounded-lg font-semibold active:bg-green-700 xs:hover:bg-green-700 md:hover:bg-green-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-[10px] xs:text-xs sm:text-sm md:text-base flex items-center justify-center gap-1 xs:gap-2"
                 >
                   <svg
-                    className="w-5 h-5"
+                    className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -680,8 +680,8 @@ export default function OrderCartSidebar({
                     />
                   </svg>
                   {completePaymentMutation.isPending
-                    ? "កំពុងដំណើរការ..."
-                    : "បញ្ចប់ការបញ្ជាទិញ"}
+                    ? "កំពុង..."
+                    : "បញ្ចប់"}
                 </button>
                 <button
                   onClick={handleCancelOrder}
@@ -689,10 +689,10 @@ export default function OrderCartSidebar({
                     orderData?.status === "completed" ||
                     cancelOrderMutation.isPending
                   }
-                  className="flex-1 py-3 bg-red-600 text-white rounded-lg font-semibold active:bg-red-700 md:hover:bg-red-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base flex items-center justify-center gap-2"
+                  className="flex-1 py-2 xs:py-3 sm:py-3 bg-red-600 text-white rounded-lg font-semibold active:bg-red-700 xs:hover:bg-red-700 md:hover:bg-red-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-[10px] xs:text-xs sm:text-sm md:text-base flex items-center justify-center gap-1 xs:gap-2"
                 >
                   <svg
-                    className="w-5 h-5"
+                    className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -705,20 +705,20 @@ export default function OrderCartSidebar({
                     />
                   </svg>
                   {cancelOrderMutation.isPending
-                    ? "កំពុងដំណើរការ..."
-                    : "លុបការបញ្ជាទិញ"}
+                    ? "កំពុង..."
+                    : "លុប"}
                 </button>
               </div>
             </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 xs:gap-2">
               <button
                 onClick={handlePrintInvoice}
                 disabled={!orderItems || orderItems.length === 0}
-                className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-semibold active:bg-blue-700 md:hover:bg-blue-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base flex items-center justify-center gap-2"
+                className="flex-1 py-2 xs:py-3 sm:py-3 bg-blue-600 text-white rounded-lg font-semibold active:bg-blue-700 xs:hover:bg-blue-700 md:hover:bg-blue-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-[10px] xs:text-xs sm:text-sm md:text-base flex items-center justify-center gap-1 xs:gap-2"
               >
                 <svg
-                  className="w-5 h-5"
+                  className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -730,7 +730,7 @@ export default function OrderCartSidebar({
                     d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
                   />
                 </svg>
-                បោះពុម្ព
+                <span className="hidden xs:inline">បោះពុម្ព</span>
               </button>
               <button
                 onClick={handlePlaceOrder}
@@ -740,13 +740,13 @@ export default function OrderCartSidebar({
                   orderData?.status === "completed" ||
                   completePaymentMutation.isPending
                 }
-                className="flex-1 py-3 bg-slate-800 text-white rounded-lg font-semibold active:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-sm sm:text-base"
+                className="flex-1 py-2 xs:py-3 sm:py-3 bg-slate-800 text-white rounded-lg font-semibold active:bg-slate-900 xs:hover:bg-slate-900 md:hover:bg-slate-900 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-[10px] xs:text-xs sm:text-sm md:text-base flex items-center justify-center gap-0.5 xs:gap-2"
               >
                 {orderData?.status === "completed"
-                  ? "បានបង់រួចរាល់"
+                  ? "បានបង់"
                   : completePaymentMutation.isPending
-                  ? "កំពុងដំណើរការ..."
-                  : "បញ្ចប់ការទូទាត់"}
+                  ? "កំពុង..."
+                  : "ទូទាត់"}
               </button>
             </div>
           )}

@@ -1,34 +1,34 @@
 export function TableSelectionSkeleton() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-3 sm:p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-2 xs:p-3 sm:p-4 md:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6 md:mb-8">
-          <div className="h-7 sm:h-8 w-40 sm:w-48 bg-slate-200 rounded-lg animate-pulse"></div>
-          <div className="h-10 sm:h-10 w-full sm:w-24 bg-slate-200 rounded-lg animate-pulse"></div>
+        <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2 xs:gap-3 sm:gap-4 mb-3 xs:mb-4 sm:mb-6 md:mb-8">
+          <div className="h-6 xs:h-7 sm:h-8 w-32 xs:w-40 sm:w-48 bg-slate-200 rounded-lg animate-pulse"></div>
+          <div className="h-10 xs:h-10 w-full xs:w-auto bg-slate-200 rounded-lg animate-pulse"></div>
         </div>
 
-        <div className="mb-4 sm:mb-6">
-          <div className="h-4 sm:h-5 w-48 sm:w-64 bg-slate-200 rounded animate-pulse"></div>
+        <div className="mb-3 xs:mb-4 sm:mb-6">
+          <div className="h-3 xs:h-4 sm:h-5 w-40 xs:w-48 sm:w-64 bg-slate-200 rounded animate-pulse"></div>
         </div>
 
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-3 xs:space-y-4 sm:space-y-6">
           {[1, 2].map((type) => (
-            <div key={type} className="space-y-2 sm:space-y-3">
-              <div className="flex items-center gap-2 sm:gap-3 px-1 sm:px-2">
-                <div className="h-0.5 sm:h-1 w-8 sm:w-12 bg-slate-200 rounded-full animate-pulse"></div>
-                <div className="h-5 sm:h-6 w-24 sm:w-32 bg-slate-200 rounded animate-pulse"></div>
-                <div className="flex-1 h-0.5 sm:h-1 bg-slate-200 rounded-full animate-pulse min-w-0"></div>
-                <div className="h-5 sm:h-6 w-6 sm:w-8 bg-slate-200 rounded-full animate-pulse flex-shrink-0"></div>
+            <div key={type} className="space-y-1.5 xs:space-y-2 sm:space-y-3">
+              <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 px-0 xs:px-1 sm:px-2">
+                <div className="h-0.5 w-6 xs:w-8 sm:w-12 bg-slate-200 rounded-full animate-pulse flex-shrink-0"></div>
+                <div className="h-4 xs:h-5 sm:h-6 w-20 xs:w-24 sm:w-32 bg-slate-200 rounded animate-pulse"></div>
+                <div className="flex-1 h-0.5 xs:h-1 bg-slate-200 rounded-full animate-pulse min-w-0"></div>
+                <div className="h-4 xs:h-5 sm:h-6 w-5 xs:w-6 sm:w-8 bg-slate-200 rounded-full animate-pulse flex-shrink-0"></div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
+              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 xs:gap-2 sm:gap-3 md:gap-4">
                 {Array.from({ length: 10 }).map((_, index) => (
                   <div
                     key={index}
-                    className="rounded-lg shadow-md p-3 sm:p-4 md:p-5 lg:p-6 bg-slate-200 animate-pulse border-2 border-slate-300 min-h-[80px] sm:min-h-[100px] md:min-h-[120px]"
+                    className="rounded-lg shadow-md p-2 xs:p-3 sm:p-4 md:p-5 lg:p-6 bg-slate-200 animate-pulse border-2 border-slate-300 min-h-[70px] xs:min-h-[80px] sm:min-h-[100px] md:min-h-[120px]"
                   >
-                    <div className="text-center space-y-2">
-                      <div className="h-4 sm:h-5 w-16 sm:w-20 bg-slate-300 rounded mx-auto"></div>
-                      <div className="h-5 sm:h-6 w-20 sm:w-24 bg-slate-300 rounded-full mx-auto"></div>
+                    <div className="text-center space-y-1.5 xs:space-y-2">
+                      <div className="h-3 xs:h-4 sm:h-5 w-12 xs:w-16 sm:w-20 bg-slate-300 rounded mx-auto"></div>
+                      <div className="h-4 xs:h-5 sm:h-6 w-16 xs:w-20 sm:w-24 bg-slate-300 rounded-full mx-auto"></div>
                     </div>
                   </div>
                 ))}
