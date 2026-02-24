@@ -8,6 +8,8 @@ import { apiClientJson } from "@/utils/api-client";
 import { type Order } from "@/services/order.service";
 import OrderCartSidebar from "./components/OrderCartSidebar";
 import MenuItemGrid from "./components/MenuItemGrid";
+import { FloatingCartButton } from "./components/FloatingCartButton";
+import { CartBottomSheet } from "./components/CartBottomSheet";
 import { type Category, type MenuItem } from "@/lib/types";
 
 export default function OrderDetailPage() {
@@ -17,6 +19,7 @@ export default function OrderDetailPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
   const [showSidebar, setShowSidebar] = useState<boolean>(false);
+  const [showMobileCart, setShowMobileCart] = useState<boolean>(false);
 
   const { data: orderData, isLoading } = useQuery<Order | null>({
     queryKey: ["orderDetail", orderId],
@@ -94,6 +97,10 @@ export default function OrderDetailPage() {
     return Array.from(new Set(menuData.map((item) => item.category)));
   }, [menuData]);
 
+  const subtotal = useMemo(() => {
+    return orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  }, [orderItems]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-2 xs:p-3 sm:p-4 md:p-8">
@@ -134,7 +141,7 @@ export default function OrderDetailPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden">
-        <div className="flex-1 p-2 xs:p-3 sm:p-4 md:p-6 w-full min-w-0 pb-24 lg:pb-6 lg:overflow-y-auto relative z-10">
+        <div className="flex-1 p-2 xs:p-3 sm:p-4 md:p-6 w-full min-w-0 pb-6 lg:pb-6 lg:overflow-y-auto relative z-10">
           <div className="max-w-7xl mx-auto w-full">
             <div className="flex flex-col gap-2 xs:gap-3 sm:gap-2 sm:flex-row sm:justify-between sm:items-start mb-3 xs:mb-4 sm:mb-4 md:mb-6">
               <div className="flex-1 min-w-0 space-y-1 xs:space-y-2 sm:space-y-2">
@@ -148,32 +155,18 @@ export default function OrderDetailPage() {
                   </div>
                 )}
               </div>
-              <div className="flex gap-1.5 xs:gap-2 flex-shrink-0 self-start sm:self-center">
-                <button
-                  onClick={() => setShowSidebar(!showSidebar)}
-                  className="lg:hidden px-3 xs:px-4 py-2 xs:py-2.5 sm:px-4 bg-slate-800 text-white rounded-lg active:bg-slate-900 transition-colors text-xs xs:text-sm sm:text-sm flex items-center gap-1.5 xs:gap-2 min-h-[44px] touch-manipulation"
-                >
-                  <svg
-                    className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                    />
-                  </svg>
-                  <span className="hidden xs:inline">កន្ត្រក់</span>
-                  <span className="bg-white text-slate-800 rounded-full px-1.5 py-0.5 text-[10px] xs:text-xs font-bold min-w-[20px] text-center">
-                    {orderItems.length}
-                  </span>
-                </button>
+              <div className="flex gap-1.5 xs:gap-2 flex-shrink-0 self-start sm:self-center lg:hidden">
                 <Link
                   href="/admin/orders"
-                  className="px-3 xs:px-4 py-2 xs:py-2.5 sm:px-4 bg-slate-600 text-white rounded-lg active:bg-slate-700 xs:hover:bg-slate-700 md:hover:bg-slate-700 text-xs xs:text-sm sm:text-sm min-h-[44px] flex items-center justify-center touch-manipulation"
+                  className="px-3 xs:px-4 py-2 xs:py-2.5 bg-slate-600 text-white rounded-lg active:bg-slate-700 xs:hover:bg-slate-700 text-xs xs:text-sm min-h-[44px] flex items-center justify-center touch-manipulation"
+                >
+                  ត្រលប់
+                </Link>
+              </div>
+              <div className="hidden lg:flex gap-1.5 xs:gap-2 flex-shrink-0">
+                <Link
+                  href="/admin/orders"
+                  className="px-3 xs:px-4 py-2 xs:py-2.5 bg-slate-600 text-white rounded-lg hover:bg-slate-700 text-xs xs:text-sm min-h-[44px] flex items-center justify-center"
                 >
                   ត្រលប់
                 </Link>
@@ -205,8 +198,8 @@ export default function OrderDetailPage() {
               </div>
             </div>
 
-            <div className="mb-3 xs:mb-4 sm:mb-4 md:mb-6">
-              <div className="flex gap-1.5 xs:gap-2 sm:gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-2 xs:-mx-3 sm:mx-0 px-2 xs:px-3 sm:px-0">
+            <div className="mb-3 xs:mb-4 sm:mb-4 md:mb-6 sticky top-0 lg:relative bg-gradient-to-b from-slate-50 to-slate-50/80 backdrop-blur-sm z-20 -mx-2 xs:-mx-3 sm:mx-0 px-2 xs:px-3 sm:px-0 pt-2 -mt-2 pb-2">
+              <div className="flex gap-1.5 xs:gap-2 sm:gap-2 overflow-x-auto pb-2 scrollbar-hide">
                 <button
                   onClick={() => setSelectedCategory(null)}
                   className={`flex-shrink-0 px-2 xs:px-3 sm:px-3 md:px-4 py-1.5 xs:py-2 sm:py-1.5 md:py-2 rounded-full text-[10px] xs:text-xs sm:text-sm md:text-base font-medium transition-all min-h-[38px] xs:min-h-[40px] sm:min-h-[40px] touch-manipulation whitespace-nowrap ${
@@ -257,14 +250,39 @@ export default function OrderDetailPage() {
           </div>
         </div>
 
+        {/* Desktop sidebar */}
+        <div className="hidden lg:block">
+          <OrderCartSidebar
+            orderId={orderId}
+            orderData={orderData}
+            orderItems={orderItems}
+            showSidebar={true}
+            onCloseSidebar={() => {}}
+          />
+        </div>
+      </div>
+
+      {/* Floating cart button (mobile only) */}
+      <FloatingCartButton
+        itemCount={orderItems.length}
+        subtotal={subtotal}
+        onClick={() => setShowMobileCart(true)}
+        isVisible={!showMobileCart}
+      />
+
+      {/* Bottom sheet cart (mobile only) */}
+      <CartBottomSheet
+        isOpen={showMobileCart}
+        onClose={() => setShowMobileCart(false)}
+      >
         <OrderCartSidebar
           orderId={orderId}
           orderData={orderData}
           orderItems={orderItems}
-          showSidebar={showSidebar}
-          onCloseSidebar={() => setShowSidebar(false)}
+          showSidebar={true}
+          onCloseSidebar={() => setShowMobileCart(false)}
         />
-      </div>
+      </CartBottomSheet>
     </div>
   );
 }

@@ -295,18 +295,12 @@ export default function OrderCartSidebar({
   return (
     <>
       {/* Mobile overlay backdrop */}
-      {showSidebar && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={onCloseSidebar}
-        />
-      )}
       <div
-        className={`lg:w-96 bg-white border-l border-slate-200 flex flex-col relative z-50 transition-transform duration-300 ease-in-out ${
+        className={`lg:w-96 bg-white border-l border-slate-200 flex flex-col relative lg:z-0 ${
           showSidebar 
             ? "translate-x-0 lg:translate-x-0" 
             : "translate-x-full lg:translate-x-0"
-        } fixed lg:static inset-y-0 right-0 w-full max-w-sm lg:max-w-none lg:h-screen`}
+        } fixed lg:static inset-y-0 right-0 w-full max-w-sm lg:max-w-none lg:h-screen hidden lg:flex`}
         style={{ touchAction: "pan-y" }}
       >
         <div className="p-2.5 xs:p-3 sm:p-4 border-b border-slate-200 flex-shrink-0">
@@ -317,7 +311,7 @@ export default function OrderCartSidebar({
             {onCloseSidebar && (
               <button
                 onClick={onCloseSidebar}
-                className="lg:hidden p-2 xs:p-2.5 text-slate-400 active:text-slate-600 rounded-lg transition-colors touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-2 xs:p-2.5 text-slate-400 active:text-slate-600 rounded-lg transition-colors touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="Close sidebar"
               >
                 <svg
@@ -705,7 +699,7 @@ export default function OrderCartSidebar({
                     />
                   </svg>
                   {cancelOrderMutation.isPending
-                    ? "កំពុង..."
+                    ? "ក��ពុង..."
                     : "លុប"}
                 </button>
               </div>

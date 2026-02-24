@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import OptimizedImage from "@/components/OptimizedImage";
@@ -26,6 +26,7 @@ export default function MenuItemGrid({
   const [itemQuantityInputs, setItemQuantityInputs] = useState<
     Record<string, string>
   >({});
+  const [addingItemId, setAddingItemId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const addItemMutation = useMutation({
@@ -62,6 +63,15 @@ export default function MenuItemGrid({
         return;
       }
       const quantity = itemQuantities[item.id] || 1;
+      
+      // Add animation
+      setAddingItemId(item.id);
+      setTimeout(() => setAddingItemId(null), 600);
+      
+      toast.success(
+        `បានបន្ថែម "${item.name}" (${quantity})`,
+        { duration: 2000 }
+      );
       addItemMutation.mutate({ menuItemId: item.id, quantity });
       setItemQuantities((prev) => {
         const newQty = { ...prev };
