@@ -113,55 +113,55 @@ export default function AdminPage() {
         },
       ],
     },
-    {
-      title: "ផលិតផល & ចំណាយ",
-      icon: "📦",
-      bgColor: "blue",
-      items: [
-        {
-          // Units management - Define measurement units (kg, liter, piece, etc) used throughout the system
-          href: "/admin/units",
-          title: "គ្រប់គ្រងឯកតា",
-          description: "គ្រប់គ្រងឯកតាវាស់វែង",
-          allowedRoles: ["admin"],
-        },
-        {
-          // Unit conversions - Convert between different units (e.g., 1kg = 1000g)
-          href: "/admin/unit-conversions",
-          title: "ការបម្លែងឯកតា",
-          description: "គ្រប់គ្រងការបម្លែងឯកតា",
-          allowedRoles: ["admin"],
-        },
-        {
-          // Products inventory - Manage raw materials and products used in recipes and operations
-          href: "/admin/products",
-          title: "គ្រប់គ្រងផលិតផល",
-          description: "គ្រប់គ្រងផលិតផលសម្រាប់ចំណាយ",
-          allowedRoles: ["admin"],
-        },
-        {
-          // Stock/Inventory levels - Track current quantity of products in stock
-          href: "/admin/inventory",
-          title: "ស្តុក",
-          description: "គ្រប់គ្រងស្តុកផលិតផល",
-          allowedRoles: ["admin"],
-        },
-        {
-          // Stock movements - View history of product additions, removals, and adjustments
-          href: "/admin/stock-movements",
-          title: "ចលនាស្តុក",
-          description: "មើលចលនាស្តុក",
-          allowedRoles: ["admin"],
-        },
-        {
-          // Expenses - Record and manage business expenses (utilities, rent, salaries, etc)
-          href: "/admin/expenses",
-          title: "គ្រប់គ្រងចំណាយ",
-          description: "គ្រប់គ្រងចំណាយលម្អិត",
-          allowedRoles: ["admin"],
-        },
-      ],
-    },
+    // {
+    //   title: "ផលិតផល & ចំណាយ",
+    //   icon: "📦",
+    //   bgColor: "blue",
+    //   items: [
+    //     {
+    //       // Units management - Define measurement units (kg, liter, piece, etc) used throughout the system
+    //       href: "/admin/units",
+    //       title: "គ្រប់គ្រងឯកតា",
+    //       description: "គ្រប់គ្រងឯកតាវាស់វែង",
+    //       allowedRoles: ["admin"],
+    //     },
+    //     {
+    //       // Unit conversions - Convert between different units (e.g., 1kg = 1000g)
+    //       href: "/admin/unit-conversions",
+    //       title: "ការបម្លែងឯកតា",
+    //       description: "គ្រប់គ្រងការបម្លែងឯកតា",
+    //       allowedRoles: ["admin"],
+    //     },
+    //     {
+    //       // Products inventory - Manage raw materials and products used in recipes and operations
+    //       href: "/admin/products",
+    //       title: "គ្រប់គ្រងផលិតផល",
+    //       description: "គ្រប់គ្រងផលិតផលសម្រាប់ចំណាយ",
+    //       allowedRoles: ["admin"],
+    //     },
+    //     {
+    //       // Stock/Inventory levels - Track current quantity of products in stock
+    //       href: "/admin/inventory",
+    //       title: "ស្តុក",
+    //       description: "គ្រប់គ្រងស្តុកផលិតផល",
+    //       allowedRoles: ["admin"],
+    //     },
+    //     {
+    //       // Stock movements - View history of product additions, removals, and adjustments
+    //       href: "/admin/stock-movements",
+    //       title: "ចលនាស្តុក",
+    //       description: "មើលចលនាស្តុក",
+    //       allowedRoles: ["admin"],
+    //     },
+    //     {
+    //       // Expenses - Record and manage business expenses (utilities, rent, salaries, etc)
+    //       href: "/admin/expenses",
+    //       title: "គ្រប់គ្រងចំណាយ",
+    //       description: "គ្រប់គ្រងចំណាយលម្អិត",
+    //       allowedRoles: ["admin"],
+    //     },
+    //   ],
+    // },
     {
       title: "ការកំណត់",
       icon: "⚙️",
