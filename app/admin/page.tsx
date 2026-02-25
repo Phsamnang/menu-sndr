@@ -217,101 +217,136 @@ export default function AdminPage() {
     items.filter((item) => item.allowedRoles.includes(userRole || ""));
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-slate-800">ផ្ទាំងគ្រប់គ្រង</h1>
-          <div className="flex items-center gap-4">
-            {user && (
-              <span className="text-slate-600 hidden sm:inline">
-                {user.username} ({user.role.displayName})
-              </span>
-            )}
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              <span>ចេញ</span>
-            </button>
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold text-slate-800">ផ្ទាំងគ្រប់គ្រង</h1>
+            <div className="flex items-center gap-3 sm:gap-6">
+              {user && (
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-medium text-slate-800">{user.username}</p>
+                  <p className="text-xs text-slate-500">{user.role.displayName}</p>
+                </div>
+              )}
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 bg-primary text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors text-xs sm:text-sm font-medium min-h-[40px]"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span>ចេញ</span>
+              </button>
+            </div>
           </div>
         </div>
+      </header>
 
-        {/* Quick Access */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quick Access Section */}
         {filterItemsByRole(quickAccessItems).length > 0 && (
-          <div className="mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <section className="mb-10">
+            <h2 className="text-lg font-semibold text-slate-700 mb-4 px-1">ដំណើរការលឿន</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {filterItemsByRole(quickAccessItems).map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-md p-6 hover:shadow-xl transition-all hover:scale-105 group"
+                  className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-5 hover:shadow-lg transition-shadow active:shadow-md min-h-[120px] flex flex-col justify-between group"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-2xl font-bold">{item.title}</h2>
-                    <svg className="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  <div>
+                    <h3 className="text-lg font-bold mb-1">{item.title}</h3>
+                    <p className="text-blue-100 text-sm">{item.description}</p>
+                  </div>
+                  <div className="text-right pt-2">
+                    <svg className="w-5 h-5 inline group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
-                  <p className="text-blue-100 text-sm">{item.description}</p>
                 </Link>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* Menu Sections */}
-        <div className="space-y-6">
+        {/* Main Menu Sections */}
+        <div className="space-y-8">
           {menuSections.map((section) => {
             const filteredItems = filterItemsByRole(section.items);
             if (filteredItems.length === 0) return null;
 
             return (
-              <div key={section.title}>
-                <h2 className="text-2xl font-bold text-slate-700 mb-6">{section.title}</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <section key={section.title}>
+                <div className="flex items-center gap-3 mb-4 px-1">
+                  <span className="text-2xl">{section.icon}</span>
+                  <h2 className="text-xl font-bold text-slate-800">{section.title}</h2>
+                  <div className="flex-1 h-0.5 bg-slate-300 rounded-full"></div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {filteredItems.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all hover:scale-105 border border-slate-200 group"
+                      className="bg-white rounded-lg border border-slate-200 p-4 hover:border-slate-300 hover:shadow-md transition-all active:shadow-sm group"
                     >
-                      <h3 className="text-lg font-bold text-slate-800 mb-1 group-hover:text-primary transition-colors">
-                        {item.title}
-                      </h3>
-                      <p className="text-sm text-slate-600">
-                        {item.description}
-                      </p>
+                      <div className="min-h-[80px] flex flex-col justify-between">
+                        <div>
+                          <h3 className="font-bold text-slate-800 mb-1 group-hover:text-primary transition-colors text-sm sm:text-base line-clamp-2">
+                            {item.title}
+                          </h3>
+                          <p className="text-xs sm:text-sm text-slate-600 line-clamp-2">
+                            {item.description}
+                          </p>
+                        </div>
+                        <div className="text-right pt-2 text-slate-400 group-hover:text-primary transition-colors">
+                          <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
                     </Link>
                   ))}
                 </div>
-              </div>
+              </section>
             );
           })}
 
-          {/* Role Specific */}
+          {/* Role Specific Section */}
           {filterItemsByRole(roleSpecificItems).length > 0 && (
-            <div>
-              <h2 className="text-2xl font-bold text-slate-700 mb-6">ការងារ</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <section>
+              <div className="flex items-center gap-3 mb-4 px-1">
+                <span className="text-2xl">👥</span>
+                <h2 className="text-xl font-bold text-slate-800">ការងារ</h2>
+                <div className="flex-1 h-0.5 bg-slate-300 rounded-full"></div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {filterItemsByRole(roleSpecificItems).map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all hover:scale-105 border border-slate-200 group"
+                    className="bg-white rounded-lg border border-slate-200 p-4 hover:border-slate-300 hover:shadow-md transition-all active:shadow-sm group"
                   >
-                    <h3 className="text-lg font-bold text-slate-800 mb-1 group-hover:text-primary transition-colors">
-                      {item.title}
-                    </h3>
-                    <p className="text-sm text-slate-600">
-                      {item.description}
-                    </p>
+                    <div className="min-h-[80px] flex flex-col justify-between">
+                      <div>
+                        <h3 className="font-bold text-slate-800 mb-1 group-hover:text-primary transition-colors text-sm sm:text-base line-clamp-2">
+                          {item.title}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-slate-600 line-clamp-2">
+                          {item.description}
+                        </p>
+                      </div>
+                      <div className="text-right pt-2 text-slate-400 group-hover:text-primary transition-colors">
+                        <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
                   </Link>
                 ))}
               </div>
-            </div>
+            </section>
           )}
         </div>
       </div>
