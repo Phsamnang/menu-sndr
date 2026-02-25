@@ -208,7 +208,7 @@ export default function AdminPage() {
     {
       href: "/",
       title: "មើលមីនុយ",
-      description: "មើលមីនុយអតិថិជន",
+      description: "មើលមី��ុយអតិថិជន",
       allowedRoles: ["admin", "chef", "waiter", "order"],
     },
   ];
@@ -244,25 +244,25 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Quick Access Section */}
         {filterItemsByRole(quickAccessItems).length > 0 && (
-          <section className="mb-10">
-            <h2 className="text-lg font-semibold text-slate-700 mb-4 px-1">ដំណើរការលឿន</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <section className="mb-16">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-5">ដំណើរការលឿន</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {filterItemsByRole(quickAccessItems).map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-5 hover:shadow-lg transition-shadow active:shadow-md min-h-[120px] flex flex-col justify-between group"
+                  className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 active:translate-y-0 min-h-[140px] flex flex-col justify-between group"
                 >
                   <div>
-                    <h3 className="text-lg font-bold mb-1">{item.title}</h3>
-                    <p className="text-blue-100 text-sm">{item.description}</p>
+                    <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+                    <p className="text-blue-100 text-sm leading-relaxed">{item.description}</p>
                   </div>
-                  <div className="text-right pt-2">
-                    <svg className="w-5 h-5 inline group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <div className="flex justify-end pt-4 opacity-70 group-hover:opacity-100 transition-opacity">
+                    <svg className="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
                   </div>
                 </Link>
@@ -272,39 +272,39 @@ export default function AdminPage() {
         )}
 
         {/* Main Menu Sections */}
-        <div className="space-y-8">
+        <div className="space-y-14">
           {menuSections.map((section) => {
             const filteredItems = filterItemsByRole(section.items);
             if (filteredItems.length === 0) return null;
 
             return (
               <section key={section.title}>
-                <div className="flex items-center gap-3 mb-4 px-1">
-                  <span className="text-2xl">{section.icon}</span>
-                  <h2 className="text-xl font-bold text-slate-800">{section.title}</h2>
-                  <div className="flex-1 h-0.5 bg-slate-300 rounded-full"></div>
+                <div className="flex items-center gap-4 mb-7">
+                  <span className="text-4xl flex-shrink-0">{section.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2">{section.title}</h2>
+                    <div className="h-1.5 bg-gradient-to-r from-blue-400 to-transparent rounded-full"></div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {filteredItems.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="bg-white rounded-lg border border-slate-200 p-4 hover:border-slate-300 hover:shadow-md transition-all active:shadow-sm group"
+                      className="bg-white rounded-xl border border-slate-200 p-5 hover:border-slate-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 active:translate-y-0 group min-h-[130px] flex flex-col justify-between"
                     >
-                      <div className="min-h-[80px] flex flex-col justify-between">
-                        <div>
-                          <h3 className="font-bold text-slate-800 mb-1 group-hover:text-primary transition-colors text-sm sm:text-base line-clamp-2">
-                            {item.title}
-                          </h3>
-                          <p className="text-xs sm:text-sm text-slate-600 line-clamp-2">
-                            {item.description}
-                          </p>
-                        </div>
-                        <div className="text-right pt-2 text-slate-400 group-hover:text-primary transition-colors">
-                          <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </div>
+                      <div>
+                        <h3 className="font-bold text-slate-800 mb-2 group-hover:text-primary transition-colors text-base leading-tight">
+                          {item.title}
+                        </h3>
+                        <p className="text-sm text-slate-600 leading-relaxed">
+                          {item.description}
+                        </p>
+                      </div>
+                      <div className="flex justify-end pt-4 text-slate-400 group-hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
+                        <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
                       </div>
                     </Link>
                   ))}
@@ -316,32 +316,32 @@ export default function AdminPage() {
           {/* Role Specific Section */}
           {filterItemsByRole(roleSpecificItems).length > 0 && (
             <section>
-              <div className="flex items-center gap-3 mb-4 px-1">
-                <span className="text-2xl">👥</span>
-                <h2 className="text-xl font-bold text-slate-800">ការងារ</h2>
-                <div className="flex-1 h-0.5 bg-slate-300 rounded-full"></div>
+              <div className="flex items-center gap-4 mb-7">
+                <span className="text-4xl flex-shrink-0">👥</span>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-2xl font-bold text-slate-800 mb-2">ការងារ</h2>
+                  <div className="h-1.5 bg-gradient-to-r from-blue-400 to-transparent rounded-full"></div>
+                </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filterItemsByRole(roleSpecificItems).map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="bg-white rounded-lg border border-slate-200 p-4 hover:border-slate-300 hover:shadow-md transition-all active:shadow-sm group"
+                    className="bg-white rounded-xl border border-slate-200 p-5 hover:border-slate-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 active:translate-y-0 group min-h-[130px] flex flex-col justify-between"
                   >
-                    <div className="min-h-[80px] flex flex-col justify-between">
-                      <div>
-                        <h3 className="font-bold text-slate-800 mb-1 group-hover:text-primary transition-colors text-sm sm:text-base line-clamp-2">
-                          {item.title}
-                        </h3>
-                        <p className="text-xs sm:text-sm text-slate-600 line-clamp-2">
-                          {item.description}
-                        </p>
-                      </div>
-                      <div className="text-right pt-2 text-slate-400 group-hover:text-primary transition-colors">
-                        <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
+                    <div>
+                      <h3 className="font-bold text-slate-800 mb-2 group-hover:text-primary transition-colors text-base leading-tight">
+                        {item.title}
+                      </h3>
+                      <p className="text-sm text-slate-600 leading-relaxed">
+                        {item.description}
+                      </p>
+                    </div>
+                    <div className="flex justify-end pt-4 text-slate-400 group-hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
+                      <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
                     </div>
                   </Link>
                 ))}
