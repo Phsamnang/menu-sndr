@@ -81,18 +81,18 @@ export default function AdminPage() {
           description: "គ្រប់គ្រងការបញ្ជាទិញ",
           allowedRoles: ["admin", "order"],
         },
-        {
-          href: "/admin/reservations",
-          title: "ការកក់តុ",
-          description: "គ្រប់គ្រងការកក់តុ",
-          allowedRoles: ["admin", "order"],
-        },
-        {
-          href: "/admin/customers",
-          title: "អតិថិជន",
-          description: "គ្រប់គ្រងអតិថិជន",
-          allowedRoles: ["admin"],
-        },
+        // {
+        //   href: "/admin/reservations",
+        //   title: "ការកក់តុ",
+        //   description: "គ្រប់គ្រងការកក់តុ",
+        //   allowedRoles: ["admin", "order"],
+        // },
+        // {
+        //   href: "/admin/customers",
+        //   title: "អតិថិជន",
+        //   description: "គ្រប់គ្រងអតិថិជន",
+        //   allowedRoles: ["admin"],
+        // },
         {
           href: "/admin/sales",
           title: "គ្រប់គ្រងការលក់",
@@ -179,12 +179,12 @@ export default function AdminPage() {
           description: "គ្រប់គ្រងព័ត៌មានហាង",
           allowedRoles: ["admin"],
         },
-        {
-          href: "/admin/exchange-rates",
-          title: "អត្រាប្តូរប្រាក់",
-          description: "គ្រប់គ្រងអត្រាប្តូរប្រាក់",
-          allowedRoles: ["admin"],
-        },
+        // {
+        //   href: "/admin/exchange-rates",
+        //   title: "អត្រាប្តូរប្រាក់",
+        //   description: "គ្រប់គ្រងអត្រាប្តូរប្រាក់",
+        //   allowedRoles: ["admin"],
+        // },
       ],
     },
   ];
