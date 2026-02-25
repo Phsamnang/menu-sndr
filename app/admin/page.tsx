@@ -81,18 +81,18 @@ export default function AdminPage() {
           description: "គ្រប់គ្រងការបញ្ជាទិញ",
           allowedRoles: ["admin", "order"],
         },
-        {
-          href: "/admin/reservations",
-          title: "ការកក់តុ",
-          description: "គ្រប់គ្រងការកក់តុ",
-          allowedRoles: ["admin", "order"],
-        },
-        {
-          href: "/admin/customers",
-          title: "អតិថិជន",
-          description: "គ្រប់គ្រងអតិថិជន",
-          allowedRoles: ["admin"],
-        },
+        // {
+        //   href: "/admin/reservations",
+        //   title: "ការកក់តុ",
+        //   description: "គ្រប់គ្រងការកក់តុ",
+        //   allowedRoles: ["admin", "order"],
+        // },
+        // {
+        //   href: "/admin/customers",
+        //   title: "អតិថិជន",
+        //   description: "គ្រប់គ្រងអតិថិជន",
+        //   allowedRoles: ["admin"],
+        // },
         {
           href: "/admin/sales",
           title: "គ្រប់គ្រងការលក់",
@@ -119,36 +119,42 @@ export default function AdminPage() {
       bgColor: "blue",
       items: [
         {
+          // Units management - Define measurement units (kg, liter, piece, etc) used throughout the system
           href: "/admin/units",
           title: "គ្រប់គ្រងឯកតា",
           description: "គ្រប់គ្រងឯកតាវាស់វែង",
           allowedRoles: ["admin"],
         },
         {
+          // Unit conversions - Convert between different units (e.g., 1kg = 1000g)
           href: "/admin/unit-conversions",
           title: "ការបម្លែងឯកតា",
           description: "គ្រប់គ្រងការបម្លែងឯកតា",
           allowedRoles: ["admin"],
         },
         {
+          // Products inventory - Manage raw materials and products used in recipes and operations
           href: "/admin/products",
           title: "គ្រប់គ្រងផលិតផល",
           description: "គ្រប់គ្រងផលិតផលសម្រាប់ចំណាយ",
           allowedRoles: ["admin"],
         },
         {
+          // Stock/Inventory levels - Track current quantity of products in stock
           href: "/admin/inventory",
           title: "ស្តុក",
           description: "គ្រប់គ្រងស្តុកផលិតផល",
           allowedRoles: ["admin"],
         },
         {
+          // Stock movements - View history of product additions, removals, and adjustments
           href: "/admin/stock-movements",
           title: "ចលនាស្តុក",
           description: "មើលចលនាស្តុក",
           allowedRoles: ["admin"],
         },
         {
+          // Expenses - Record and manage business expenses (utilities, rent, salaries, etc)
           href: "/admin/expenses",
           title: "គ្រប់គ្រងចំណាយ",
           description: "គ្រប់គ្រងចំណាយលម្អិត",
@@ -173,12 +179,12 @@ export default function AdminPage() {
           description: "គ្រប់គ្រងព័ត៌មានហាង",
           allowedRoles: ["admin"],
         },
-        {
-          href: "/admin/exchange-rates",
-          title: "អត្រាប្តូរប្រាក់",
-          description: "គ្រប់គ្រងអត្រាប្តូរប្រាក់",
-          allowedRoles: ["admin"],
-        },
+        // {
+        //   href: "/admin/exchange-rates",
+        //   title: "អត្រាប្តូរប្រាក់",
+        //   description: "គ្រប់គ្រងអត្រាប្តូរប្រាក់",
+        //   allowedRoles: ["admin"],
+        // },
       ],
     },
   ];
