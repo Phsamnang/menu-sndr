@@ -653,7 +653,7 @@ export default function OrderCartSidebar({
                     orderData?.status === "completed" ||
                     completePaymentMutation.isPending
                   }
-                  className="flex-1 py-2 xs:py-3 sm:py-3 bg-green-600 text-white rounded-lg font-semibold active:bg-green-700 xs:hover:bg-green-700 md:hover:bg-green-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-[10px] xs:text-xs sm:text-sm md:text-base flex items-center justify-center gap-1 xs:gap-2"
+                  className="flex-1 py-2 xs:py-3 sm:py-3 bg-green-600 text-white rounded-lg font-semibold active:bg-green-700 xs:hover:bg-green-700 md:hover:bg-green-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-[10px] xs:text-xs sm:text-sm md:text-base flex items-center justify-center gap-1 xs:gap-2 min-h-[44px] xs:min-h-[48px] min-w-[44px]"
                 >
                   <svg
                     className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0"

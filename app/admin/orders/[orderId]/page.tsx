@@ -294,7 +294,15 @@ export default function OrderDetailPage() {
       {/* Mobile Print Button - Always visible on mobile */}
       <button
         onClick={() => {
-          window.print();
+          try {
+            if (!orderData?.id) return;
+            const cacheBuster = Date.now();
+            const imageUrl = `${window.location.origin}/api/admin/orders/${orderData.id}/invoice-image?t=${cacheBuster}`;
+            const printUrl = `com.samathosoft.webprint://#imageurl#${imageUrl}#/imageurl#`;
+            window.location.href = printUrl;
+          } catch (error) {
+            console.error("Error printing invoice:", error);
+          }
         }}
         className="fixed bottom-6 left-4 xs:left-6 lg:hidden z-40 touch-manipulation bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-full shadow-lg active:shadow-md transition-all p-4 xs:p-5 flex items-center justify-center gap-1.5 min-h-[56px] xs:min-h-[60px] min-w-[56px] xs:min-w-[60px]"
         aria-label="Print invoice"
