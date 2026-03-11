@@ -719,14 +719,14 @@ export default function OrderCartSidebar({
               </button>
             </div>
           ) : (
-            <div className="flex gap-1.5 xs:gap-2">
+            <div className="space-y-2 xs:space-y-2">
+              {/* Mobile Print Button - Always visible */}
               <button
                 onClick={handlePrintInvoice}
-                disabled={!orderItems || orderItems.length === 0}
-                className="flex-1 py-2 xs:py-3 sm:py-3 btn-primary rounded-lg font-semibold active:bg-primary/90 xs:hover:bg-primary/90 md:hover:bg-primary/90 disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-[10px] xs:text-xs sm:text-sm md:text-base flex items-center justify-center gap-1 xs:gap-2"
+                className="w-full md:hidden py-2.5 xs:py-3 bg-orange-500 text-white rounded-lg font-semibold active:bg-orange-600 touch-manipulation text-xs xs:text-sm flex items-center justify-center gap-1.5 xs:gap-2 min-h-[44px]"
               >
                 <svg
-                  className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0"
+                  className="w-4 h-4 xs:w-5 xs:h-5 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -738,24 +738,46 @@ export default function OrderCartSidebar({
                     d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
                   />
                 </svg>
-                <span className="inline">បោះពុម្ព</span>
+                <span>បោះពុម្ព (ឆ្ពោះទៅគ្រប់គ្រង)</span>
               </button>
-              <button
-                onClick={handlePlaceOrder}
-                disabled={
-                  !orderItems ||
-                  orderItems.length === 0 ||
-                  orderData?.status === "completed" ||
-                  completePaymentMutation.isPending
-                }
-                className="flex-1 py-2 xs:py-3 sm:py-3 btn-primary rounded-lg font-semibold active:bg-primary/90 xs:hover:bg-primary/90 md:hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation text-[10px] xs:text-xs sm:text-sm md:text-base flex items-center justify-center gap-0.5 xs:gap-2"
-              >
-                {orderData?.status === "completed"
-                  ? "បានបង់"
-                  : completePaymentMutation.isPending
-                  ? "កំពុង..."
-                  : "ទូទាត់"}
-              </button>
+
+              <div className="flex gap-1.5 xs:gap-2">
+                <button
+                  onClick={handlePrintInvoice}
+                  className="hidden md:flex flex-1 py-2 xs:py-3 sm:py-3 btn-primary rounded-lg font-semibold active:bg-primary/90 xs:hover:bg-primary/90 touch-manipulation text-[10px] xs:text-xs sm:text-sm md:text-base items-center justify-center gap-1 xs:gap-2"
+                >
+                  <svg
+                    className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                    />
+                  </svg>
+                  <span className="inline">បោះពុម្ព</span>
+                </button>
+                <button
+                  onClick={handlePlaceOrder}
+                  disabled={
+                    !orderItems ||
+                    orderItems.length === 0 ||
+                    orderData?.status === "completed" ||
+                    completePaymentMutation.isPending
+                  }
+                  className="flex-1 py-2 xs:py-3 sm:py-3 btn-primary rounded-lg font-semibold active:bg-primary/90 xs:hover:bg-primary/90 md:hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation text-[10px] xs:text-xs sm:text-sm md:text-base flex items-center justify-center gap-0.5 xs:gap-2"
+                >
+                  {orderData?.status === "completed"
+                    ? "បានបង់"
+                    : completePaymentMutation.isPending
+                    ? "កំពុង..."
+                    : "ទូទាត់"}
+                </button>
+              </div>
             </div>
           )}
         </div>
