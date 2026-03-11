@@ -291,6 +291,30 @@ export default function OrderDetailPage() {
         isVisible={!showMobileCart}
       />
 
+      {/* Mobile Print Button - Always visible on mobile */}
+      <button
+        onClick={() => {
+          window.print();
+        }}
+        className="fixed bottom-6 left-4 xs:left-6 lg:hidden z-40 touch-manipulation bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-full shadow-lg active:shadow-md transition-all p-4 xs:p-5 flex items-center justify-center gap-1.5 min-h-[56px] xs:min-h-[60px] min-w-[56px] xs:min-w-[60px]"
+        aria-label="Print invoice"
+        title="បោះពុម្ព (ឆ្ពោះទៅគ្រប់គ្រង)"
+      >
+        <svg
+          className="w-6 h-6 xs:w-7 xs:h-7"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+          />
+        </svg>
+      </button>
+
       {/* Bottom sheet cart (mobile only) */}
       <CartBottomSheet
         isOpen={showMobileCart}
