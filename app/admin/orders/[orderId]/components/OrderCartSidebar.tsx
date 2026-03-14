@@ -127,6 +127,7 @@ export default function OrderCartSidebar({
       queryClient.invalidateQueries({ queryKey: ["tables"] });
       queryClient.invalidateQueries({ queryKey: ["activeOrders"] });
       toast.success("ការទូទាត់បានបញ្ចប់!");
+      window.location.href = "/admin/orders";
     },
   });
 
