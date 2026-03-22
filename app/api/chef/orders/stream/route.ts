@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth, AuthenticatedRequest } from "@/lib/middleware";
 
+const KITCHEN_ITEM_STATUSES = ["pending", "preparing", "ready"] as const;
+
 async function fetchChefOrders(status?: string) {
-  const itemStatusFilter = status
-    ? [status]
-    : ["pending", "preparing"];
+  const itemStatusFilter =
+    status && (KITCHEN_ITEM_STATUSES as readonly string[]).includes(status)
+      ? [status]
+      : [...KITCHEN_ITEM_STATUSES];
 
   const orders = await prisma.order.findMany({
     where: {

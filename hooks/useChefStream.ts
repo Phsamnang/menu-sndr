@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { getTokenSync } from "@/utils/token";
+import { apiClientJson } from "@/utils/api-client";
 
 interface OrderItem {
   id: string;
@@ -60,6 +61,14 @@ export function useChefStream(statusFilter: string | null) {
   const previousItemIdsRef = useRef<Set<string>>(new Set());
   const isInitialLoadRef = useRef(true);
 
+  const refetch = useCallback(async () => {
+    const q = statusFilter ? `?status=${encodeURIComponent(statusFilter)}` : "";
+    const result = await apiClientJson<{ items: Order[] }>(`/api/chef/orders${q}`);
+    if (result.success && result.data?.items) {
+      setOrdersData({ items: result.data.items });
+    }
+  }, [statusFilter]);
+
   useEffect(() => {
     const token = getTokenSync();
     const tokenParam = token ? `&token=${encodeURIComponent(token)}` : "";
@@ -115,6 +124,6 @@ export function useChefStream(statusFilter: string | null) {
     };
   }, [statusFilter]);
 
-  return { ordersData, isLoading };
+  return { ordersData, isLoading, refetch };
 }
 

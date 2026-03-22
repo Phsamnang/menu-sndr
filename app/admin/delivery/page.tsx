@@ -37,11 +37,13 @@ export default function DeliveryPage() {
           data: { status },
         }
       );
+
       if (!result.success || !result.data) {
         throw new Error(
           result.error?.message || "Failed to update item status"
         );
       }
+
       return result.data;
     },
     onSuccess: () => {
@@ -57,15 +59,6 @@ export default function DeliveryPage() {
     [updateStatusMutation]
   );
 
-  const handleMarkAllServed = useCallback(
-    (orderId: string, itemIds: string[]) => {
-      itemIds.forEach((itemId) => {
-        updateStatusMutation.mutate({ orderId, itemId, status: "served" });
-      });
-    },
-    [updateStatusMutation]
-  );
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
@@ -74,12 +67,8 @@ export default function DeliveryPage() {
         return "status-primary";
       case "ready":
         return "bg-green-100 text-green-800 border-green-300";
-      case "served":
-        return "bg-gray-100 text-gray-800 border-gray-300";
-      case "cancelled":
-        return "bg-red-100 text-red-800 border-red-300";
       default:
-        return "bg-slate-100 text-slate-800 border-slate-300";
+        return "hidden"; // hide others
     }
   };
 
@@ -91,33 +80,39 @@ export default function DeliveryPage() {
         return "កំពុងរៀបចំ";
       case "ready":
         return "រួចរាល់";
-      case "served":
-        return "បានដឹក";
-      case "cancelled":
-        return "បានលុប";
       default:
-        return status;
+        return ""; // hide others
     }
   };
 
   const orders = ordersData?.items || [];
-  const allItems = orders.flatMap((order) =>
-    order.items.map((item) => ({ ...item, order }))
+
+  // ✅ IMPORTANT: filter out served & cancelled
+  const allItems = useMemo(
+    () =>
+      orders
+        .flatMap((order) =>
+          order.items.map((item) => ({ ...item, order }))
+        )
+        .filter(
+          (item) =>
+            item.status !== "served" && item.status !== "cancelled"
+        ),
+    [orders]
   );
 
-  const groupedByStatus = allItems.reduce((acc, item) => {
-    if (!acc[item.status]) {
-      acc[item.status] = [];
-    }
-    acc[item.status].push(item);
-    return acc;
-  }, {} as Record<string, typeof allItems>);
+  const groupedByStatus = useMemo(() => {
+    return allItems.reduce((acc, item) => {
+      if (!acc[item.status]) acc[item.status] = [];
+      acc[item.status].push(item);
+      return acc;
+    }, {} as Record<string, typeof allItems>);
+  }, [allItems]);
 
   const filteredItems = statusFilter
     ? groupedByStatus[statusFilter] || []
     : allItems;
 
-  // Define columns for TanStack Table
   const columns = useMemo<ColumnDef<typeof filteredItems[number]>[]>(
     () => [
       {
@@ -126,7 +121,7 @@ export default function DeliveryPage() {
         cell: (info) => {
           const menuItem = info.getValue() as OrderItem["menuItem"];
           return (
-            <div className="w-16 h-16 bg-slate-100 rounded overflow-hidden flex-shrink-0">
+            <div className="w-16 h-16 bg-slate-100 rounded overflow-hidden">
               {menuItem.image ? (
                 <OptimizedImage
                   src={menuItem.image}
@@ -134,23 +129,10 @@ export default function DeliveryPage() {
                   width={64}
                   height={64}
                   className="w-full h-full object-cover"
-                  quality={75}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-slate-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
+                <div className="w-full h-full flex items-center justify-center text-slate-300">
+                  No Image
                 </div>
               )}
             </div>
@@ -195,6 +177,11 @@ export default function DeliveryPage() {
         header: "ស្ថានភាព",
         cell: (info) => {
           const status = info.getValue() as string;
+
+          if (status === "served" || status === "cancelled") {
+            return null;
+          }
+
           return (
             <div
               className={`inline-block px-2 py-1 rounded text-xs font-medium border ${getStatusColor(
@@ -249,27 +236,25 @@ export default function DeliveryPage() {
         header: "សកម្មភាព",
         cell: (info) => {
           const item = info.row.original;
+
           return (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleMarkServed(item.order.id, item.id);
               }}
-              disabled={
-                updateStatusMutation.isPending || item.status === "served"
-              }
-              className="px-3 py-2 btn-primary rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={updateStatusMutation.isPending}
+              className="px-3 py-2 btn-primary rounded-lg font-medium text-sm disabled:opacity-50"
             >
-              {item.status === "served" ? "បានដឹក" : "ដឹក"}
+              ដឹក
             </button>
           );
         },
       },
     ],
-    [handleMarkServed, updateStatusMutation.isPending]
+    [handleMarkServed]
   );
 
-  // Set up TanStack Table
   const table = useReactTable({
     data: filteredItems,
     columns,
@@ -282,7 +267,7 @@ export default function DeliveryPage() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 flex justify-between items-start">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-2">
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">
               ការដឹកជញ្ជូន
             </h1>
             <p className="text-slate-600">
@@ -291,107 +276,69 @@ export default function DeliveryPage() {
           </div>
           <Link
             href="/admin"
-            className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 text-sm"
+            className="px-4 py-2 bg-slate-600 text-white rounded-lg"
           >
             ត្រលប់
           </Link>
         </div>
 
-        <div className="mb-6 flex flex-wrap gap-2">
+        {/* Filters */}
+        <div className="mb-6 flex gap-2">
           <button
             onClick={() => setStatusFilter(null)}
-            className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-              statusFilter === null
-                ? "bg-slate-800 text-white shadow-md"
-                : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"
-            }`}
+            className="px-4 py-2 bg-slate-800 text-white rounded"
           >
             ទាំងអស់ ({allItems.length})
           </button>
+
           {["pending", "ready"].map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                statusFilter === status
-                  ? "bg-slate-800 text-white shadow-md"
-                  : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"
-              }`}
+              className="px-4 py-2 bg-white border rounded"
             >
-              {getStatusLabel(status)} ({groupedByStatus[status]?.length || 0})
+              {getStatusLabel(status)} (
+              {groupedByStatus[status]?.length || 0})
             </button>
           ))}
         </div>
 
+        {/* Table */}
         {isLoading ? (
-          <div className="text-center py-16 bg-white rounded-lg shadow-sm">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-slate-800"></div>
-            <p className="text-slate-600 mt-4">កំពុងផ្ទុក...</p>
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-lg shadow-sm">
-            <svg
-              className="w-16 h-16 text-slate-300 mx-auto mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            <p className="text-slate-500 text-lg">
-              មិនមានមុខម្ហូបដែលរួចរាល់សម្រាប់ដឹកទេ
-            </p>
-          </div>
+          <p className="text-center py-10">Loading...</p>
         ) : (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-slate-50 border-b border-slate-200">
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <tr key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <th
-                          key={header.id}
-                          className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider"
-                        >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </th>
-                      ))}
-                    </tr>
-                  ))}
-                </thead>
-                <tbody className="bg-white divide-y divide-slate-100">
-                  {table.getRowModel().rows.map((row) => (
-                    <tr
-                      key={row.id}
-                      className="hover:bg-slate-50 transition-colors"
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <td
-                          key={cell.id}
-                          className="px-6 py-4 text-sm text-slate-900"
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="bg-white rounded shadow">
+            <table className="w-full">
+              <thead>
+                {table.getHeaderGroups().map((hg) => (
+                  <tr key={hg.id}>
+                    {hg.headers.map((h) => (
+                      <th key={h.id} className="p-3 text-left">
+                        {flexRender(
+                          h.column.columnDef.header,
+                          h.getContext()
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+
+              <tbody>
+                {table.getRowModel().rows.map((row) => (
+                  <tr key={row.id} className="border-t">
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="p-3">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
