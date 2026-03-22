@@ -239,9 +239,9 @@ export default function OrderCartSidebar({
 
     const confirmMessage = "តើអ្នកចង់បញ្ចប់ការបញ្ជាទិញនេះទេ?";
     if (confirm(confirmMessage)) {
-      completePaymentMutation.mutate();
+      cancelOrderMutation.mutate();
     }
-  }, [orderData?.status, completePaymentMutation]);
+  }, [orderData?.status, cancelOrderMutation]);
 
   const handleCancelOrder = useCallback(() => {
     if (orderData?.status === "completed") {
@@ -652,7 +652,7 @@ export default function OrderCartSidebar({
                   onClick={handleFinishOrder}
                   disabled={
                     orderData?.status === "completed" ||
-                    completePaymentMutation.isPending
+                    cancelOrderMutation.isPending
                   }
                   className="flex-1 py-2 xs:py-3 sm:py-3 bg-green-600 text-white rounded-lg font-semibold active:bg-green-700 xs:hover:bg-green-700 md:hover:bg-green-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-[10px] xs:text-xs sm:text-sm md:text-base flex items-center justify-center gap-1 xs:gap-2 min-h-[44px] xs:min-h-[48px] min-w-[44px]"
                 >
@@ -669,7 +669,7 @@ export default function OrderCartSidebar({
                       d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  {completePaymentMutation.isPending
+                  {cancelOrderMutation.isPending
                     ? "កំពុង..."
                     : "បញ្ចប់"}
                 </button>
@@ -695,7 +695,7 @@ export default function OrderCartSidebar({
                     />
                   </svg>
                   {cancelOrderMutation.isPending
-                    ? "ក��ពុង..."
+                    ? "កំពុង..."
                     : "លុប"}
                 </button>
               </div>
