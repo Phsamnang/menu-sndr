@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
 
 interface MenuItem {
   href: string;
@@ -13,16 +11,8 @@ interface MenuItem {
 }
 
 export default function AdminPage() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const userRole = user?.role.name;
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
-  };
 
   const menuItems: MenuItem[] = [
     { href: "/admin/orders", title: "លក់", icon: "💳", allowedRoles: ["admin", "order"] },
@@ -31,174 +21,100 @@ export default function AdminPage() {
     { href: "/admin/tables", title: "តុ", icon: "🪑", allowedRoles: ["admin"] },
     { href: "/admin/sales", title: "ការលក់", icon: "📊", allowedRoles: ["admin"] },
     { href: "/admin/chef", title: "ចម្អិន", icon: "👨‍🍳", allowedRoles: ["admin", "chef"] },
-    { href: "/admin/delivery", title: "ដឹក", icon: "🚚", allowedRoles: ["admin", "waiter", "order"] },
-    { href: "/admin/users", title: "អ្នកប្រើប្រាស់", icon: "👤", allowedRoles: ["admin"] },
-    { href: "/admin/shop-info", title: "ហាង", icon: "🏪", allowedRoles: ["admin"] },
   ];
 
   const filteredItems = menuItems.filter((item) =>
     item.allowedRoles.includes(userRole || "")
   );
 
-  const isActive = (href: string) => pathname === href;
-
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      {/* Sidebar */}
-      <aside className={`${
-        sidebarOpen ? "w-64" : "w-20"
-      } bg-white border-r border-slate-200 transition-all duration-300 flex flex-col`}>
-        {/* Logo */}
-        <div className="h-20 flex items-center justify-center border-b border-slate-200 px-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">{sidebarOpen ? "MENU" : "M"}</div>
-            {sidebarOpen && <p className="text-xs text-slate-500 mt-1">Admin Panel</p>}
+    <>
+      {/* Top Header */}
+      <header className="bg-white border-b border-slate-200 px-8 py-6 sticky top-0 z-30">
+        <div className="flex items-center justify-between max-w-7xl mx-auto">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-800">ផ្ទាំងគ្រប់គ្រង</h1>
+            <p className="text-sm text-slate-500 mt-1">ស្វាគមន៍ ឡើងវិញ, {user?.username}!</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <input
+              type="text"
+              placeholder="ស្វាគមន៍..."
+              className="px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
           </div>
         </div>
+      </header>
 
-        {/* Menu Items */}
-        <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2">
-          {filteredItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-all ${
-                isActive(item.href)
-                  ? "bg-primary text-white"
-                  : "text-slate-700 hover:bg-slate-100"
-              } ${sidebarOpen ? "justify-start" : "justify-center"}`}
-            >
-              <span className="text-xl flex-shrink-0">{item.icon}</span>
-              {sidebarOpen && (
-                <span className="font-medium text-sm whitespace-nowrap">
-                  {item.title}
-                </span>
-              )}
-            </Link>
-          ))}
-        </nav>
-
-        {/* User Info & Actions */}
-        <div className="border-t border-slate-200 p-3 space-y-3">
-          {sidebarOpen && user && (
-            <div className="px-4 py-2 bg-slate-50 rounded-lg text-center">
-              <p className="text-xs font-semibold text-slate-700">{user.username}</p>
-              <p className="text-xs text-slate-500">{user.role.displayName}</p>
-            </div>
-          )}
-          
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-            title={sidebarOpen ? "ហាក់ដង់" : "បង្ហាញ"}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-            {sidebarOpen && <span className="text-sm">ហាក់ដង់</span>}
-          </button>
-
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            {sidebarOpen && <span className="text-sm">ចេញ</span>}
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1">
-        {/* Top Header */}
-        <header className="bg-white border-b border-slate-200 px-8 py-6">
-          <div className="flex items-center justify-between max-w-7xl mx-auto">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-800">ផ្ទាំងគ្រប់គ្រង</h1>
-              <p className="text-sm text-slate-500 mt-1">ស្វាគមន៍ ឡើងវិញ, {user?.username}!</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <input
-                type="text"
-                placeholder="ស្វាគមន៍..."
-                className="px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-          </div>
-        </header>
-
-        {/* Content Area */}
-        <div className="p-8">
-          <div className="max-w-7xl mx-auto">
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <div className="bg-white rounded-lg border border-slate-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-600 text-sm font-medium">លក់ថ្ងៃនេះ</p>
-                    <p className="text-2xl font-bold text-slate-800 mt-2">$1,234</p>
-                  </div>
-                  <div className="text-3xl">💳</div>
+      {/* Content Area */}
+      <div className="p-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-600 text-sm font-medium">លក់ថ្ងៃនេះ</p>
+                  <p className="text-2xl font-bold text-slate-800 mt-2">$1,234</p>
                 </div>
-              </div>
-              <div className="bg-white rounded-lg border border-slate-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-600 text-sm font-medium">លក់សរុប</p>
-                    <p className="text-2xl font-bold text-slate-800 mt-2">456</p>
-                  </div>
-                  <div className="text-3xl">📊</div>
-                </div>
-              </div>
-              <div className="bg-white rounded-lg border border-slate-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-600 text-sm font-medium">តុលែង</p>
-                    <p className="text-2xl font-bold text-slate-800 mt-2">12</p>
-                  </div>
-                  <div className="text-3xl">🪑</div>
-                </div>
-              </div>
-              <div className="bg-white rounded-lg border border-slate-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-600 text-sm font-medium">អ្នកប្រើប្រាស់</p>
-                    <p className="text-2xl font-bold text-slate-800 mt-2">8</p>
-                  </div>
-                  <div className="text-3xl">👤</div>
-                </div>
+                <div className="text-3xl">💳</div>
               </div>
             </div>
-
-            {/* Main Navigation Cards */}
-            <div>
-              <h2 className="text-xl font-bold text-slate-800 mb-4">ទៅដែលស្ថិតនៅ</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredItems.slice(0, 6).map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="bg-white rounded-lg border border-slate-200 hover:border-primary hover:shadow-lg transition-all p-6 flex items-start gap-4 group"
-                  >
-                    <div className="text-4xl">{item.icon}</div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-slate-800 group-hover:text-primary transition-colors">
-                        {item.title}
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-1">ចូលទៅក្នុងផ្នែក</p>
-                    </div>
-                    <svg className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                ))}
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-600 text-sm font-medium">លក់សរុប</p>
+                  <p className="text-2xl font-bold text-slate-800 mt-2">456</p>
+                </div>
+                <div className="text-3xl">📊</div>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-600 text-sm font-medium">តុលែង</p>
+                  <p className="text-2xl font-bold text-slate-800 mt-2">12</p>
+                </div>
+                <div className="text-3xl">🪑</div>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-600 text-sm font-medium">អ្នកប្រើប្រាស់</p>
+                  <p className="text-2xl font-bold text-slate-800 mt-2">8</p>
+                </div>
+                <div className="text-3xl">👤</div>
               </div>
             </div>
           </div>
+
+          {/* Main Navigation Cards */}
+          <div>
+            <h2 className="text-xl font-bold text-slate-800 mb-4">ទៅដែលស្ថិតនៅ</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="bg-white rounded-lg border border-slate-200 hover:border-primary hover:shadow-lg transition-all p-6 flex items-start gap-4 group"
+                >
+                  <div className="text-4xl">{item.icon}</div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-slate-800 group-hover:text-primary transition-colors">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">ចូលទៅក្នុងផ្នែក</p>
+                  </div>
+                  <svg className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }
