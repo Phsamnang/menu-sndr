@@ -3,19 +3,13 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 
 interface MenuItem {
   href: string;
   title: string;
-  description: string;
-  allowedRoles: string[];
-}
-
-interface MenuSection {
-  title: string;
-  items: MenuItem[];
   icon: string;
+  allowedRoles: string[];
 }
 
 export default function AdminPage() {
@@ -23,295 +17,188 @@ export default function AdminPage() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const userRole = user?.role.name;
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleLogout = () => {
     logout();
     router.push("/login");
   };
 
-  const menuSections: MenuSection[] = [
-    {
-      title: "លក់",
-      icon: "💳",
-      items: [
-        { href: "/admin/orders", title: "លក់", description: "គ្រប់គ្រងការលក់", allowedRoles: ["admin", "order"] },
-        { href: "/admin/sales", title: "ការលក់", description: "ស្ថិតិលក់", allowedRoles: ["admin"] },
-        { href: "/admin/promotions", title: "ការផ្តល់ជូន", description: "គ្រប់គ្រងប្រូម៉ូશន", allowedRoles: ["admin"] },
-        { href: "/admin/daily-summaries", title: "សង្ខេប", description: "សង្ខេបប្រចាំថ្ងៃ", allowedRoles: ["admin"] },
-      ],
-    },
-    {
-      title: "មីនុយ",
-      icon: "📋",
-      items: [
-        { href: "/admin/categories", title: "ប្រភេទម្ហូប", description: "គ្រប់គ្រងប្រភេទ", allowedRoles: ["admin"] },
-        { href: "/admin/table-types", title: "ប្រភេទតុ", description: "គ្រប់គ្រងប្រភេទតុ", allowedRoles: ["admin"] },
-        { href: "/admin/tables", title: "តុ", description: "គ្រប់គ្រងតុ", allowedRoles: ["admin"] },
-        { href: "/admin/menu-items", title: "មុខម្ហូប", description: "គ្រប់គ្រងមុខម្ហូប", allowedRoles: ["admin"] },
-        { href: "/admin/recipe-items", title: "រូបមន្ត", description: "គ្រប់គ្រងរូបមន្ត", allowedRoles: ["admin"] },
-      ],
-    },
-    // {
-    //   title: "ផលិតផល",
-    //   icon: "📦",
-    //   items: [
-    //     { href: "/admin/units", title: "ឯកតា", description: "គ្រប់គ្រងឯកតា", allowedRoles: ["admin"] },
-    //     { href: "/admin/products", title: "ផលិតផល", description: "គ្រប់គ្រងផលិតផល", allowedRoles: ["admin"] },
-    //     { href: "/admin/inventory", title: "ស្តុក", description: "គ្រប់គ្រងស្តុក", allowedRoles: ["admin"] },
-    //     { href: "/admin/expenses", title: "ចំណាយ", description: "គ្រប់គ្រងចំណាយ", allowedRoles: ["admin"] },
-    //   ],
-    // },
-    {
-      title: "ការកំណត់",
-      icon: "⚙️",
-      items: [
-        { href: "/admin/users", title: "អ្នកប្រើប្រាស់", description: "គ្រប់គ្រងគណនី", allowedRoles: ["admin"] },
-        { href: "/admin/shop-info", title: "ហាង", description: "ព័ត៌មានហាង", allowedRoles: ["admin"] },
-      ],
-    },
+  const menuItems: MenuItem[] = [
+    { href: "/admin/orders", title: "លក់", icon: "💳", allowedRoles: ["admin", "order"] },
+    { href: "/admin/categories", title: "មីនុយ", icon: "📋", allowedRoles: ["admin"] },
+    { href: "/admin/menu-items", title: "មុខម្ហូប", icon: "🍽️", allowedRoles: ["admin"] },
+    { href: "/admin/tables", title: "តុ", icon: "🪑", allowedRoles: ["admin"] },
+    { href: "/admin/sales", title: "ការលក់", icon: "📊", allowedRoles: ["admin"] },
+    { href: "/admin/chef", title: "ចម្អិន", icon: "👨‍🍳", allowedRoles: ["admin", "chef"] },
+    { href: "/admin/delivery", title: "ដឹក", icon: "🚚", allowedRoles: ["admin", "waiter", "order"] },
+    { href: "/admin/users", title: "អ្នកប្រើប្រាស់", icon: "👤", allowedRoles: ["admin"] },
+    { href: "/admin/shop-info", title: "ហាង", icon: "🏪", allowedRoles: ["admin"] },
   ];
 
-  const roleSpecificItems: MenuItem[] = [
-    { href: "/admin/chef", title: "ចម្អិន", description: "ការបញ្ជាទិញចម្អិន", allowedRoles: ["admin", "chef"] },
-    { href: "/admin/delivery", title: "ដឹក", description: "ការដឹកជញ្ជូន", allowedRoles: ["admin", "waiter", "order"] },
-  ];
+  const filteredItems = menuItems.filter((item) =>
+    item.allowedRoles.includes(userRole || "")
+  );
 
-  const quickAccessItems: MenuItem[] = [
-    { href: "/", title: "មើលមីនុយ", description: "មើលមីនុយអតិថិជន", allowedRoles: ["admin", "chef", "waiter", "order"] },
-  ];
-
-  const filterItemsByRole = (items: MenuItem[]) =>
-    items.filter((item) => item.allowedRoles.includes(userRole || ""));
-
-  const roleNavItems = useMemo(() => filterItemsByRole(roleSpecificItems), [userRole]);
-
-  const { salesSection, menuSectionsRest } = useMemo(() => {
-    const filtered = menuSections
-      .map((s) => ({ ...s, items: filterItemsByRole(s.items) }))
-      .filter((s) => s.items.length > 0);
-    const sales = filtered.find((s) => s.title === "លក់");
-    const rest = filtered.filter((s) => s.title !== "លក់");
-    return { salesSection: sales, menuSectionsRest: rest };
-  }, [userRole]);
-
-  type NavBlock =
-    | { kind: "section"; section: MenuSection }
-    | { kind: "role" };
-
-  const sidebarNavBlocks = useMemo((): NavBlock[] => {
-    const blocks: NavBlock[] = [];
-    if (salesSection) blocks.push({ kind: "section", section: salesSection });
-    if (roleNavItems.length > 0) blocks.push({ kind: "role" });
-    menuSectionsRest.forEach((section) => blocks.push({ kind: "section", section }));
-    return blocks;
-  }, [salesSection, menuSectionsRest, roleNavItems.length]);
-
-  const navLinkClass = (href: string) => {
-    const active = pathname === href || (href !== "/admin" && pathname.startsWith(href));
-    return `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
-      active
-        ? "bg-primary/10 text-primary shadow-sm"
-        : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-    }`;
-  };
+  const isActive = (href: string) => pathname === href;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <button
-          type="button"
-          aria-label="Close menu"
-          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
+    <div className="flex min-h-screen bg-slate-50">
       {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[min(20rem,90vw)] flex-col border-r border-slate-200 bg-white transition-transform duration-200 ease-out lg:static lg:z-0 lg:w-72 lg:shadow-none overflow-hidden ${
-          sidebarOpen ? "translate-x-0 shadow-xl" : "-translate-x-full lg:translate-x-0"
-        }`}
-      >
-        {/* Sidebar Header */}
-        <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4">
-          <Link
-            href="/admin"
-            className="flex items-center gap-2 font-bold text-slate-800 truncate hover:text-primary transition-colors"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <span className="text-xl">📊</span>
-            <span className="hidden sm:inline">ផ្ទាំង</span>
-          </Link>
-          <button
-            type="button"
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Close sidebar"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+      <aside className={`${
+        sidebarOpen ? "w-64" : "w-20"
+      } bg-white border-r border-slate-200 transition-all duration-300 flex flex-col`}>
+        {/* Logo */}
+        <div className="h-20 flex items-center justify-center border-b border-slate-200 px-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary">{sidebarOpen ? "MENU" : "M"}</div>
+            {sidebarOpen && <p className="text-xs text-slate-500 mt-1">Admin Panel</p>}
+          </div>
         </div>
 
-        {/* Sidebar: លក់ → ការងារ → មីនុយ / ការកំណត់ */}
-        <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-2">
-          {sidebarNavBlocks.map((block, index) => (
-            <div
-              key={block.kind === "section" ? block.section.title : "role"}
-              className={index > 0 ? "pt-2 border-t border-slate-200" : ""}
+        {/* Menu Items */}
+        <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2">
+          {filteredItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-all ${
+                isActive(item.href)
+                  ? "bg-primary text-white"
+                  : "text-slate-700 hover:bg-slate-100"
+              } ${sidebarOpen ? "justify-start" : "justify-center"}`}
             >
-              {block.kind === "role" ? (
-                <>
-                  <div className="mb-3 flex items-center gap-2 px-3 pt-2 pb-1">
-                    <span className="text-lg">👥</span>
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      ការងារ
-                    </h3>
-                  </div>
-                  <ul className="space-y-1">
-                    {roleNavItems.map((item) => (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          className={navLinkClass(item.href)}
-                          onClick={() => setSidebarOpen(false)}
-                        >
-                          <span className="flex-1 min-w-0">
-                            <div className="font-medium text-slate-900 truncate">{item.title}</div>
-                            <div className="text-xs text-slate-500 truncate hidden sm:block">{item.description}</div>
-                          </span>
-                          <svg className="h-4 w-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <>
-                  <div className="mb-3 flex items-center gap-2 px-3 pt-2 pb-1">
-                    <span className="text-lg">{block.section.icon}</span>
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      {block.section.title}
-                    </h3>
-                  </div>
-                  <ul className="space-y-1">
-                    {block.section.items.map((item) => (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          className={navLinkClass(item.href)}
-                          onClick={() => setSidebarOpen(false)}
-                        >
-                          <span className="flex-1 min-w-0">
-                            <div className="font-medium text-slate-900 truncate">{item.title}</div>
-                            <div className="text-xs text-slate-500 truncate hidden sm:block">{item.description}</div>
-                          </span>
-                          <svg className="h-4 w-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </>
+              <span className="text-xl flex-shrink-0">{item.icon}</span>
+              {sidebarOpen && (
+                <span className="font-medium text-sm whitespace-nowrap">
+                  {item.title}
+                </span>
               )}
-            </div>
+            </Link>
           ))}
         </nav>
 
-        {/* User and Logout */}
+        {/* User Info & Actions */}
         <div className="border-t border-slate-200 p-3 space-y-3">
-          {user && (
-            <div className="rounded-lg bg-gradient-to-br from-blue-50 to-slate-50 px-3 py-3 border border-blue-100">
-              <p className="truncate text-sm font-semibold text-slate-800">{user.username}</p>
-              <p className="truncate text-xs text-slate-500 mt-0.5">{user.role.displayName}</p>
+          {sidebarOpen && user && (
+            <div className="px-4 py-2 bg-slate-50 rounded-lg text-center">
+              <p className="text-xs font-semibold text-slate-700">{user.username}</p>
+              <p className="text-xs text-slate-500">{user.role.displayName}</p>
             </div>
           )}
+          
           <button
-            type="button"
-            onClick={handleLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary hover:bg-primary/90 text-white px-3 py-2.5 text-sm font-medium transition-colors active:bg-primary/80"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            title={sidebarOpen ? "ហាក់ដង់" : "បង្ហាញ"}
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
-            ចេញ
+            {sidebarOpen && <span className="text-sm">ហាក់ដង់</span>}
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            {sidebarOpen && <span className="text-sm">ចេញ</span>}
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Mobile Header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-4 shadow-sm lg:hidden">
-          <button
-            type="button"
-            className="rounded-lg p-2 text-slate-600 hover:bg-slate-100"
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Open menu"
-          >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          <h1 className="truncate text-lg font-bold text-slate-800">ផ្ទាំងគ្រប់គ្រង</h1>
+      <main className="flex-1">
+        {/* Top Header */}
+        <header className="bg-white border-b border-slate-200 px-8 py-6">
+          <div className="flex items-center justify-between max-w-7xl mx-auto">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-800">ផ្ទាំងគ្រប់គ្រង</h1>
+              <p className="text-sm text-slate-500 mt-1">ស្វាគមន៍ ឡើងវិញ, {user?.username}!</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <input
+                type="text"
+                placeholder="ស្វាគមន៍..."
+                className="px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          </div>
         </header>
 
-        {/* Main Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-6xl">
-            {/* Desktop Header */}
-            <div className="mb-8 hidden lg:block">
-              <h1 className="text-3xl font-bold text-slate-800">ផ្ទាំងគ្រប់គ្រង</h1>
-              <p className="mt-2 text-slate-600">ជ្រើសរើសពីមីនុយខាងឆ្វេង ឬផ្សេងទៀត</p>
+        {/* Content Area */}
+        <div className="p-8">
+          <div className="max-w-7xl mx-auto">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-600 text-sm font-medium">លក់ថ្ងៃនេះ</p>
+                    <p className="text-2xl font-bold text-slate-800 mt-2">$1,234</p>
+                  </div>
+                  <div className="text-3xl">💳</div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-600 text-sm font-medium">លក់សរុប</p>
+                    <p className="text-2xl font-bold text-slate-800 mt-2">456</p>
+                  </div>
+                  <div className="text-3xl">📊</div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-600 text-sm font-medium">តុលែង</p>
+                    <p className="text-2xl font-bold text-slate-800 mt-2">12</p>
+                  </div>
+                  <div className="text-3xl">🪑</div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-600 text-sm font-medium">អ្នកប្រើប្រាស់</p>
+                    <p className="text-2xl font-bold text-slate-800 mt-2">8</p>
+                  </div>
+                  <div className="text-3xl">👤</div>
+                </div>
+              </div>
             </div>
 
-            {/* Quick Access */}
-            {filterItemsByRole(quickAccessItems).length > 0 && (
-              <section className="mb-12">
-                <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-500">ដំណើរការលឿន</h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {filterItemsByRole(quickAccessItems).map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="group flex min-h-[120px] flex-col justify-between rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-5 text-white shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 active:translate-y-0"
-                    >
-                      <div>
-                        <h3 className="mb-2 text-lg font-bold">{item.title}</h3>
-                        <p className="text-sm leading-relaxed text-blue-100">{item.description}</p>
-                      </div>
-                      <div className="flex justify-end pt-3 opacity-70 group-hover:opacity-100 transition-opacity">
-                        <svg className="h-6 w-6 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                        </svg>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Welcome Card */}
-            <section className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
-              <h2 className="mb-2 text-lg font-semibold text-slate-800">សូមស្វាគមន៍</h2>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                ប្រើប្រាស់មីនុយខាងឆ្វេងដើម្បីចូលទៅកាន់ផ្នែកគ្រប់គ្រងផ្សេងៗ។ លើទូរស័ព្ទ ចុចប៊ូតុងឯកសារខាងលើដើម្បីបើកមីនុយ។
-              </p>
-            </section>
+            {/* Main Navigation Cards */}
+            <div>
+              <h2 className="text-xl font-bold text-slate-800 mb-4">ទៅដែលស្ថិតនៅ</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredItems.slice(0, 6).map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="bg-white rounded-lg border border-slate-200 hover:border-primary hover:shadow-lg transition-all p-6 flex items-start gap-4 group"
+                  >
+                    <div className="text-4xl">{item.icon}</div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-slate-800 group-hover:text-primary transition-colors">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-1">ចូលទៅក្នុងផ្នែក</p>
+                    </div>
+                    <svg className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
