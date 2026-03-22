@@ -35,36 +35,46 @@ export default function AdminPage() {
       title: "មីនុយ",
       icon: "📋",
       items: [
-        { href: "/admin/categories", title: "ប្រភេទម្ហូប", description: "", allowedRoles: ["admin"] },
-        { href: "/admin/table-types", title: "ប្រភេទតុ", description: "", allowedRoles: ["admin"] },
-        { href: "/admin/tables", title: "តុ", description: "", allowedRoles: ["admin"] },
-        { href: "/admin/menu-items", title: "មុខម្ហូប", description: "", allowedRoles: ["admin"] },
-        { href: "/admin/recipe-items", title: "រូបមន្ត", description: "", allowedRoles: ["admin"] },
+        { href: "/admin/categories", title: "ប្រភេទម្ហូប", description: "គ្រប់គ្រងប្រភេទ", allowedRoles: ["admin"] },
+        { href: "/admin/table-types", title: "ប្រភេទតុ", description: "គ្រប់គ្រងប្រភេទតុ", allowedRoles: ["admin"] },
+        { href: "/admin/tables", title: "តុ", description: "គ្រប់គ្រងតុ", allowedRoles: ["admin"] },
+        { href: "/admin/menu-items", title: "មុខម្ហូប", description: "គ្រប់គ្រងមុខម្ហូប", allowedRoles: ["admin"] },
+        { href: "/admin/recipe-items", title: "រូបមន្ត", description: "គ្រប់គ្រងរូបមន្ត", allowedRoles: ["admin"] },
       ],
     },
     {
       title: "លក់",
       icon: "💳",
       items: [
-        { href: "/admin/orders", title: "លក់", description: "", allowedRoles: ["admin", "order"] },
-        { href: "/admin/sales", title: "គ្រប់គ្រងការលក់", description: "", allowedRoles: ["admin"] },
-        { href: "/admin/promotions", title: "ការផ្តល់ជូន", description: "", allowedRoles: ["admin"] },
-        { href: "/admin/daily-summaries", title: "សង្ខេបប្រចាំថ្ងៃ", description: "", allowedRoles: ["admin"] },
+        { href: "/admin/orders", title: "លក់", description: "គ្រប់គ្រងការលក់", allowedRoles: ["admin", "order"] },
+        { href: "/admin/sales", title: "ការលក់", description: "ស្ថិតិលក់", allowedRoles: ["admin"] },
+        { href: "/admin/promotions", title: "ការផ្តល់ជូន", description: "គ្រប់គ្រងប្រូម៉ូશន", allowedRoles: ["admin"] },
+        { href: "/admin/daily-summaries", title: "សង្ខេប", description: "សង្ខេបប្រចាំថ្ងៃ", allowedRoles: ["admin"] },
+      ],
+    },
+    {
+      title: "ផលិតផល",
+      icon: "📦",
+      items: [
+        { href: "/admin/units", title: "ឯកតា", description: "គ្រប់គ្រងឯកតា", allowedRoles: ["admin"] },
+        { href: "/admin/products", title: "ផលិតផល", description: "គ្រប់គ្រងផលិតផល", allowedRoles: ["admin"] },
+        { href: "/admin/inventory", title: "ស្តុក", description: "គ្រប់គ្រងស្តុក", allowedRoles: ["admin"] },
+        { href: "/admin/expenses", title: "ចំណាយ", description: "គ្រប់គ្រងចំណាយ", allowedRoles: ["admin"] },
       ],
     },
     {
       title: "ការកំណត់",
       icon: "⚙️",
       items: [
-        { href: "/admin/users", title: "អ្នកប្រើប្រាស់", description: "", allowedRoles: ["admin"] },
-        { href: "/admin/shop-info", title: "ព័ត៌មានហាង", description: "", allowedRoles: ["admin"] },
+        { href: "/admin/users", title: "អ្នកប្រើប្រាស់", description: "គ្រប់គ្រងគណនី", allowedRoles: ["admin"] },
+        { href: "/admin/shop-info", title: "ហាង", description: "ព័ត៌មានហាង", allowedRoles: ["admin"] },
       ],
     },
   ];
 
   const roleSpecificItems: MenuItem[] = [
-    { href: "/admin/chef", title: "ចម្អិន", description: "", allowedRoles: ["admin", "chef"] },
-    { href: "/admin/delivery", title: "ការដឹកជញ្ជូន", description: "", allowedRoles: ["admin", "waiter", "order"] },
+    { href: "/admin/chef", title: "ចម្អិន", description: "ការបញ្ជាទិញចម្អិន", allowedRoles: ["admin", "chef"] },
+    { href: "/admin/delivery", title: "ដឹក", description: "ការដឹកជញ្ជូន", allowedRoles: ["admin", "waiter", "order"] },
   ];
 
   const quickAccessItems: MenuItem[] = [
@@ -84,15 +94,16 @@ export default function AdminPage() {
 
   const navLinkClass = (href: string) => {
     const active = pathname === href || (href !== "/admin" && pathname.startsWith(href));
-    return `flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+    return `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
       active
-        ? "bg-primary/10 text-primary"
-        : "text-slate-700 hover:bg-slate-100"
+        ? "bg-primary/10 text-primary shadow-sm"
+        : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
     }`;
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
+      {/* Overlay for mobile */}
       {sidebarOpen && (
         <button
           type="button"
@@ -102,14 +113,21 @@ export default function AdminPage() {
         />
       )}
 
+      {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[min(18rem,85vw)] flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-200 ease-out lg:static lg:z-0 lg:w-64 lg:shadow-none ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        className={`fixed inset-y-0 left-0 z-50 flex w-[min(20rem,90vw)] flex-col border-r border-slate-200 bg-white transition-transform duration-200 ease-out lg:static lg:z-0 lg:w-72 lg:shadow-none overflow-hidden ${
+          sidebarOpen ? "translate-x-0 shadow-xl" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="flex h-14 items-center justify-between border-b border-slate-200 px-4 lg:h-16">
-          <Link href="/admin" className="font-bold text-slate-800 truncate" onClick={() => setSidebarOpen(false)}>
-            ផ្ទាំងគ្រប់គ្រង
+        {/* Sidebar Header */}
+        <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4">
+          <Link
+            href="/admin"
+            className="flex items-center gap-2 font-bold text-slate-800 truncate hover:text-primary transition-colors"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <span className="text-xl">📊</span>
+            <span className="hidden sm:inline">ផ្ទាំង</span>
           </Link>
           <button
             type="button"
@@ -123,18 +141,31 @@ export default function AdminPage() {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
+        {/* Sidebar Navigation */}
+        <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-2">
           {sidebarSections.map((section) => (
-            <div key={section.title} className="mb-6 last:mb-0">
-              <div className="mb-2 flex items-center gap-2 px-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                <span>{section.icon}</span>
-                <span>{section.title}</span>
+            <div key={section.title}>
+              <div className="mb-3 flex items-center gap-2 px-3 pt-2 pb-1">
+                <span className="text-lg">{section.icon}</span>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  {section.title}
+                </h3>
               </div>
-              <ul className="space-y-0.5">
+              <ul className="space-y-1">
                 {section.items.map((item) => (
                   <li key={item.href}>
-                    <Link href={item.href} className={navLinkClass(item.href)} onClick={() => setSidebarOpen(false)}>
-                      {item.title}
+                    <Link
+                      href={item.href}
+                      className={navLinkClass(item.href)}
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <span className="flex-1 min-w-0">
+                        <div className="font-medium text-slate-900 truncate">{item.title}</div>
+                        <div className="text-xs text-slate-500 truncate hidden sm:block">{item.description}</div>
+                      </span>
+                      <svg className="h-4 w-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </Link>
                   </li>
                 ))}
@@ -143,16 +174,28 @@ export default function AdminPage() {
           ))}
 
           {roleNavItems.length > 0 && (
-            <div className="mb-6">
-              <div className="mb-2 flex items-center gap-2 px-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                <span>👥</span>
-                <span>ការងារ</span>
+            <div className="mt-4 pt-4 border-t border-slate-200">
+              <div className="mb-3 flex items-center gap-2 px-3 pb-1">
+                <span className="text-lg">👥</span>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  ការងារ
+                </h3>
               </div>
-              <ul className="space-y-0.5">
+              <ul className="space-y-1">
                 {roleNavItems.map((item) => (
                   <li key={item.href}>
-                    <Link href={item.href} className={navLinkClass(item.href)} onClick={() => setSidebarOpen(false)}>
-                      {item.title}
+                    <Link
+                      href={item.href}
+                      className={navLinkClass(item.href)}
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <span className="flex-1 min-w-0">
+                        <div className="font-medium text-slate-900 truncate">{item.title}</div>
+                        <div className="text-xs text-slate-500 truncate hidden sm:block">{item.description}</div>
+                      </span>
+                      <svg className="h-4 w-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </Link>
                   </li>
                 ))}
@@ -161,17 +204,18 @@ export default function AdminPage() {
           )}
         </nav>
 
-        <div className="border-t border-slate-200 p-3">
+        {/* User and Logout */}
+        <div className="border-t border-slate-200 p-3 space-y-3">
           {user && (
-            <div className="mb-3 rounded-lg bg-slate-50 px-3 py-2">
-              <p className="truncate text-sm font-medium text-slate-800">{user.username}</p>
-              <p className="truncate text-xs text-slate-500">{user.role.displayName}</p>
+            <div className="rounded-lg bg-gradient-to-br from-blue-50 to-slate-50 px-3 py-3 border border-blue-100">
+              <p className="truncate text-sm font-semibold text-slate-800">{user.username}</p>
+              <p className="truncate text-xs text-slate-500 mt-0.5">{user.role.displayName}</p>
             </div>
           )}
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2.5 text-sm font-medium text-white hover:bg-primary/90"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary hover:bg-primary/90 text-white px-3 py-2.5 text-sm font-medium transition-colors active:bg-primary/80"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -186,8 +230,10 @@ export default function AdminPage() {
         </div>
       </aside>
 
+      {/* Main Content */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-slate-200 bg-white px-4 shadow-sm lg:hidden">
+        {/* Mobile Header */}
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-4 shadow-sm lg:hidden">
           <button
             type="button"
             className="rounded-lg p-2 text-slate-600 hover:bg-slate-100"
@@ -201,28 +247,31 @@ export default function AdminPage() {
           <h1 className="truncate text-lg font-bold text-slate-800">ផ្ទាំងគ្រប់គ្រង</h1>
         </header>
 
+        {/* Main Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-6xl">
+            {/* Desktop Header */}
             <div className="mb-8 hidden lg:block">
-              <h1 className="text-2xl font-bold text-slate-800 sm:text-3xl">ផ្ទាំងគ្រប់គ្រង</h1>
-              <p className="mt-1 text-slate-600">ជ្រើសរើសពីមីនុយខាងឆ្វេង ឬដំណើរការលឿនខាងក្រោម</p>
+              <h1 className="text-3xl font-bold text-slate-800">ផ្ទាំងគ្រប់គ្រង</h1>
+              <p className="mt-2 text-slate-600">ជ្រើសរើសពីមីនុយខាងឆ្វេង ឬផ្សេងទៀត</p>
             </div>
 
+            {/* Quick Access */}
             {filterItemsByRole(quickAccessItems).length > 0 && (
-              <section className="mb-10">
+              <section className="mb-12">
                 <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-500">ដំណើរការលឿន</h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {filterItemsByRole(quickAccessItems).map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="group flex min-h-[120px] flex-col justify-between rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0"
+                      className="group flex min-h-[120px] flex-col justify-between rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-5 text-white shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 active:translate-y-0"
                     >
                       <div>
-                        <h3 className="mb-2 text-xl font-bold">{item.title}</h3>
+                        <h3 className="mb-2 text-lg font-bold">{item.title}</h3>
                         <p className="text-sm leading-relaxed text-blue-100">{item.description}</p>
                       </div>
-                      <div className="flex justify-end pt-3 opacity-80 transition-opacity group-hover:opacity-100">
+                      <div className="flex justify-end pt-3 opacity-70 group-hover:opacity-100 transition-opacity">
                         <svg className="h-6 w-6 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
@@ -233,10 +282,11 @@ export default function AdminPage() {
               </section>
             )}
 
-            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            {/* Welcome Card */}
+            <section className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
               <h2 className="mb-2 text-lg font-semibold text-slate-800">សូមស្វាគមន៍</h2>
-              <p className="text-sm text-slate-600">
-                ប្រើប្រាស់មីនុយខាងឆ្វេងដើម្បីចូលទៅកាន់ផ្នែកគ្រប់គ្រង។ លើទូរស័ព្ទ ចុចរូបបីខ្សែខាងឆ្វេងខាងលើដើម្បីបើកមីនុយ។
+              <p className="text-sm text-slate-600 leading-relaxed">
+                ប្រើប្រាស់មីនុយខាងឆ្វេងដើម្បីចូលទៅកាន់ផ្នែកគ្រប់គ្រងផ្សេងៗ។ លើទូរស័ព្ទ ចុចប៊ូតុងឯកសារខាងលើដើម្បីបើកមីនុយ។
               </p>
             </section>
           </div>
