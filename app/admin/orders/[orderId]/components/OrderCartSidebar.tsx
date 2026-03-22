@@ -256,9 +256,14 @@ export default function OrderCartSidebar({
   }, [orderData?.status, cancelOrderMutation]);
 
   const handlePrintInvoice = useCallback(async () => {
+    const orderId = orderData?.id;
+    if (!orderId) {
+      toast.error("រកមិនឃើញការបញ្ជាទិញ");
+      return;
+    }
     try {
       const cacheBuster = Date.now();
-      const imageUrl = `${window.location.origin}/api/admin/orders/${orderData.id}/invoice-image?t=${cacheBuster}`;
+      const imageUrl = `${window.location.origin}/api/admin/orders/${orderId}/invoice-image?t=${cacheBuster}`;
       const printUrl = `com.samathosoft.webprint://#imageurl#${imageUrl}#/imageurl#`;
       window.location.href = printUrl;
     } catch (error) {
