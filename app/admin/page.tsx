@@ -32,17 +32,6 @@ export default function AdminPage() {
 
   const menuSections: MenuSection[] = [
     {
-      title: "មីនុយ",
-      icon: "📋",
-      items: [
-        { href: "/admin/categories", title: "ប្រភេទម្ហូប", description: "គ្រប់គ្រងប្រភេទ", allowedRoles: ["admin"] },
-        { href: "/admin/table-types", title: "ប្រភេទតុ", description: "គ្រប់គ្រងប្រភេទតុ", allowedRoles: ["admin"] },
-        { href: "/admin/tables", title: "តុ", description: "គ្រប់គ្រងតុ", allowedRoles: ["admin"] },
-        { href: "/admin/menu-items", title: "មុខម្ហូប", description: "គ្រប់គ្រងមុខម្ហូប", allowedRoles: ["admin"] },
-        { href: "/admin/recipe-items", title: "រូបមន្ត", description: "គ្រប់គ្រងរូបមន្ត", allowedRoles: ["admin"] },
-      ],
-    },
-    {
       title: "លក់",
       icon: "💳",
       items: [
@@ -53,15 +42,26 @@ export default function AdminPage() {
       ],
     },
     {
-      title: "ផលិតផល",
-      icon: "📦",
+      title: "មីនុយ",
+      icon: "📋",
       items: [
-        { href: "/admin/units", title: "ឯកតា", description: "គ្រប់គ្រងឯកតា", allowedRoles: ["admin"] },
-        { href: "/admin/products", title: "ផលិតផល", description: "គ្រប់គ្រងផលិតផល", allowedRoles: ["admin"] },
-        { href: "/admin/inventory", title: "ស្តុក", description: "គ្រប់គ្រងស្តុក", allowedRoles: ["admin"] },
-        { href: "/admin/expenses", title: "ចំណាយ", description: "គ្រប់គ្រងចំណាយ", allowedRoles: ["admin"] },
+        { href: "/admin/categories", title: "ប្រភេទម្ហូប", description: "គ្រប់គ្រងប្រភេទ", allowedRoles: ["admin"] },
+        { href: "/admin/table-types", title: "ប្រភេទតុ", description: "គ្រប់គ្រងប្រភេទតុ", allowedRoles: ["admin"] },
+        { href: "/admin/tables", title: "តុ", description: "គ្រប់គ្រងតុ", allowedRoles: ["admin"] },
+        { href: "/admin/menu-items", title: "មុខម្ហូប", description: "គ្រប់គ្រងមុខម្ហូប", allowedRoles: ["admin"] },
+        { href: "/admin/recipe-items", title: "រូបមន្ត", description: "គ្រប់គ្រងរូបមន្ត", allowedRoles: ["admin"] },
       ],
     },
+    // {
+    //   title: "ផលិតផល",
+    //   icon: "📦",
+    //   items: [
+    //     { href: "/admin/units", title: "ឯកតា", description: "គ្រប់គ្រងឯកតា", allowedRoles: ["admin"] },
+    //     { href: "/admin/products", title: "ផលិតផល", description: "គ្រប់គ្រងផលិតផល", allowedRoles: ["admin"] },
+    //     { href: "/admin/inventory", title: "ស្តុក", description: "គ្រប់គ្រងស្តុក", allowedRoles: ["admin"] },
+    //     { href: "/admin/expenses", title: "ចំណាយ", description: "គ្រប់គ្រងចំណាយ", allowedRoles: ["admin"] },
+    //   ],
+    // },
     {
       title: "ការកំណត់",
       icon: "⚙️",
@@ -84,13 +84,28 @@ export default function AdminPage() {
   const filterItemsByRole = (items: MenuItem[]) =>
     items.filter((item) => item.allowedRoles.includes(userRole || ""));
 
-  const sidebarSections = useMemo(() => {
-    return menuSections
+  const roleNavItems = useMemo(() => filterItemsByRole(roleSpecificItems), [userRole]);
+
+  const { salesSection, menuSectionsRest } = useMemo(() => {
+    const filtered = menuSections
       .map((s) => ({ ...s, items: filterItemsByRole(s.items) }))
       .filter((s) => s.items.length > 0);
+    const sales = filtered.find((s) => s.title === "លក់");
+    const rest = filtered.filter((s) => s.title !== "លក់");
+    return { salesSection: sales, menuSectionsRest: rest };
   }, [userRole]);
 
-  const roleNavItems = useMemo(() => filterItemsByRole(roleSpecificItems), [userRole]);
+  type NavBlock =
+    | { kind: "section"; section: MenuSection }
+    | { kind: "role" };
+
+  const sidebarNavBlocks = useMemo((): NavBlock[] => {
+    const blocks: NavBlock[] = [];
+    if (salesSection) blocks.push({ kind: "section", section: salesSection });
+    if (roleNavItems.length > 0) blocks.push({ kind: "role" });
+    menuSectionsRest.forEach((section) => blocks.push({ kind: "section", section }));
+    return blocks;
+  }, [salesSection, menuSectionsRest, roleNavItems.length]);
 
   const navLinkClass = (href: string) => {
     const active = pathname === href || (href !== "/admin" && pathname.startsWith(href));
@@ -141,67 +156,72 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {/* Sidebar Navigation */}
+        {/* Sidebar: លក់ → ការងារ → មីនុយ / ការកំណត់ */}
         <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-2">
-          {sidebarSections.map((section) => (
-            <div key={section.title}>
-              <div className="mb-3 flex items-center gap-2 px-3 pt-2 pb-1">
-                <span className="text-lg">{section.icon}</span>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  {section.title}
-                </h3>
-              </div>
-              <ul className="space-y-1">
-                {section.items.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className={navLinkClass(item.href)}
-                      onClick={() => setSidebarOpen(false)}
-                    >
-                      <span className="flex-1 min-w-0">
-                        <div className="font-medium text-slate-900 truncate">{item.title}</div>
-                        <div className="text-xs text-slate-500 truncate hidden sm:block">{item.description}</div>
-                      </span>
-                      <svg className="h-4 w-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+          {sidebarNavBlocks.map((block, index) => (
+            <div
+              key={block.kind === "section" ? block.section.title : "role"}
+              className={index > 0 ? "pt-2 border-t border-slate-200" : ""}
+            >
+              {block.kind === "role" ? (
+                <>
+                  <div className="mb-3 flex items-center gap-2 px-3 pt-2 pb-1">
+                    <span className="text-lg">👥</span>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      ការងារ
+                    </h3>
+                  </div>
+                  <ul className="space-y-1">
+                    {roleNavItems.map((item) => (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          className={navLinkClass(item.href)}
+                          onClick={() => setSidebarOpen(false)}
+                        >
+                          <span className="flex-1 min-w-0">
+                            <div className="font-medium text-slate-900 truncate">{item.title}</div>
+                            <div className="text-xs text-slate-500 truncate hidden sm:block">{item.description}</div>
+                          </span>
+                          <svg className="h-4 w-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <div className="mb-3 flex items-center gap-2 px-3 pt-2 pb-1">
+                    <span className="text-lg">{block.section.icon}</span>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      {block.section.title}
+                    </h3>
+                  </div>
+                  <ul className="space-y-1">
+                    {block.section.items.map((item) => (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          className={navLinkClass(item.href)}
+                          onClick={() => setSidebarOpen(false)}
+                        >
+                          <span className="flex-1 min-w-0">
+                            <div className="font-medium text-slate-900 truncate">{item.title}</div>
+                            <div className="text-xs text-slate-500 truncate hidden sm:block">{item.description}</div>
+                          </span>
+                          <svg className="h-4 w-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
           ))}
-
-          {roleNavItems.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-slate-200">
-              <div className="mb-3 flex items-center gap-2 px-3 pb-1">
-                <span className="text-lg">👥</span>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  ការងារ
-                </h3>
-              </div>
-              <ul className="space-y-1">
-                {roleNavItems.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className={navLinkClass(item.href)}
-                      onClick={() => setSidebarOpen(false)}
-                    >
-                      <span className="flex-1 min-w-0">
-                        <div className="font-medium text-slate-900 truncate">{item.title}</div>
-                        <div className="text-xs text-slate-500 truncate hidden sm:block">{item.description}</div>
-                      </span>
-                      <svg className="h-4 w-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </nav>
 
         {/* User and Logout */}
