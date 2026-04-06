@@ -22,6 +22,25 @@ type ErrorResponse = {
   timestamp: string;
 };
 
+export type Pagination = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+};
+
+export type ListData<T> = {
+  items: T[];
+  total: number;
+};
+
+export type PaginatedData<T> = {
+  items: T[];
+  pagination: Pagination;
+};
+
 export function successResponse<T>(
   data: T,
   message?: string,
@@ -35,6 +54,44 @@ export function successResponse<T>(
       timestamp: new Date().toISOString(),
     },
     { status }
+  );
+}
+
+export function listResponse<T>(
+  items: T[],
+  message?: string,
+  status: number = 200
+): NextResponse<SuccessResponse<ListData<T>>> {
+  return successResponse(
+    { items, total: items.length },
+    message,
+    status
+  );
+}
+
+export function paginatedResponse<T>(
+  items: T[],
+  page: number,
+  limit: number,
+  total: number,
+  message?: string,
+  status: number = 200
+): NextResponse<SuccessResponse<PaginatedData<T>>> {
+  const totalPages = Math.ceil(total / limit);
+  return successResponse(
+    {
+      items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    },
+    message,
+    status
   );
 }
 

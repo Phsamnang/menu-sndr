@@ -28,7 +28,7 @@ async function getHandler(request: AuthenticatedRequest) {
       orderBy: { date: "desc" },
     });
 
-    return successResponse(summaries, "Daily summaries fetched successfully");
+    return successResponse({ items: summaries, total: summaries.length }, "Daily summaries fetched successfully");
   } catch (error: any) {
     console.error("Error fetching daily summaries:", error);
     return errorResponse(

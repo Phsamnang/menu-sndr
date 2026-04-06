@@ -14,7 +14,7 @@ async function getHandler(
       orderBy: { createdAt: "desc" },
     });
 
-    return successResponse(payments, "Payments fetched successfully");
+    return successResponse({ items: payments, total: payments.length }, "Payments fetched successfully");
   } catch (error: any) {
     console.error("Error fetching payments:", error);
     return errorResponse(

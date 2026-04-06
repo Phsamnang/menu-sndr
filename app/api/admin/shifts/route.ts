@@ -46,7 +46,7 @@ async function getHandler(request: AuthenticatedRequest) {
       orderBy: { shiftDate: "desc" },
     });
 
-    return successResponse(shifts, "Shifts fetched successfully");
+    return successResponse({ items: shifts, total: shifts.length }, "Shifts fetched successfully");
   } catch (error: any) {
     console.error("Error fetching shifts:", error);
     return errorResponse(

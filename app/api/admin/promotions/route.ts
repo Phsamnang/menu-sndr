@@ -31,7 +31,7 @@ async function getHandler(request: AuthenticatedRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return successResponse(promotions, "Promotions fetched successfully");
+    return successResponse({ items: promotions, total: promotions.length }, "Promotions fetched successfully");
   } catch (error: any) {
     console.error("Error fetching promotions:", error);
     return errorResponse(

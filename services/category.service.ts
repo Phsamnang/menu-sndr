@@ -21,14 +21,14 @@ const CategoryEndpoints = {
 
 export const categoryService = {
   getAll: async (): Promise<Category[]> => {
-    const response = await axiosInstance.get<ApiResponse<Category[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: Category[]; total: number }>>(
       CategoryEndpoints.getAll()
     );
     const result = response.data;
     if (!result.success || !result.data) {
       throw new Error(result.error?.message || "Failed to fetch categories");
     }
-    return result.data;
+    return result.data.items;
   },
 
   create: async (data: {

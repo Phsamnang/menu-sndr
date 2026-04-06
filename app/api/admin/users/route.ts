@@ -28,7 +28,7 @@ async function getHandler(request: AuthenticatedRequest) {
       orderBy: { username: "asc" },
     });
 
-    return successResponse(users, "Users fetched successfully");
+    return successResponse({ items: users, total: users.length }, "Users fetched successfully");
   } catch (error: any) {
     console.error("Error fetching users:", error);
     return errorResponse("FETCH_USERS_ERROR", "Failed to fetch users", 500, [

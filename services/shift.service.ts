@@ -55,14 +55,14 @@ export const shiftService = {
     if (filters?.startDate) params.append("startDate", filters.startDate);
     if (filters?.endDate) params.append("endDate", filters.endDate);
 
-    const response = await axiosInstance.get<ApiResponse<Shift[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: Shift[]; total: number }>>(
       `/api/admin/shifts${params.toString() ? `?${params.toString()}` : ""}`
     );
     const result = response.data;
     if (!result.success || !result.data) {
       return [];
     }
-    return result.data;
+    return result.data.items;
   },
 
   getById: async (id: string): Promise<Shift> => {

@@ -28,7 +28,7 @@ async function getHandler(request: AuthenticatedRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return successResponse(conversions, "Unit conversions fetched successfully");
+    return successResponse({ items: conversions, total: conversions.length }, "Unit conversions fetched successfully");
   } catch (error: any) {
     console.error("Error fetching unit conversions:", error);
     return errorResponse(

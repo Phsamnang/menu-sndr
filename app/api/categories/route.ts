@@ -9,7 +9,7 @@ export async function GET() {
       },
     });
 
-    return successResponse(categories, "Categories fetched successfully");
+    return successResponse({ items: categories, total: categories.length }, "Categories fetched successfully");
   } catch (error: any) {
     console.error("Error fetching categories:", error);
     return errorResponse(

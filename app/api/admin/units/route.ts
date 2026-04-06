@@ -19,7 +19,7 @@ async function getHandler(request: AuthenticatedRequest) {
       orderBy: [{ order: "asc" }, { name: "asc" }],
     });
 
-    return successResponse(units, "Units fetched successfully");
+    return successResponse({ items: units, total: units.length }, "Units fetched successfully");
   } catch (error: any) {
     console.error("Error fetching units:", error);
     return errorResponse(

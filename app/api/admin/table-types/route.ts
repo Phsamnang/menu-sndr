@@ -8,7 +8,7 @@ async function getHandler(request: NextRequest) {
     const tableTypes = await prisma.tableType.findMany({
       orderBy: { order: "asc" },
     });
-    return successResponse(tableTypes, "Table types fetched successfully");
+    return successResponse({ items: tableTypes, total: tableTypes.length }, "Table types fetched successfully");
   } catch (error: any) {
     console.error("Error fetching table types:", error);
     return errorResponse(

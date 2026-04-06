@@ -1,6 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { Order } from "@/services/order.service";
+import { paymentService, Payment } from "@/services/payment.service";
 import OptimizedImage from "@/components/OptimizedImage";
 import { FaTimes } from "react-icons/fa";
 
@@ -11,12 +13,40 @@ interface OrderDetailModalProps {
   formatTime: (dateString: string) => string;
 }
 
+const METHOD_LABELS: Record<string, string> = {
+  cash: "សាច់ប្រាក់",
+  card: "កាត",
+  bank_transfer: "ផ្ទេរប្រាក់",
+  mobile_payment: "ទូរស័ព្ទ",
+};
+
+const STATUS_STYLES: Record<string, string> = {
+  completed: "bg-green-100 text-green-800",
+  refunded: "bg-red-100 text-red-800",
+  pending: "bg-yellow-100 text-yellow-800",
+  failed: "bg-slate-100 text-slate-800",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  completed: "បានបង់",
+  refunded: "បានសងប្រាក់វិញ",
+  pending: "កំពុងរង់ចាំ",
+  failed: "បរាជ័យ",
+};
+
 export default function OrderDetailModal({
   order,
   onClose,
   formatDate,
   formatTime,
 }: OrderDetailModalProps) {
+  const { data: paymentsData } = useQuery({
+    queryKey: ["orderPayments", order?.id],
+    queryFn: () => paymentService.getByOrderId(order!.id),
+    enabled: !!order,
+  });
+  const payments = paymentsData?.items || [];
+
   if (!order) return null;
 
   return (
@@ -161,6 +191,59 @@ export default function OrderDetailModal({
               </div>
             </div>
           </div>
+
+          {payments.length > 0 && (
+            <div className="border-t border-slate-200 pt-6">
+              <h3 className="text-lg font-bold text-slate-800 mb-4">
+                ប្រវត្តិការទូទាត់
+              </h3>
+              <div className="space-y-3">
+                {payments.map((payment: Payment) => (
+                  <div
+                    key={payment.id}
+                    className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium text-slate-900">
+                        {METHOD_LABELS[payment.method] || payment.method}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        {formatDate(payment.createdAt)}{" "}
+                        {formatTime(payment.createdAt)}
+                      </p>
+                      {payment.status === "refunded" && payment.refundedAt && (
+                        <p className="text-sm text-red-500">
+                          សងប្រាក់វិញ:{" "}
+                          {formatDate(payment.refundedAt)}{" "}
+                          {formatTime(payment.refundedAt)}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right flex items-center gap-3">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          STATUS_STYLES[payment.status] || STATUS_STYLES.pending
+                        }`}
+                      >
+                        {STATUS_LABELS[payment.status] || payment.status}
+                      </span>
+                      <span
+                        className={`text-base font-bold ${
+                          payment.status === "refunded"
+                            ? "text-red-600"
+                            : "text-slate-900"
+                        }`}
+                      >
+                        {payment.status === "refunded" ? "-" : ""}
+                        {payment.amount.toLocaleString("km-KH")}
+                        {payment.currency === "KHR" ? "៛" : "$"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

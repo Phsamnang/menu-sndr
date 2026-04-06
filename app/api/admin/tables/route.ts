@@ -11,7 +11,7 @@ async function getHandler(request: AuthenticatedRequest) {
       },
       orderBy: { number: "asc" },
     });
-    return successResponse(tables, "Tables fetched successfully");
+    return successResponse({ items: tables, total: tables.length }, "Tables fetched successfully");
   } catch (error: any) {
     console.error("Error fetching tables:", error);
     return errorResponse("FETCH_TABLES_ERROR", "Failed to fetch tables", 500, [

@@ -44,11 +44,11 @@ export default function CustomerOrderPage() {
     queryFn: async () => {
       if (!tableTypeName) return [];
       const url = `/api/menu?tableType=${tableTypeName}`;
-      const result = await apiClientJson<MenuItem[]>(url);
+      const result = await apiClientJson<{ items: MenuItem[]; total: number }>(url);
       if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch menu");
       }
-      return result.data;
+      return result.data.items;
     },
     enabled: !!tableTypeName,
   });
@@ -56,11 +56,11 @@ export default function CustomerOrderPage() {
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["publicCategories"],
     queryFn: async () => {
-      const result = await apiClientJson<Category[]>("/api/categories");
+      const result = await apiClientJson<{ items: Category[]; total: number }>("/api/categories");
       if (!result.success || !result.data) {
         return [];
       }
-      return result.data;
+      return result.data.items;
     },
   });
 

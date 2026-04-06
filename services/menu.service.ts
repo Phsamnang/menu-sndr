@@ -25,7 +25,7 @@ export const menuService = {
       ? `/api/menu?${queryParams.toString()}`
       : "/api/menu";
 
-    const response = await axiosInstance.get<ApiResponse<MenuItem[]>>(url, {
+    const response = await axiosInstance.get<ApiResponse<{ items: MenuItem[]; total: number }>>(url, {
       requireAuth: false,
     } as any);
     const result = response.data;
@@ -36,7 +36,7 @@ export const menuService = {
       throw new Error(errorMessage);
     }
 
-    return result.data;
+    return result.data.items;
   },
 };
 

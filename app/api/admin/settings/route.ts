@@ -24,7 +24,7 @@ async function getHandler(request: AuthenticatedRequest) {
       orderBy: [{ category: "asc" }, { key: "asc" }],
     });
 
-    return successResponse(settings, "Settings fetched successfully");
+    return successResponse({ items: settings, total: settings.length }, "Settings fetched successfully");
   } catch (error: any) {
     console.error("Error fetching settings:", error);
     return errorResponse(

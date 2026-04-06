@@ -20,14 +20,14 @@ export interface TableItem {
 
 export const tableService = {
   getAll: async (): Promise<TableItem[]> => {
-    const response = await axiosInstance.get<ApiResponse<TableItem[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: TableItem[]; total: number }>>(
       "/api/admin/tables"
     );
     const result = response.data;
     if (!result.success || !result.data) {
       throw new Error(result.error?.message || "Failed to fetch tables");
     }
-    return result.data;
+    return result.data.items;
   },
 
   create: async (data: {

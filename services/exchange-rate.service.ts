@@ -32,14 +32,14 @@ export const exchangeRateService = {
     if (filters?.toCurrency) params.append("toCurrency", filters.toCurrency);
     if (filters?.latest) params.append("latest", "true");
 
-    const response = await axiosInstance.get<ApiResponse<ExchangeRate[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: ExchangeRate[]; total: number }>>(
       `/api/admin/exchange-rates${params.toString() ? `?${params.toString()}` : ""}`
     );
     const result = response.data;
     if (!result.success || !result.data) {
       return [];
     }
-    return result.data;
+    return result.data.items;
   },
 
   create: async (data: CreateExchangeRateData): Promise<ExchangeRate> => {

@@ -24,7 +24,7 @@ async function getHandler(request: AuthenticatedRequest) {
       orderBy: { name: "asc" },
     });
 
-    return successResponse(suppliers, "Suppliers fetched successfully");
+    return successResponse({ items: suppliers, total: suppliers.length }, "Suppliers fetched successfully");
   } catch (error: any) {
     console.error("Error fetching suppliers:", error);
     return errorResponse(

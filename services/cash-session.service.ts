@@ -57,14 +57,14 @@ export const cashSessionService = {
     if (filters?.startDate) params.append("startDate", filters.startDate);
     if (filters?.endDate) params.append("endDate", filters.endDate);
 
-    const response = await axiosInstance.get<ApiResponse<CashSession[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: CashSession[]; total: number }>>(
       `/api/admin/cash-sessions${params.toString() ? `?${params.toString()}` : ""}`
     );
     const result = response.data;
     if (!result.success || !result.data) {
       return [];
     }
-    return result.data;
+    return result.data.items;
   },
 
   getById: async (id: string): Promise<CashSession> => {

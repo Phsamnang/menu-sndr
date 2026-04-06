@@ -57,12 +57,12 @@ export const supplierService = {
     }
 
     const url = `/api/admin/suppliers${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
-    const response = await axiosInstance.get<ApiResponse<Supplier[]>>(url);
+    const response = await axiosInstance.get<ApiResponse<{ items: Supplier[]; total: number }>>(url);
     const result = response.data;
     if (!result.success || !result.data) {
       return [];
     }
-    return result.data;
+    return result.data.items;
   },
 
   getById: async (id: string): Promise<Supplier> => {

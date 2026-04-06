@@ -18,8 +18,45 @@ import {
   FaCalendarAlt,
   FaChevronLeft,
   FaChevronRight,
+  FaMoneyBillWave,
+  FaCreditCard,
+  FaUniversity,
+  FaMobileAlt,
 } from "react-icons/fa";
+import { apiClientJson } from "@/utils/api-client";
 import OrderDetailModal from "./components/OrderDetailModal";
+
+interface PaymentMethodStat {
+  method: string;
+  totalAmount: number;
+  count: number;
+}
+
+const METHOD_CONFIG: Record<
+  string,
+  { label: string; icon: React.ReactNode; color: string }
+> = {
+  cash: {
+    label: "សាច់ប្រាក់",
+    icon: <FaMoneyBillWave className="text-2xl text-green-600" />,
+    color: "border-green-500",
+  },
+  card: {
+    label: "កាត",
+    icon: <FaCreditCard className="text-2xl text-blue-600" />,
+    color: "border-blue-500",
+  },
+  bank_transfer: {
+    label: "ផ្ទេរប្រាក់",
+    icon: <FaUniversity className="text-2xl text-purple-600" />,
+    color: "border-purple-500",
+  },
+  mobile_payment: {
+    label: "ទូរស័ព្ទ",
+    icon: <FaMobileAlt className="text-2xl text-orange-600" />,
+    color: "border-orange-500",
+  },
+};
 
 export default function SalesManagementPage() {
   const [startDate, setStartDate] = useState<string>(() => {
@@ -69,6 +106,22 @@ export default function SalesManagementPage() {
       return orderService.getById(selectedOrderId);
     },
     enabled: !!selectedOrderId,
+  });
+
+  const { data: paymentStats = [] } = useQuery<PaymentMethodStat[]>({
+    queryKey: ["paymentMethodStats", startDate, endDate],
+    queryFn: async () => {
+      const result = await apiClientJson<{
+        items: PaymentMethodStat[];
+        total: number;
+      }>(
+        `/api/admin/payments/stats?startDate=${startOfDay.toISOString()}&endDate=${endOfDay.toISOString()}`
+      );
+      if (!result.success || !result.data) {
+        return [];
+      }
+      return result.data.items;
+    },
   });
 
   const statistics = useMemo(() => {
@@ -358,6 +411,46 @@ export default function SalesManagementPage() {
             </div>
           </div>
         </div>
+
+        {paymentStats.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-bold text-slate-800 mb-4">
+              តាមវិធីសាស្ត្រទូទាត់
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {paymentStats.map((stat) => {
+                const config = METHOD_CONFIG[stat.method] || {
+                  label: stat.method,
+                  icon: <FaDollarSign className="text-2xl text-slate-600" />,
+                  color: "border-slate-500",
+                };
+                return (
+                  <div
+                    key={stat.method}
+                    className={`bg-white rounded-lg shadow-md p-6 border-l-4 ${config.color}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-slate-600 mb-1">
+                          {config.label}
+                        </p>
+                        <p className="text-2xl font-bold text-slate-900">
+                          {stat.totalAmount.toLocaleString("km-KH")}៛
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {stat.count} ការទូទាត់
+                        </p>
+                      </div>
+                      <div className="bg-slate-50 p-3 rounded-full">
+                        {config.icon}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-200">

@@ -74,6 +74,8 @@ async function getHandler(request: AuthenticatedRequest) {
           limit,
           total,
           totalPages: Math.ceil(total / limit),
+          hasNextPage: page < Math.ceil(total / limit),
+          hasPrevPage: page > 1,
         },
       },
       "Audit logs fetched successfully"

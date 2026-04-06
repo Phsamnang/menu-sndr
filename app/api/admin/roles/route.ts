@@ -8,7 +8,7 @@ async function getHandler(request: AuthenticatedRequest) {
     const roles = await prisma.role.findMany({
       orderBy: { name: "asc" },
     });
-    return successResponse(roles, "Roles fetched successfully");
+    return successResponse({ items: roles, total: roles.length }, "Roles fetched successfully");
   } catch (error: any) {
     console.error("Error fetching roles:", error);
     return errorResponse(

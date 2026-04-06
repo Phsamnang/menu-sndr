@@ -29,14 +29,14 @@ export const dailySummaryService = {
     if (filters?.startDate) params.append("startDate", filters.startDate);
     if (filters?.endDate) params.append("endDate", filters.endDate);
 
-    const response = await axiosInstance.get<ApiResponse<DailySummary[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: DailySummary[]; total: number }>>(
       `/api/admin/daily-summaries${params.toString() ? `?${params.toString()}` : ""}`
     );
     const result = response.data;
     if (!result.success || !result.data) {
       return [];
     }
-    return result.data;
+    return result.data.items;
   },
 
   create: async (data: CreateDailySummaryData): Promise<DailySummary> => {

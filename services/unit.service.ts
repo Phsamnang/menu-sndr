@@ -29,14 +29,14 @@ export interface UpdateUnitData {
 
 export const unitService = {
   getAll: async (): Promise<Unit[]> => {
-    const response = await axiosInstance.get<ApiResponse<Unit[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: Unit[]; total: number }>>(
       "/api/admin/units"
     );
     const result = response.data;
     if (!result.success || !result.data) {
       return [];
     }
-    return result.data;
+    return result.data.items;
   },
 
   getById: async (id: string): Promise<Unit> => {

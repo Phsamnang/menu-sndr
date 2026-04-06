@@ -62,11 +62,11 @@ export default function OrdersPage() {
         return [];
       }
       const url = `/api/menu?tableType=${selectedTable.tableType.name}`;
-      const result = await apiClientJson<MenuItem[]>(url);
+      const result = await apiClientJson<{ items: MenuItem[]; total: number }>(url);
       if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch menu");
       }
-      return result.data;
+      return result.data.items;
     },
     enabled: !!selectedTable?.tableType.name,
   });
@@ -74,11 +74,11 @@ export default function OrdersPage() {
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: async () => {
-      const result = await apiClientJson<Category[]>("/api/admin/categories");
+      const result = await apiClientJson<{ items: Category[]; total: number }>("/api/admin/categories");
       if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch categories");
       }
-      return result.data;
+      return result.data.items;
     },
   });
 
@@ -86,11 +86,11 @@ export default function OrdersPage() {
     {
       queryKey: ["tables"],
       queryFn: async () => {
-        const result = await apiClientJson<TableItem[]>("/api/admin/tables");
+        const result = await apiClientJson<{ items: TableItem[]; total: number }>("/api/admin/tables");
         if (!result.success || !result.data) {
           throw new Error(result.error?.message || "Failed to fetch tables");
         }
-        return result.data;
+        return result.data.items;
       },
     }
   );

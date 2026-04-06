@@ -158,14 +158,14 @@ export const unitConversionService = {
     if (filters?.fromUnitId) params.append("fromUnitId", filters.fromUnitId);
     if (filters?.toUnitId) params.append("toUnitId", filters.toUnitId);
 
-    const response = await axiosInstance.get<ApiResponse<UnitConversion[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: UnitConversion[]; total: number }>>(
       `/api/admin/unit-conversions${params.toString() ? `?${params.toString()}` : ""}`
     );
     const result = response.data;
     if (!result.success || !result.data) {
       return [];
     }
-    return result.data;
+    return result.data.items;
   },
 
   getById: async (id: string): Promise<UnitConversion> => {

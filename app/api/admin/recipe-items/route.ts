@@ -36,7 +36,7 @@ async function getHandler(request: AuthenticatedRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return successResponse(recipeItems, "Recipe items fetched successfully");
+    return successResponse({ items: recipeItems, total: recipeItems.length }, "Recipe items fetched successfully");
   } catch (error: any) {
     console.error("Error fetching recipe items:", error);
     return errorResponse(

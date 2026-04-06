@@ -10,7 +10,7 @@ export interface TableType {
 
 export const tableTypeService = {
   getAll: async (requireAuth: boolean = true): Promise<TableType[]> => {
-    const response = await axiosInstance.get<ApiResponse<TableType[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: TableType[]; total: number }>>(
       "/api/admin/table-types",
       { requireAuth } as any
     );
@@ -18,7 +18,7 @@ export const tableTypeService = {
     if (!result.success || !result.data) {
       throw new Error(result.error?.message || "Failed to fetch table types");
     }
-    return result.data;
+    return result.data.items;
   },
 
   create: async (data: {

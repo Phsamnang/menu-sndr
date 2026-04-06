@@ -8,6 +8,7 @@ import {
   type Order,
   orderService,
 } from "@/services/order.service";
+import { paymentService } from "@/services/payment.service";
 import OptimizedImage from "@/components/OptimizedImage";
 
 interface OrderCartSidebarProps {
@@ -118,8 +119,10 @@ export default function OrderCartSidebar({
       if (!orderId) {
         throw new Error("Order not found");
       }
-      return orderService.update(orderId, {
-        status: "completed",
+      return paymentService.create(orderId, {
+        amount: orderData?.total || 0,
+        method: paymentMethod,
+        currency: "KHR",
       });
     },
     onSuccess: () => {

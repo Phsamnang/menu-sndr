@@ -35,14 +35,14 @@ export interface UpdateProductData {
 
 export const productService = {
   getAll: async (): Promise<Product[]> => {
-    const response = await axiosInstance.get<ApiResponse<Product[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: Product[]; total: number }>>(
       "/api/admin/products"
     );
     const result = response.data;
     if (!result.success || !result.data) {
       return [];
     }
-    return result.data;
+    return result.data.items;
   },
 
   getById: async (id: string): Promise<Product> => {

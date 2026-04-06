@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       ),
     }));
 
-    return successResponse(formattedItems, "Menu fetched successfully");
+    return successResponse({ items: formattedItems, total: formattedItems.length }, "Menu fetched successfully");
   } catch (error: any) {
     console.error("Error fetching menu:", error);
     return errorResponse(

@@ -43,11 +43,11 @@ export default function OrderDetailPage() {
     queryKey: ["menu", tableTypeName],
     queryFn: async () => {
       if (!tableTypeName) return [];
-      const result = await apiClientJson<MenuItem[]>(`/api/menu?tableType=${tableTypeName}`);
+      const result = await apiClientJson<{ items: MenuItem[]; total: number }>(`/api/menu?tableType=${tableTypeName}`);
       if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch menu");
       }
-      return result.data;
+      return result.data.items;
     },
     enabled: !!tableTypeName,
   });
@@ -55,11 +55,11 @@ export default function OrderDetailPage() {
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: async () => {
-      const result = await apiClientJson<Category[]>("/api/admin/categories");
+      const result = await apiClientJson<{ items: Category[]; total: number }>("/api/admin/categories");
       if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch categories");
       }
-      return result.data;
+      return result.data.items;
     },
   });
 

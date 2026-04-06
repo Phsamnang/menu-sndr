@@ -18,14 +18,14 @@ export interface User {
 
 export const userService = {
   getAll: async (): Promise<User[]> => {
-    const response = await axiosInstance.get<ApiResponse<User[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: User[]; total: number }>>(
       "/api/admin/users"
     );
     const result = response.data;
     if (!result.success || !result.data) {
       throw new Error(result.error?.message || "Failed to fetch users");
     }
-    return result.data;
+    return result.data.items;
   },
 
   create: async (data: {
@@ -78,13 +78,13 @@ export const userService = {
 
 export const roleService = {
   getAll: async (): Promise<Role[]> => {
-    const response = await axiosInstance.get<ApiResponse<Role[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: Role[]; total: number }>>(
       "/api/admin/roles"
     );
     const result = response.data;
     if (!result.success || !result.data) {
       return [];
     }
-    return result.data;
+    return result.data.items;
   },
 };

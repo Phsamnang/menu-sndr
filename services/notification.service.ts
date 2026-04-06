@@ -37,14 +37,14 @@ export const notificationService = {
       params.append("isRead", filters.isRead.toString());
     if (filters?.priority) params.append("priority", filters.priority);
 
-    const response = await axiosInstance.get<ApiResponse<Notification[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: Notification[]; total: number }>>(
       `/api/admin/notifications${params.toString() ? `?${params.toString()}` : ""}`
     );
     const result = response.data;
     if (!result.success || !result.data) {
       return [];
     }
-    return result.data;
+    return result.data.items;
   },
 
   markAsRead: async (id: string): Promise<Notification> => {

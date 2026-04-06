@@ -45,7 +45,7 @@ async function getHandler(request: AuthenticatedRequest) {
       orderBy: { openedAt: "desc" },
     });
 
-    return successResponse(sessions, "Cash sessions fetched successfully");
+    return successResponse({ items: sessions, total: sessions.length }, "Cash sessions fetched successfully");
   } catch (error: any) {
     console.error("Error fetching cash sessions:", error);
     return errorResponse(

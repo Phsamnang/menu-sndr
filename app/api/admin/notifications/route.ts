@@ -44,7 +44,7 @@ async function getHandler(request: AuthenticatedRequest) {
       ],
     });
 
-    return successResponse(notifications, "Notifications fetched successfully");
+    return successResponse({ items: notifications, total: notifications.length }, "Notifications fetched successfully");
   } catch (error: any) {
     console.error("Error fetching notifications:", error);
     return errorResponse(

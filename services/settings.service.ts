@@ -40,14 +40,14 @@ export const settingsService = {
     if (filters?.isPublic !== undefined)
       params.append("isPublic", filters.isPublic.toString());
 
-    const response = await axiosInstance.get<ApiResponse<Setting[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: Setting[]; total: number }>>(
       `/api/admin/settings${params.toString() ? `?${params.toString()}` : ""}`
     );
     const result = response.data;
     if (!result.success || !result.data) {
       return [];
     }
-    return result.data;
+    return result.data.items;
   },
 
   getById: async (id: string): Promise<Setting> => {

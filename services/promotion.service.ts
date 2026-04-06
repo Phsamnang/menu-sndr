@@ -65,14 +65,14 @@ export const promotionService = {
       params.append("isActive", filters.isActive.toString());
     if (filters?.type) params.append("type", filters.type);
 
-    const response = await axiosInstance.get<ApiResponse<Promotion[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: Promotion[]; total: number }>>(
       `/api/admin/promotions${params.toString() ? `?${params.toString()}` : ""}`
     );
     const result = response.data;
     if (!result.success || !result.data) {
       return [];
     }
-    return result.data;
+    return result.data.items;
   },
 
   getById: async (id: string): Promise<Promotion> => {

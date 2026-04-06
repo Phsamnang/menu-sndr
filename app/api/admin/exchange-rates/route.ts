@@ -30,7 +30,7 @@ async function getHandler(request: AuthenticatedRequest) {
       take: latest ? 1 : undefined,
     });
 
-    return successResponse(rates, "Exchange rates fetched successfully");
+    return successResponse({ items: rates, total: rates.length }, "Exchange rates fetched successfully");
   } catch (error: any) {
     console.error("Error fetching exchange rates:", error);
     return errorResponse(

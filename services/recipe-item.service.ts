@@ -51,14 +51,14 @@ export const recipeItemService = {
     if (filters?.menuItemId) params.append("menuItemId", filters.menuItemId);
     if (filters?.productId) params.append("productId", filters.productId);
 
-    const response = await axiosInstance.get<ApiResponse<RecipeItem[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ items: RecipeItem[]; total: number }>>(
       `/api/admin/recipe-items${params.toString() ? `?${params.toString()}` : ""}`
     );
     const result = response.data;
     if (!result.success || !result.data) {
       return [];
     }
-    return result.data;
+    return result.data.items;
   },
 
   getById: async (id: string): Promise<RecipeItem> => {
