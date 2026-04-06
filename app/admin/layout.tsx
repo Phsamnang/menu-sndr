@@ -10,6 +10,7 @@ interface MenuItem {
   title: string;
   icon: string;
   allowedRoles: string[];
+  description?: string;
 }
 
 export default function AdminLayout({
@@ -21,7 +22,6 @@ export default function AdminLayout({
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const userRole = user?.role.name;
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile-first: closed on mobile
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
@@ -30,15 +30,15 @@ export default function AdminLayout({
   };
 
   const menuItems: MenuItem[] = [
-    { href: "/admin/orders", title: "លក់", icon: "💳", allowedRoles: ["admin", "order"] },
-    { href: "/admin/categories", title: "មីនុយ", icon: "📋", allowedRoles: ["admin"] },
-    { href: "/admin/menu-items", title: "មុខម្ហូប", icon: "🍽️", allowedRoles: ["admin"] },
-    { href: "/admin/tables", title: "តុ", icon: "🪑", allowedRoles: ["admin"] },
-    { href: "/admin/sales", title: "ការលក់", icon: "📊", allowedRoles: ["admin"] },
-    { href: "/admin/chef", title: "ចម្អិន", icon: "👨‍🍳", allowedRoles: ["admin", "chef"] },
-    { href: "/admin/delivery", title: "ដឹក", icon: "🚚", allowedRoles: ["admin", "waiter", "order"] },
-    { href: "/admin/users", title: "អ្នកប្រើប្រាស់", icon: "👤", allowedRoles: ["admin"] },
-    { href: "/admin/shop-info", title: "ហាង", icon: "🏪", allowedRoles: ["admin"] },
+    { href: "/admin/orders", title: "លក់", icon: "💳", allowedRoles: ["admin", "order"], description: "ប្រឹងការលក់" },
+    { href: "/admin/categories", title: "មីនុយ", icon: "📋", allowedRoles: ["admin"], description: "ប្រឹងមីនុយ" },
+    { href: "/admin/menu-items", title: "មុខម្ហូប", icon: "🍽️", allowedRoles: ["admin"], description: "ប្រឹងមុខម្ហូប" },
+    { href: "/admin/tables", title: "តុ", icon: "🪑", allowedRoles: ["admin"], description: "ប្រឹងតុ" },
+    { href: "/admin/sales", title: "ការលក់", icon: "📊", allowedRoles: ["admin"], description: "ដាក់ពិន្ទុលក់" },
+    { href: "/admin/chef", title: "ចម្អិន", icon: "👨‍🍳", allowedRoles: ["admin", "chef"], description: "រលាក់ចម្អិន" },
+    { href: "/admin/delivery", title: "ដឹក", icon: "🚚", allowedRoles: ["admin", "waiter", "order"], description: "ដឹកចែច" },
+    { href: "/admin/users", title: "អ្នកប្រើប្រាស់", icon: "👤", allowedRoles: ["admin"], description: "គ្រប់គ្រងអ្នក" },
+    { href: "/admin/shop-info", title: "ហាង", icon: "🏪", allowedRoles: ["admin"], description: "ព័ត៌មានហាង" },
   ];
 
   const filteredItems = menuItems.filter((item) =>
@@ -55,168 +55,143 @@ export default function AdminLayout({
     return false;
   };
 
-  return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
-      {/* Desktop Sidebar - Hidden on mobile */}
-      <aside className="hidden lg:flex w-64 bg-white border-r border-slate-200 flex-col flex-shrink-0">
-        {/* Logo */}
-        <div className="h-20 flex items-center justify-center border-b border-slate-200 px-4 flex-shrink-0">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">MENU</div>
-            <p className="text-xs text-slate-500 mt-1">Admin Panel</p>
+  const SidebarContent = () => (
+    <>
+      {/* Logo Section */}
+      <div className="px-6 py-8 border-b border-slate-200">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center">
+            <span className="text-xl font-bold text-white">M</span>
+          </div>
+          <div>
+            <div className="font-bold text-slate-900">Menu System</div>
+            <p className="text-xs text-slate-500">Admin Panel</p>
           </div>
         </div>
+      </div>
 
-        {/* Menu Items */}
-        <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2">
+      {/* User Section */}
+      {user && (
+        <div className="px-6 py-4 border-b border-slate-200">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+              <span className="text-lg">{user.username.charAt(0).toUpperCase()}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-900 truncate">{user.username}</p>
+              <p className="text-xs text-slate-500 truncate">{user.role.displayName}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Navigation Items */}
+      <nav className="flex-1 overflow-y-auto py-6 px-3">
+        <div className="space-y-1.5">
           {filteredItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-all ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all group ${
                 isActive(item.href)
-                  ? "bg-primary text-white"
+                  ? "bg-primary text-white shadow-md"
                   : "text-slate-700 hover:bg-slate-100"
               }`}
             >
               <span className="text-xl flex-shrink-0">{item.icon}</span>
-              <span className="font-medium text-sm">{item.title}</span>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm leading-tight">{item.title}</p>
+                <p className={`text-xs leading-tight hidden lg:block ${
+                  isActive(item.href) ? "text-primary-foreground/80" : "text-slate-500"
+                }`}>
+                  {item.description}
+                </p>
+              </div>
+              <svg
+                className={`w-4 h-4 flex-shrink-0 transition-transform ${
+                  isActive(item.href) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </Link>
           ))}
-        </nav>
-
-        {/* User Info & Actions */}
-        <div className="border-t border-slate-200 p-3 space-y-3 flex-shrink-0">
-          {user && (
-            <div className="px-4 py-2 bg-slate-50 rounded-lg text-center">
-              <p className="text-xs font-semibold text-slate-700 truncate">
-                {user.username}
-              </p>
-              <p className="text-xs text-slate-500 truncate">{user.role.displayName}</p>
-            </div>
-          )}
-
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
-            <span className="text-sm">ចេញ</span>
-          </button>
         </div>
+      </nav>
+
+      {/* Logout Button */}
+      <div className="p-4 border-t border-slate-200">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors font-medium text-sm"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            />
+          </svg>
+          <span className="hidden lg:inline">ចេញ</span>
+        </button>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex w-72 bg-white flex-col flex-shrink-0 border-r border-slate-200 shadow-sm">
+        <SidebarContent />
       </aside>
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/40 z-30 lg:hidden backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
-      {/* Mobile Drawer - Shown on mobile when menu is open */}
+      {/* Mobile Sidebar Drawer */}
       <aside
-        className={`fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-200 flex flex-col z-40 transform transition-transform duration-300 lg:hidden ${
+        className={`fixed left-0 top-0 h-full w-72 bg-white flex flex-col z-40 transform transition-transform duration-300 shadow-xl lg:hidden ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Logo */}
-        <div className="h-20 flex items-center justify-center border-b border-slate-200 px-4 flex-shrink-0">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">MENU</div>
-            <p className="text-xs text-slate-500 mt-1">Admin Panel</p>
-          </div>
-        </div>
-
-        {/* Menu Items */}
-        <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2">
-          {filteredItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-all ${
-                isActive(item.href)
-                  ? "bg-primary text-white"
-                  : "text-slate-700 hover:bg-slate-100"
-              }`}
-            >
-              <span className="text-xl flex-shrink-0">{item.icon}</span>
-              <span className="font-medium text-sm">{item.title}</span>
-            </Link>
-          ))}
-        </nav>
-
-        {/* User Info & Actions */}
-        <div className="border-t border-slate-200 p-3 space-y-3 flex-shrink-0">
-          {user && (
-            <div className="px-4 py-2 bg-slate-50 rounded-lg text-center">
-              <p className="text-xs font-semibold text-slate-700 truncate">
-                {user.username}
-              </p>
-              <p className="text-xs text-slate-500 truncate">{user.role.displayName}</p>
-            </div>
-          )}
-
+        {/* Close Button */}
+        <div className="absolute top-4 right-4 z-50">
           <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-            <span className="text-sm">ចេញ</span>
           </button>
         </div>
+        <SidebarContent />
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto flex flex-col">
-        {/* Mobile Header with Menu Button */}
-        <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-4 flex items-center justify-between flex-shrink-0">
+        {/* Mobile Header */}
+        <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-4 flex items-center justify-between flex-shrink-0 shadow-sm">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
           >
-            <svg
-              className="w-6 h-6 text-slate-700"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
+            <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <h1 className="text-xl font-bold text-slate-800">MENU</h1>
-          <div className="w-10" /> {/* Spacer for centering */}
+          <h1 className="text-lg font-bold text-slate-900">Menu</h1>
+          <div className="w-10" />
         </div>
 
         {/* Page Content */}
