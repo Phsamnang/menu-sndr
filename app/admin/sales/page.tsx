@@ -338,13 +338,13 @@ export default function SalesManagementPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-primary">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600 mb-1">
                   សរុបមុនបញ្ចុះតម្លៃ
                 </p>
-                <p className="text-3xl font-bold text-orange-600">
+                <p className="text-3xl font-bold text-primary">
                   {statistics.totalSubtotal.toLocaleString("km-KH")}៛
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
@@ -352,8 +352,8 @@ export default function SalesManagementPage() {
                   {statistics.totalDiscount.toLocaleString("km-KH")}៛
                 </p>
               </div>
-              <div className="bg-orange-100 p-3 rounded-full">
-                <FaChartLine className="text-2xl text-orange-600" />
+              <div className="bg-blue-100 p-3 rounded-full">
+                <FaChartLine className="text-2xl text-primary" />
               </div>
             </div>
           </div>

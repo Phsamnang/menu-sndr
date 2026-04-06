@@ -304,7 +304,7 @@ export default function OrderDetailPage() {
             console.error("Error printing invoice:", error);
           }
         }}
-        className="fixed bottom-6 left-4 xs:left-6 lg:hidden z-40 touch-manipulation bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-full shadow-lg active:shadow-md transition-all p-4 xs:p-5 flex items-center justify-center gap-1.5 min-h-[56px] xs:min-h-[60px] min-w-[56px] xs:min-w-[60px]"
+        className="fixed bottom-6 left-4 xs:left-6 lg:hidden z-40 touch-manipulation bg-primary hover:bg-primary/90 active:bg-primary/80 text-white rounded-full shadow-lg active:shadow-md transition-all p-4 xs:p-5 flex items-center justify-center gap-1.5 min-h-[56px] xs:min-h-[60px] min-w-[56px] xs:min-w-[60px]"
         aria-label="Print invoice"
         title="បោះពុម្ព (ឆ្ពោះទៅគ្រប់គ្រង)"
       >

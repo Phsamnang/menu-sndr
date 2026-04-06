@@ -96,7 +96,7 @@ export default function StockMovementsPage() {
           IN: "bg-green-100 text-green-800",
           OUT: "bg-red-100 text-red-800",
           ADJUSTMENT: "badge-primary",
-          WASTE: "bg-orange-100 text-orange-800",
+          WASTE: "bg-yellow-100 text-yellow-800",
           RETURN: "bg-purple-100 text-purple-800",
         };
         const typeLabels: Record<string, string> = {

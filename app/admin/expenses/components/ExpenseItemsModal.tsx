@@ -485,7 +485,7 @@ export default function ExpenseItemsModal({
                           className={`text-xs px-2 py-1 rounded ${
                             item.paymentStatus === "PAID"
                               ? "bg-green-100 text-green-800"
-                              : "bg-orange-100 text-orange-800"
+                              : "bg-yellow-100 text-yellow-800"
                           }`}
                         >
                           {item.paymentStatus === "PAID"
@@ -539,14 +539,14 @@ export default function ExpenseItemsModal({
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-700">បង់ហើយ:</span>
+                  <span className="text-sm text-slate-700">��ង់ហើយ:</span>
                   <span className="text-lg font-bold text-green-700">
                     ${totalPaidUSD.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-700">មិនទាន់បង់:</span>
-                  <span className="text-lg font-bold text-orange-700">
+                  <span className="text-lg font-bold text-yellow-700">
                     ${totalUnpaidUSD.toFixed(2)}
                   </span>
                 </div>

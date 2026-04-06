@@ -730,7 +730,7 @@ export default function OrderCartSidebar({
               <div className="md:hidden sticky bottom-0 left-0 right-0 bg-white pt-2">
                 <button
                   onClick={handlePrintInvoice}
-                  className="w-full py-3 xs:py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold active:bg-orange-700 touch-manipulation text-xs xs:text-sm flex items-center justify-center gap-1.5 xs:gap-2 min-h-[44px] xs:min-h-[48px] transition-colors"
+                  className="w-full py-3 xs:py-3 bg-primary hover:bg-primary/90 text-white rounded-lg font-semibold active:bg-primary/80 touch-manipulation text-xs xs:text-sm flex items-center justify-center gap-1.5 xs:gap-2 min-h-[44px] xs:min-h-[48px] transition-colors"
                 >
                   <svg
                     className="w-4 h-4 xs:w-5 xs:h-5 flex-shrink-0"

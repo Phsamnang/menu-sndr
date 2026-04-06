@@ -160,7 +160,7 @@ export default function MenuItemsPage() {
         <span
           className={`text-xs px-2 py-1 rounded-full ${
             item.isCook
-              ? "bg-orange-100 text-orange-800"
+              ? "bg-blue-100 text-blue-800"
               : "bg-slate-100 text-slate-600"
           }`}
         >

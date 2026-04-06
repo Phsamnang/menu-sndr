@@ -151,7 +151,7 @@ export default function DeliveryPage() {
                   {menuItem.name}
                 </span>
                 {menuItem.isCook && (
-                  <span className="px-1.5 py-0.5 bg-orange-100 text-orange-800 text-xs rounded">
+                  <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">
                     🔥
                   </span>
                 )}
