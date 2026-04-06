@@ -170,7 +170,7 @@ export default function CustomerOrderCartSidebar({
                           <span className="text-xs xs:text-sm font-semibold text-slate-900">
                             សរុប:
                           </span>
-                          <span className="text-sm xs:text-base font-bold text-orange-500">
+                          <span className="text-sm xs:text-base font-bold text-primary">
                             {item.totalPrice.toLocaleString("km-KH")}៛
                           </span>
                         </div>

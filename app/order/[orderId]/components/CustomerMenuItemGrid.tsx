@@ -166,7 +166,7 @@ export default function CustomerMenuItemGrid({
                 {item.name}
               </h3>
               <div className="flex items-center justify-between mb-1 xs:mb-1.5 flex-shrink-0">
-                <span className="text-[9px] xs:text-xs sm:text-sm font-bold text-orange-500">
+                <span className="text-[9px] xs:text-xs sm:text-sm font-bold text-primary">
                   {price.toLocaleString("km-KH")}៛
                 </span>
               </div>
