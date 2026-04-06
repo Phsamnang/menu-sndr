@@ -151,7 +151,7 @@ export default function DeliveryPage() {
                   {menuItem.name}
                 </span>
                 {menuItem.isCook && (
-                  <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">
+                  <span className="px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded">
                     🔥
                   </span>
                 )}
@@ -286,7 +286,7 @@ export default function DeliveryPage() {
         <div className="mb-6 flex gap-2">
           <button
             onClick={() => setStatusFilter(null)}
-            className="px-4 py-2 bg-slate-800 text-white rounded"
+            className={`px-4 py-2 rounded text-sm ${statusFilter === null ? "bg-primary text-white" : "bg-white border"}`}
           >
             ទាំងអស់ ({allItems.length})
           </button>
@@ -295,7 +295,7 @@ export default function DeliveryPage() {
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className="px-4 py-2 bg-white border rounded"
+              className={`px-4 py-2 rounded text-sm ${statusFilter === status ? "bg-primary text-white" : "bg-white border"}`}
             >
               {getStatusLabel(status)} (
               {groupedByStatus[status]?.length || 0})

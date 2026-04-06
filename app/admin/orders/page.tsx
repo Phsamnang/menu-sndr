@@ -615,7 +615,11 @@ export default function OrdersPage() {
       const cacheBuster = Date.now();
       const imageUrl = `${window.location.origin}/api/admin/orders/${orderData.id}/invoice-image?t=${cacheBuster}`;
       const printUrl = `com.samathosoft.webprint://#imageurl#${imageUrl}#/imageurl#`;
-      window.location.href = printUrl;
+      const link = document.createElement("a");
+      link.href = printUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
       console.error("Error printing invoice:", error);
       toast.error("មានបញ្ហាក្នុងការបោះពុម្ពវិក្កយបត្រ");

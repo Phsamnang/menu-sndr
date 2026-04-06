@@ -160,7 +160,7 @@ export default function MenuItemsPage() {
         <span
           className={`text-xs px-2 py-1 rounded-full ${
             item.isCook
-              ? "bg-blue-100 text-blue-800"
+              ? "bg-primary/10 text-primary"
               : "bg-slate-100 text-slate-600"
           }`}
         >
@@ -214,7 +214,7 @@ export default function MenuItemsPage() {
                 setEditingItem(null);
                 setIsModalOpen(true);
               }}
-              className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
             >
               បន្ថែមមុខម្ហូប
             </button>

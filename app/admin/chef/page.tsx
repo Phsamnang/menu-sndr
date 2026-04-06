@@ -220,7 +220,7 @@ export default function ChefPage() {
                   onClick={() =>
                     handleStatusChange(item.order.id, item.id, "ready")
                   }
-                  className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm"
+                  className="px-3 py-2 btn-primary rounded-lg text-sm"
                 >
                   រួចរាល់
                 </button>
@@ -268,7 +268,7 @@ export default function ChefPage() {
             onClick={() => setStatusFilter(null)}
             className={`px-4 py-2 rounded-lg text-sm ${
               statusFilter === null
-                ? "bg-slate-800 text-white"
+                ? "bg-primary text-white"
                 : "bg-white border"
             }`}
           >
@@ -281,7 +281,7 @@ export default function ChefPage() {
               onClick={() => setStatusFilter(status)}
               className={`px-4 py-2 rounded-lg text-sm ${
                 statusFilter === status
-                  ? "bg-slate-800 text-white"
+                  ? "bg-primary text-white"
                   : "bg-white border"
               }`}
             >

@@ -199,11 +199,11 @@ export default function CustomerOrderCartSidebar({
                 </span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-xs xs:text-sm sm:text-lg border-t-2 border-indigo-200 pt-1.5 xs:pt-2">
-              <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <div className="flex justify-between font-bold text-xs xs:text-sm sm:text-lg border-t-2 border-primary/30 pt-1.5 xs:pt-2">
+              <span className="text-primary">
                 សរុប:
               </span>
-              <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent text-sm xs:text-base sm:text-xl">
+              <span className="text-primary text-sm xs:text-base sm:text-xl">
                 {total.toLocaleString("km-KH")}៛
               </span>
             </div>
@@ -233,8 +233,8 @@ export default function CustomerOrderCartSidebar({
           )}
 
           {orderData?.status !== "completed" && (
-            <div className="p-2 xs:p-2.5 sm:p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-[9px] xs:text-xs sm:text-xs text-blue-800 text-center">
+            <div className="p-2 xs:p-2.5 sm:p-3 bg-primary/10 border border-primary/20 rounded-lg">
+              <p className="text-[9px] xs:text-xs sm:text-xs text-primary text-center">
                 សូមរង់ចាំអ្នកបម្រើដើម្បីជួយអ្នក
               </p>
             </div>

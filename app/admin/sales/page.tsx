@@ -299,30 +299,30 @@ export default function SalesManagementPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-primary">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600 mb-1">
                   ចំណូលសរុប
                 </p>
-                <p className="text-3xl font-bold text-green-600">
+                <p className="text-3xl font-bold text-primary">
                   {statistics.totalIncome.toLocaleString("km-KH")}៛
                 </p>
                 <p className="text-xs text-slate-500 mt-1">ចំណូល</p>
               </div>
-              <div className="bg-green-100 p-3 rounded-full">
-                <FaDollarSign className="text-2xl text-green-600" />
+              <div className="bg-primary/10 p-3 rounded-full">
+                <FaDollarSign className="text-2xl text-primary" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-primary">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600 mb-1">
                   តម្លៃមធ្យម
                 </p>
-                <p className="text-3xl font-bold text-purple-600">
+                <p className="text-3xl font-bold text-primary">
                   {statistics.averageOrderValue.toLocaleString("km-KH", {
                     maximumFractionDigits: 0,
                   })}
@@ -332,8 +332,8 @@ export default function SalesManagementPage() {
                   ក្នុងមួយការបញ្ជាទិញ
                 </p>
               </div>
-              <div className="bg-purple-100 p-3 rounded-full">
-                <FaChartLine className="text-2xl text-purple-600" />
+              <div className="bg-primary/10 p-3 rounded-full">
+                <FaChartLine className="text-2xl text-primary" />
               </div>
             </div>
           </div>
@@ -352,7 +352,7 @@ export default function SalesManagementPage() {
                   {statistics.totalDiscount.toLocaleString("km-KH")}៛
                 </p>
               </div>
-              <div className="bg-blue-100 p-3 rounded-full">
+              <div className="bg-primary/10 p-3 rounded-full">
                 <FaChartLine className="text-2xl text-primary" />
               </div>
             </div>
@@ -494,7 +494,7 @@ export default function SalesManagementPage() {
                               className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                                 table.getState().pagination.pageIndex ===
                                 pageIndex
-                                  ? "bg-slate-800 text-white"
+                                  ? "bg-primary text-white"
                                   : "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50"
                               }`}
                             >

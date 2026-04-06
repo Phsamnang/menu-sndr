@@ -260,7 +260,7 @@ export default function MenuItemModal({
             <button
               type="submit"
               disabled={!formData.image || uploading}
-              className="flex-1 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 disabled:bg-slate-400 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:bg-primary/40 disabled:cursor-not-allowed"
             >
               {editingItem ? "ធ្វើបច្ចុប្បន្នភាព" : "បង្កើត"}
             </button>

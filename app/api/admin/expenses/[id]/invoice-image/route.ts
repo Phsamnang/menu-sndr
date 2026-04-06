@@ -1,6 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import puppeteer from "puppeteer";
+import { chromium, type Browser } from "playwright";
+
+let sharedBrowser: Browser | null = null;
+
+async function getBrowser(): Promise<Browser> {
+  if (sharedBrowser && sharedBrowser.isConnected()) {
+    return sharedBrowser;
+  }
+  sharedBrowser = await chromium.launch({
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--single-process",
+      "--no-zygote",
+      "--disable-extensions",
+      "--disable-software-rasterizer",
+    ],
+  });
+  return sharedBrowser;
+}
 
 async function getHandler(
   request: Request,
@@ -407,70 +429,26 @@ async function getHandler(
 </html>
     `;
 
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+    const browser = await getBrowser();
+
+    const page = await browser.newPage();
 
     try {
-      const page = await browser.newPage();
-
-      // Width: 11.7 inches = 1123 pixels at 96 DPI
       const invoiceWidth = 1123;
-      const a4Height = 1123;
 
-      // Set initial viewport to A4 width, but allow height to grow
-      await page.setViewport({
-        width: invoiceWidth,
-        height: a4Height,
-        deviceScaleFactor: 2,
-      });
+      await page.setViewportSize({ width: invoiceWidth, height: 800 });
 
-      await page.setContent(invoiceHTML, { waitUntil: "networkidle0" });
+      await page.setContent(invoiceHTML, { waitUntil: "load" });
 
-      // Wait a bit for fonts to load
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Wait for font files to finish loading after the font CSS has been fetched
+      await page.evaluate(() => document.fonts.ready);
 
-      // Get the actual content height
-      const contentHeight = await page.evaluate(() => {
-        const body = document.body;
-        const html = document.documentElement;
-        const height = Math.max(
-          body.scrollHeight,
-          body.offsetHeight,
-          html.clientHeight,
-          html.scrollHeight,
-          html.offsetHeight
-        );
-        return Math.ceil(height);
-      });
-
-      // Use content height with some padding, but ensure minimum A4 height
-      const finalHeight = Math.max(contentHeight + 40, a4Height);
-
-      // Update viewport to match content height
-      await page.setViewport({
-        width: invoiceWidth,
-        height: finalHeight,
-        deviceScaleFactor: 2,
-      });
-
-      // Wait for layout to settle
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      // Take screenshot of exact content height
       const screenshot = await page.screenshot({
         type: "png",
-        fullPage: false,
-        clip: {
-          x: 0,
-          y: 0,
-          width: invoiceWidth,
-          height: contentHeight + 20,
-        },
+        fullPage: true,
       });
 
-      await browser.close();
+      await page.close();
 
       return new NextResponse(screenshot as any, {
         headers: {
@@ -479,7 +457,7 @@ async function getHandler(
         },
       });
     } catch (error) {
-      await browser.close();
+      await page.close();
       throw error;
     }
   } catch (error: any) {

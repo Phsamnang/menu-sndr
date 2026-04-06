@@ -280,7 +280,7 @@ export default function ExpensesPage() {
               e.stopPropagation();
               handleManageProducts(item);
             }}
-            className="px-3 py-1.5 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 transition-colors flex items-center gap-1"
+            className="px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-1"
             title="គ្រប់គ្រងផលិតផល"
           >
             <FaBox />
@@ -298,7 +298,7 @@ export default function ExpensesPage() {
               link.click();
               document.body.removeChild(link);
             }}
-            className="px-3 py-1.5 bg-purple-500 text-white text-sm rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-1"
+            className="px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-1"
             title="ទាញយកវិក្កយបត្រ"
           >
             <FaDownload />
@@ -351,7 +351,7 @@ export default function ExpensesPage() {
                 });
                 setIsModalOpen(true);
               }}
-              className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 flex items-center gap-2"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2"
             >
               <FaDollarSign />
               <span>បន្ថែមចំណាយ</span>

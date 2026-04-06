@@ -208,7 +208,7 @@ export default function UnitConversionsPage() {
                 });
                 setIsModalOpen(true);
               }}
-              className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
             >
               បន្ថែមការបម្លែង
             </button>

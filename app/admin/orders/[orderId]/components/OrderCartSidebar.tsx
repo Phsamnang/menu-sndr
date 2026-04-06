@@ -265,7 +265,11 @@ export default function OrderCartSidebar({
       const cacheBuster = Date.now();
       const imageUrl = `${window.location.origin}/api/admin/orders/${orderId}/invoice-image?t=${cacheBuster}`;
       const printUrl = `com.samathosoft.webprint://#imageurl#${imageUrl}#/imageurl#`;
-      window.location.href = printUrl;
+      const link = document.createElement("a");
+      link.href = printUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
       console.error("Error printing invoice:", error);
       toast.error("មានបញ្ហាក្នុងការបោះពុម្ពវិក្កយបត្រ");
@@ -445,7 +449,7 @@ export default function OrderCartSidebar({
                                   : item.status === "preparing"
                                   ? "badge-primary"
                                   : item.status === "ready"
-                                  ? "bg-purple-100 text-purple-800"
+                                  ? "bg-primary/10 text-primary"
                                   : item.status === "served"
                                   ? "bg-green-100 text-green-800"
                                   : "bg-slate-100 text-slate-800"
@@ -515,11 +519,11 @@ export default function OrderCartSidebar({
                 </span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-xs xs:text-sm sm:text-lg border-t-2 border-indigo-200 pt-1.5 xs:pt-2">
-              <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <div className="flex justify-between font-bold text-xs xs:text-sm sm:text-lg border-t-2 border-primary/30 pt-1.5 xs:pt-2">
+              <span className="text-primary">
                 សរុប:
               </span>
-              <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent text-sm xs:text-base sm:text-xl">
+              <span className="text-primary text-sm xs:text-base sm:text-xl">
                 {total.toLocaleString("km-KH")}៛
               </span>
             </div>
@@ -659,7 +663,7 @@ export default function OrderCartSidebar({
                     orderData?.status === "completed" ||
                     cancelOrderMutation.isPending
                   }
-                  className="flex-1 py-2 xs:py-3 sm:py-3 bg-green-600 text-white rounded-lg font-semibold active:bg-green-700 xs:hover:bg-green-700 md:hover:bg-green-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-[10px] xs:text-xs sm:text-sm md:text-base flex items-center justify-center gap-1 xs:gap-2 min-h-[44px] xs:min-h-[48px] min-w-[44px]"
+                  className="flex-1 py-2 xs:py-3 sm:py-3 bg-primary text-white rounded-lg font-semibold active:bg-primary/80 xs:hover:bg-primary/90 md:hover:bg-primary/90 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed touch-manipulation text-[10px] xs:text-xs sm:text-sm md:text-base flex items-center justify-center gap-1 xs:gap-2 min-h-[44px] xs:min-h-[48px] min-w-[44px]"
                 >
                   <svg
                     className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0"

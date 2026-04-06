@@ -171,7 +171,7 @@ export default function PromotionsPage() {
                 setEditingPromotion(null);
                 setIsModalOpen(true);
               }}
-              className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
             >
               បន្ថែមការផ្តល់ជូន
             </button>
@@ -183,7 +183,7 @@ export default function PromotionsPage() {
             onClick={() => setIsActiveFilter(null)}
             className={`px-4 py-2 rounded-lg ${
               isActiveFilter === null
-                ? "bg-slate-800 text-white"
+                ? "bg-primary text-white"
                 : "bg-white text-slate-700 border"
             }`}
           >
@@ -193,7 +193,7 @@ export default function PromotionsPage() {
             onClick={() => setIsActiveFilter(true)}
             className={`px-4 py-2 rounded-lg ${
               isActiveFilter === true
-                ? "bg-slate-800 text-white"
+                ? "bg-primary text-white"
                 : "bg-white text-slate-700 border"
             }`}
           >
@@ -203,7 +203,7 @@ export default function PromotionsPage() {
             onClick={() => setIsActiveFilter(false)}
             className={`px-4 py-2 rounded-lg ${
               isActiveFilter === false
-                ? "bg-slate-800 text-white"
+                ? "bg-primary text-white"
                 : "bg-white text-slate-700 border"
             }`}
           >

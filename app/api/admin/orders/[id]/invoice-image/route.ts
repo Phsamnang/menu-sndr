@@ -477,8 +477,8 @@ const invoiceHTML = `
 
       await page.setContent(invoiceHTML, { waitUntil: "load" });
 
-      // Give webfonts a short time to finish loading before screenshot
-      await page.waitForTimeout(700);
+      // Wait for font files to finish loading after the font CSS has been fetched
+      await page.evaluate(() => document.fonts.ready);
 
       const screenshot = await page.screenshot({
         type: "png",
