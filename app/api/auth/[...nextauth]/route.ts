@@ -98,6 +98,7 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   secret: NEXTAUTH_SECRET,
+  trustHost: true,
 };
 
 const handler = NextAuth(authOptions);
