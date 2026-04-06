@@ -62,8 +62,7 @@ export function CartBottomSheet({
           animation: isOpen
             ? 'slideUp 0.3s ease-out'
             : 'slideDown 0.3s ease-out',
-          maxHeight: 'min(90vh, calc(100vh - 60px))',
-          top: 'auto',
+          height: 'min(90vh, calc(100vh - 60px))',
         }}
       >
         {/* Drag handle */}
@@ -71,8 +70,8 @@ export function CartBottomSheet({
           <div className="w-12 h-1.5 bg-slate-300 rounded-full" />
         </div>
 
-        {/* Content - scrollable container */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
+        {/* Content - fixed height so OrderCartSidebar can scroll items internally */}
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {children}
         </div>
       </div>

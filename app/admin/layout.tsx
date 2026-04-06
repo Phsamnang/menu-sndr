@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface MenuItem {
   href: string;
@@ -44,6 +44,13 @@ export default function AdminLayout({
   const filteredItems = menuItems.filter((item) =>
     item.allowedRoles.includes(userRole || "")
   );
+
+  useEffect(() => {
+    const current = menuItems.find(
+      (item) => item.href !== "/admin" && pathname.startsWith(item.href)
+    );
+    document.title = current ? `${current.title} | Menu System` : "Menu System";
+  }, [pathname]);
 
   const isActive = (href: string) => {
     if (href === "/admin" && pathname === "/admin") {

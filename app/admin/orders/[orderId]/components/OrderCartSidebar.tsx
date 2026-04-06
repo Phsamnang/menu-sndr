@@ -28,6 +28,7 @@ export default function OrderCartSidebar({
 }: OrderCartSidebarProps) {
   const queryClient = useQueryClient();
   const isUpdatingDiscountRef = useRef(false);
+  const orderDataRef = useRef(orderData);
 
   const [customerName, setCustomerName] = useState<string>("");
   const [discountType, setDiscountType] = useState<"percentage" | "amount">(
@@ -37,6 +38,11 @@ export default function OrderCartSidebar({
   const [debouncedDiscountValue, setDebouncedDiscountValue] =
     useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+
+  // Keep ref in sync with latest orderData
+  useEffect(() => {
+    orderDataRef.current = orderData;
+  }, [orderData]);
 
   // Initialize state from orderData
   useEffect(() => {
@@ -154,11 +160,11 @@ export default function OrderCartSidebar({
 
   // Update discount on server when debounced value changes
   useEffect(() => {
+    const current = orderDataRef.current;
     if (
-      orderData &&
+      current &&
       !isUpdatingDiscountRef.current &&
-      !updateDiscountMutation.isPending &&
-      debouncedDiscountValue !== (orderData.discountValue || 0)
+      debouncedDiscountValue !== (current.discountValue || 0)
     ) {
       isUpdatingDiscountRef.current = true;
       updateDiscountMutation.mutate(
@@ -173,7 +179,8 @@ export default function OrderCartSidebar({
         }
       );
     }
-  }, [debouncedDiscountValue, discountType, orderData, updateDiscountMutation]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedDiscountValue, discountType]);
 
   // Handler functions
   const removeFromCart = useCallback(
