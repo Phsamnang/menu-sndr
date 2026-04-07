@@ -21,12 +21,7 @@ export default function CustomerMenuItemGrid({
   orderId,
   orderData,
 }: CustomerMenuItemGridProps) {
-  const [itemQuantities, setItemQuantities] = useState<Record<string, number>>(
-    {}
-  );
-  const [itemQuantityInputs, setItemQuantityInputs] = useState<
-    Record<string, string>
-  >({});
+  const [qtys, setQtys] = useState<Record<string, number>>({});
   const [addingItemId, setAddingItemId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -38,9 +33,7 @@ export default function CustomerMenuItemGrid({
       menuItemId: string;
       quantity: number;
     }) => {
-      if (!orderId) {
-        throw new Error("Order not found");
-      }
+      if (!orderId) throw new Error("Order not found");
       const result = await apiClientJson<Order>(
         `/api/orders/${orderId}/items`,
         {
@@ -54,199 +47,157 @@ export default function CustomerMenuItemGrid({
       }
       return result.data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["customerOrder", orderId] });
+      setQtys((prev) => {
+        const n = { ...prev };
+        delete n[variables.menuItemId];
+        return n;
+      });
     },
   });
 
-  const setItemQuantity = useCallback((itemId: string, quantity: number) => {
-    setItemQuantities((prev) => ({
-      ...prev,
-      [itemId]: quantity > 0 ? quantity : 1,
-    }));
-  }, []);
+  const getQty = (id: string) => qtys[id] ?? 1;
+
+  const setQty = (id: string, val: number) => {
+    setQtys((prev) => ({ ...prev, [id]: Math.max(1, val) }));
+  };
 
   const addToCart = useCallback(
     (item: MenuItem) => {
       if (orderData?.status === "completed") {
-        toast.error(
-          "ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចបន្ថែមមុខម្ហូបបានទេ"
-        );
+        toast.error("ការបញ្ជាទិញនេះបានបង់រួចរាល់ហើយ! មិនអាចបន្ថែមមុខម្ហូបបានទេ");
         return;
       }
-      const quantity = itemQuantities[item.id] || 1;
-
-      // Add animation
+      const qty = getQty(item.id);
       setAddingItemId(item.id);
       setTimeout(() => setAddingItemId(null), 600);
-
-      toast.success(`បានបន្ថែម "${item.name}" (${quantity})`, {
-        duration: 2000,
-      });
-      addItemMutation.mutate({ menuItemId: item.id, quantity });
-      setItemQuantities((prev) => {
-        const newQty = { ...prev };
-        delete newQty[item.id];
-        return newQty;
-      });
+      toast.success(`បានបន្ថែម "${item.name}" (${qty})`, { duration: 2000 });
+      addItemMutation.mutate({ menuItemId: item.id, quantity: qty });
     },
-    [itemQuantities, orderData?.status, addItemMutation]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [orderData?.status, addItemMutation, qtys]
   );
 
   if (!items || items.length === 0) {
     return (
-      <div className="text-center py-8 xs:py-10 sm:py-12 bg-white rounded-lg shadow-sm">
-        <p className="text-slate-500 text-xs xs:text-sm sm:text-base">
-          រកមិនឃើញមុខម្ហូបទេ
-        </p>
+      <div className="flex flex-col items-center justify-center h-48 text-slate-400">
+        <svg className="w-10 h-10 mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+            d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p className="text-sm">រកមិនឃើញមុខម្ហូបទេ</p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 xs:gap-2 sm:gap-2.5 md:gap-3 lg:gap-4 pb-4 w-full">
+    <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pb-4">
       {items.map((item) => {
         const price = tableTypeName ? item.prices[tableTypeName] || 0 : 0;
+        const isDisabled = orderData?.status === "completed" || price === 0;
+        const qty = getQty(item.id);
+
         return (
           <div
             key={item.id}
-            className={`bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden active:shadow-md xs:hover:shadow-md md:hover:shadow-md transition-all duration-300 flex flex-col w-full ${
-              addingItemId === item.id
-                ? "scale-95 shadow-lg ring-2 ring-green-400"
-                : ""
+            className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow ${
+              addingItemId === item.id ? "ring-2 ring-green-400" : ""
             }`}
           >
-            <div className="relative h-16 xs:h-18 sm:h-20 md:h-24 lg:h-28 bg-slate-100 flex-shrink-0">
+            {/* Image — tap to add */}
+            <button
+              onClick={() => addToCart(item)}
+              disabled={isDisabled || addItemMutation.isPending}
+              className="group relative w-full aspect-[4/3] bg-slate-100 overflow-hidden block disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               {item.image ? (
                 <OptimizedImage
                   src={item.image}
                   alt={item.name}
-                  width={150}
-                  height={120}
-                  className="w-full h-full object-cover"
-                  quality={85}
+                  width={240}
+                  height={180}
+                  className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                  quality={80}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-slate-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
+                  <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                       d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                     />
                   </svg>
                 </div>
               )}
+              {/* Added feedback overlay */}
               {addingItemId === item.id && (
-                <div className="absolute inset-0 bg-green-500/80 flex items-center justify-center animate-pulse">
-                  <svg
-                    className="w-8 h-8 xs:w-10 xs:h-10 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={3}
-                      d="M5 13l4 4L19 7"
-                    />
+                <div className="absolute inset-0 bg-green-500/70 flex items-center justify-center animate-pulse">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
               )}
-            </div>
-            <div className="p-1.5 xs:p-2 sm:p-2.5 md:p-3 flex-1 flex flex-col min-h-0">
-              <h3 className="font-semibold text-slate-900 mb-0.5 xs:mb-1 text-[10px] xs:text-xs sm:text-sm line-clamp-2 leading-tight min-h-[2em] flex-shrink-0">
-                {item.name}
-              </h3>
-              <div className="flex items-center justify-between mb-1 xs:mb-1.5 flex-shrink-0">
-                <span className="text-[9px] xs:text-xs sm:text-sm font-bold text-primary">
+              {/* Hover pill */}
+              {!isDisabled && (
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold shadow">
+                    +
+                  </span>
+                </div>
+              )}
+            </button>
+
+            {/* Info + qty */}
+            <div className="p-2.5 space-y-2">
+              <div>
+                <p className="text-xs font-medium text-slate-700 line-clamp-2 leading-snug min-h-[2.5em]">
+                  {item.name}
+                </p>
+                <p className="text-xs font-bold text-primary mt-0.5">
                   {price.toLocaleString("km-KH")}៛
-                </span>
+                </p>
               </div>
-              <div className="mb-1 xs:mb-1.5 flex-shrink-0">
-                <div className="flex items-center gap-1 mb-0.5">
-                  <label className="block text-[9px] xs:text-[10px] sm:text-xs text-slate-600 flex-1">
-                    ចំនួន
-                  </label>
+
+              {/* Qty row */}
+              <div className="flex items-center gap-1.5">
+                <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50 flex-1">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const current = itemQuantities[item.id] || 1;
-                      if (current > 1) setItemQuantity(item.id, current - 1);
-                    }}
-                    className="px-1 py-0.5 text-slate-600 hover:bg-slate-100 rounded text-xs"
+                    onClick={() => setQty(item.id, qty - 1)}
+                    disabled={isDisabled || qty <= 1}
+                    className="w-7 h-7 flex items-center justify-center text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors touch-manipulation text-sm"
                   >
-                    -
+                    −
                   </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const current = itemQuantities[item.id] || 1;
-                      setItemQuantity(item.id, current + 1);
+                  <input
+                    type="number"
+                    min="1"
+                    value={qty}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value);
+                      if (!isNaN(v) && v >= 1) setQty(item.id, v);
                     }}
-                    className="px-1 py-0.5 text-slate-600 hover:bg-slate-100 rounded text-xs"
+                    onClick={(e) => e.stopPropagation()}
+                    disabled={isDisabled}
+                    className="flex-1 h-7 text-center text-xs font-semibold text-slate-800 bg-transparent border-x border-slate-200 focus:outline-none focus:bg-white disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <button
+                    onClick={() => setQty(item.id, qty + 1)}
+                    disabled={isDisabled}
+                    className="w-7 h-7 flex items-center justify-center text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors touch-manipulation text-sm"
                   >
                     +
                   </button>
                 </div>
-                <input
-                  type="number"
-                  value={
-                    itemQuantityInputs[item.id] !== undefined
-                      ? itemQuantityInputs[item.id]
-                      : itemQuantities[item.id] || ""
-                  }
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setItemQuantityInputs((prev) => ({
-                      ...prev,
-                      [item.id]: value,
-                    }));
-                  }}
-                  onBlur={(e) => {
-                    const value = e.target.value;
-                    const numValue = parseInt(value, 10);
-                    if (value === "" || isNaN(numValue) || numValue < 1) {
-                      const finalValue = 1;
-                      setItemQuantity(item.id, finalValue);
-                      setItemQuantityInputs((prev) => {
-                        const next = { ...prev };
-                        delete next[item.id];
-                        return next;
-                      });
-                    } else {
-                      setItemQuantity(item.id, numValue);
-                      setItemQuantityInputs((prev) => {
-                        const next = { ...prev };
-                        delete next[item.id];
-                        return next;
-                      });
-                    }
-                  }}
-                  onFocus={(e) => e.target.select()}
-                  onClick={(e) => e.stopPropagation()}
-                  placeholder="1"
-                  className="w-full px-1 xs:px-1.5 sm:px-2 py-1 xs:py-1.5 sm:py-2 text-center text-[9px] xs:text-xs sm:text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-500 min-h-[32px] xs:min-h-[36px] sm:min-h-[40px] touch-manipulation"
-                />
+                <button
+                  onClick={() => addToCart(item)}
+                  disabled={isDisabled || addItemMutation.isPending}
+                  className="w-7 h-7 flex items-center justify-center bg-primary text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 active:scale-95 transition-all touch-manipulation flex-shrink-0"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
               </div>
-              <button
-                onClick={() => addToCart(item)}
-                disabled={
-                  price === 0 ||
-                  addItemMutation.isPending ||
-                  orderData?.status === "completed"
-                }
-                className="w-full px-1 xs:px-2 sm:px-2.5 py-1 xs:py-1.5 sm:py-2 btn-primary text-[9px] xs:text-xs sm:text-sm rounded-lg active:bg-primary/90 xs:hover:bg-primary/90 md:hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation min-h-[32px] xs:min-h-[36px] sm:min-h-[40px] font-medium flex-shrink-0 mt-auto"
-              >
-                + បន្ថែម
-              </button>
             </div>
           </div>
         );
