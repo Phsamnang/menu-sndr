@@ -45,8 +45,11 @@ async function handler(request: AuthenticatedRequest) {
       },
       include: {
         table: {
-          include: {
-            tableType: true,
+          select: {
+            id: true,
+            number: true,
+            name: true,
+            tableType: { select: { id: true, name: true, displayName: true } },
           },
         },
         items: {
@@ -75,8 +78,12 @@ async function handler(request: AuthenticatedRequest) {
           },
           include: {
             menuItem: {
-              include: {
-                category: true,
+              select: {
+                id: true,
+                name: true,
+                image: true,
+                isCook: true,
+                category: { select: { name: true, displayName: true } },
               },
             },
           },

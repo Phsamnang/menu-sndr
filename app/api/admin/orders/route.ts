@@ -31,6 +31,8 @@ async function getHandler(request: AuthenticatedRequest) {
       }
     }
 
+    const includeItems = searchParams.get("includeItems") === "true";
+
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
         where,
@@ -41,20 +43,28 @@ async function getHandler(request: AuthenticatedRequest) {
             },
           },
           customer: true,
-          items: {
-            include: {
-              menuItem: {
-                include: {
-                  category: true,
+          ...(includeItems
+            ? {
+                items: {
+                  include: {
+                    menuItem: {
+                      include: {
+                        category: true,
+                      },
+                    },
+                  },
                 },
-              },
-            },
-          },
-          payments: true,
-          statusHistory: {
-            orderBy: { createdAt: "desc" },
-            take: 10,
-          },
+                payments: true,
+                statusHistory: {
+                  orderBy: { createdAt: "desc" as const },
+                  take: 10,
+                },
+              }
+            : {
+                _count: {
+                  select: { items: true },
+                },
+              }),
         },
         orderBy: { createdAt: "desc" },
         skip,

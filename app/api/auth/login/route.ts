@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       username: user.username,
       roleId: user.roleId,
+      roleName: user.role.name,
     });
 
     return successResponse(

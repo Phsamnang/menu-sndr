@@ -8,7 +8,40 @@ export interface AuthenticatedRequest extends NextRequest {
     userId: string;
     username: string;
     roleId: string;
+    roleName?: string;
   };
+}
+
+// Simple in-memory cache for roleId → roleName (rarely changes)
+const roleCache = new Map<string, { name: string; expiresAt: number }>();
+const ROLE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function getRoleName(roleId: string): Promise<string | null> {
+  const cached = roleCache.get(roleId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.name;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: roleId },
+    select: { role: { select: { name: true } } },
+  });
+
+  // Fallback: look up by roleId directly on Role table
+  if (!user) {
+    const role = await prisma.role.findUnique({
+      where: { id: roleId },
+      select: { name: true },
+    });
+    if (role) {
+      roleCache.set(roleId, { name: role.name, expiresAt: Date.now() + ROLE_CACHE_TTL });
+      return role.name;
+    }
+    return null;
+  }
+
+  roleCache.set(roleId, { name: user.role.name, expiresAt: Date.now() + ROLE_CACHE_TTL });
+  return user.role.name;
 }
 
 export function withAuth(
@@ -32,25 +65,23 @@ export function withAuth(
     }
 
     if (allowedRoles && allowedRoles.length > 0) {
-      const user = await prisma.user.findUnique({
-        where: { id: payload.userId },
-        include: { role: true },
-      });
+      // Use roleName from JWT if available (new tokens), otherwise fall back to DB
+      let roleName = payload.roleName;
+      if (!roleName) {
+        roleName = await getRoleName(payload.userId) ?? undefined;
+      }
 
-      if (!user || !allowedRoles.includes(user.role.name)) {
+      if (!roleName || !allowedRoles.includes(roleName)) {
         return errorResponse("FORBIDDEN", "Insufficient permissions", 403, [
           { message: "You don't have permission to access this resource" },
         ]);
       }
+
+      (request as AuthenticatedRequest).user = { ...payload, roleName };
+    } else {
+      (request as AuthenticatedRequest).user = payload;
     }
 
-    (request as AuthenticatedRequest).user = payload;
     return handler(request as AuthenticatedRequest);
   };
 }
-
-
-
-
-
-

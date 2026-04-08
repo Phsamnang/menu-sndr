@@ -9,6 +9,9 @@ async function getHandler(
 ) {
   try {
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const slim = searchParams.get("slim") === "true";
+
     const order = await prisma.order.findUnique({
       where: { id },
       include: {
@@ -25,15 +28,17 @@ async function getHandler(
                 category: true,
               },
             },
-            kitchenOrder: true,
+            ...(slim ? {} : { kitchenOrder: true }),
           },
         },
-        payments: {
-          orderBy: { createdAt: "desc" },
-        },
-        statusHistory: {
-          orderBy: { createdAt: "desc" },
-        },
+        ...(!slim && {
+          payments: {
+            orderBy: { createdAt: "desc" as const },
+          },
+          statusHistory: {
+            orderBy: { createdAt: "desc" as const },
+          },
+        }),
       },
     });
 

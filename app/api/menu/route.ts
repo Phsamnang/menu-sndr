@@ -12,13 +12,14 @@ export async function GET(request: NextRequest) {
     const tableTypeName = searchParams.get("tableType");
 
     const menuItems = await prisma.menuItem.findMany({
-      where: categoryName
-        ? {
-            category: {
-              name: categoryName,
-            },
-          }
-        : undefined,
+      where: {
+        isAvailable: true,
+        ...(categoryName && {
+          category: {
+            name: categoryName,
+          },
+        }),
+      },
       include: {
         category: true,
         prices: {

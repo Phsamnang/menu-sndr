@@ -28,24 +28,31 @@ async function postHandler(
       );
     }
 
+    // Only select the fields we need — not full includes
     const [order, menuItem] = await Promise.all([
       prisma.order.findUnique({
         where: { id },
-        include: {
+        select: {
+          status: true,
+          tableId: true,
           table: {
-            include: { tableType: true },
+            select: { tableTypeId: true },
           },
         },
       }),
       prisma.menuItem.findUnique({
         where: { id: menuItemId },
-        include: {
+        select: {
           prices: {
-            include: { tableType: true },
+            select: { tableTypeId: true, amount: true },
           },
         },
       }),
     ]);
+
+    if (!order) {
+      return errorResponse("NOT_FOUND", "Order not found", 404);
+    }
 
     if (!menuItem) {
       return errorResponse("NOT_FOUND", "Menu item not found", 404);
@@ -75,29 +82,25 @@ async function postHandler(
       );
     }
 
-    let orderItem;
-
     if (order.status === "new") {
-      orderItem = await prisma.orderItem.create({
+      await prisma.orderItem.create({
         data: {
           orderId: id,
-          menuItemId: menuItemId,
-          quantity: quantity,
-          unitPrice: unitPrice,
+          menuItemId,
+          quantity,
+          unitPrice,
           totalPrice: quantity * unitPrice,
         },
       });
     } else {
       const existingItem = await prisma.orderItem.findFirst({
-        where: {
-          orderId: id,
-          menuItemId: menuItemId,
-        },
+        where: { orderId: id, menuItemId },
+        select: { id: true, quantity: true },
       });
 
       if (existingItem) {
         const newQuantity = existingItem.quantity + quantity;
-        orderItem = await prisma.orderItem.update({
+        await prisma.orderItem.update({
           where: { id: existingItem.id },
           data: {
             quantity: newQuantity,
@@ -105,37 +108,21 @@ async function postHandler(
           },
         });
       } else {
-        orderItem = await prisma.orderItem.create({
+        await prisma.orderItem.create({
           data: {
             orderId: id,
-            menuItemId: menuItemId,
-            quantity: quantity,
-            unitPrice: unitPrice,
+            menuItemId,
+            quantity,
+            unitPrice,
             totalPrice: quantity * unitPrice,
           },
         });
       }
     }
 
-    const [updatedOrder] = await Promise.all([
-      prisma.order.findUnique({
-        where: { id },
-        include: {
-          items: {
-            include: {
-              menuItem: {
-                include: {
-                  category: true,
-                },
-              },
-            },
-          },
-        },
-      }),
-      updateOrderTotals(id),
-    ]);
+    await updateOrderTotals(id);
 
-    return successResponse(updatedOrder, "Item added to order successfully");
+    return successResponse({ orderId: id }, "Item added to order successfully");
   } catch (error: any) {
     console.error("Error adding item to order:", error);
     return errorResponse("ADD_ITEM_ERROR", "Failed to add item to order", 500, [
@@ -168,6 +155,7 @@ async function putHandler(
     } else {
       const orderItem = await prisma.orderItem.findUnique({
         where: { id: itemId },
+        select: { unitPrice: true },
       });
 
       if (!orderItem) {
@@ -177,31 +165,15 @@ async function putHandler(
       await prisma.orderItem.update({
         where: { id: itemId },
         data: {
-          quantity: quantity,
+          quantity,
           totalPrice: quantity * orderItem.unitPrice,
         },
       });
     }
 
-    const [updatedOrder] = await Promise.all([
-      prisma.order.findUnique({
-        where: { id },
-        include: {
-          items: {
-            include: {
-              menuItem: {
-                include: {
-                  category: true,
-                },
-              },
-            },
-          },
-        },
-      }),
-      updateOrderTotals(id),
-    ]);
+    await updateOrderTotals(id);
 
-    return successResponse(updatedOrder, "Order item updated successfully");
+    return successResponse({ orderId: id }, "Order item updated successfully");
   } catch (error: any) {
     console.error("Error updating order item:", error);
     return errorResponse(
@@ -232,25 +204,9 @@ async function deleteHandler(
       where: { id: itemId },
     });
 
-    const [updatedOrder] = await Promise.all([
-      prisma.order.findUnique({
-        where: { id },
-        include: {
-          items: {
-            include: {
-              menuItem: {
-                include: {
-                  category: true,
-                },
-              },
-            },
-          },
-        },
-      }),
-      updateOrderTotals(id),
-    ]);
+    await updateOrderTotals(id);
 
-    return successResponse(updatedOrder, "Order item deleted successfully");
+    return successResponse({ orderId: id }, "Order item deleted successfully");
   } catch (error: any) {
     console.error("Error deleting order item:", error);
     return errorResponse(
@@ -263,22 +219,24 @@ async function deleteHandler(
 }
 
 async function updateOrderTotals(orderId: string) {
-  const result = await prisma.orderItem.aggregate({
-    where: { orderId },
-    _sum: { totalPrice: true },
-  });
-
-  const subtotal = result._sum.totalPrice || 0;
-
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    select: {
-      discountType: true,
-      discountValue: true,
-    },
-  });
+  // Run aggregate + order fetch in parallel instead of sequentially
+  const [result, order] = await Promise.all([
+    prisma.orderItem.aggregate({
+      where: { orderId },
+      _sum: { totalPrice: true },
+    }),
+    prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        discountType: true,
+        discountValue: true,
+      },
+    }),
+  ]);
 
   if (!order) return;
+
+  const subtotal = result._sum.totalPrice || 0;
 
   let discountAmount = 0;
   if (order.discountType && order.discountValue) {

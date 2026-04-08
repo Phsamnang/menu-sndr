@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find /d/menu-sndr/app -type f \\\\\\( -name \"*delivery*\" -o -name \"*chef*\" -o -name \"*kitchen*\" \\\\\\) ! -path \"*/node_modules/*\" -exec ls -lh {} \\\\;)"
+      "Bash(find /d/menu-sndr/app -type f \\\\\\( -name \"*delivery*\" -o -name \"*chef*\" -o -name \"*kitchen*\" \\\\\\) ! -path \"*/node_modules/*\" -exec ls -lh {} \\\\;)",
+      "Bash(npx prisma:*)"
     ]
   }
 }

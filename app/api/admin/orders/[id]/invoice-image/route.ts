@@ -33,43 +33,41 @@ async function getHandler(
 ) {
   try {
     const { id } = await params;
-    const order = await prisma.order.findUnique({
-      where: { id },
-      include: {
-        table: {
-          include: {
-            tableType: true,
+
+    // Fetch order and shop info in parallel
+    const [order, existingShopInfo] = await Promise.all([
+      prisma.order.findUnique({
+        where: { id },
+        include: {
+          table: {
+            select: { number: true, name: true },
           },
-        },
-        items: {
-          include: {
-            menuItem: {
-              include: {
-                category: true,
+          items: {
+            include: {
+              menuItem: {
+                select: { name: true },
               },
             },
           },
         },
-      },
-    });
+      }),
+      prisma.shopInfo.findFirst(),
+    ]);
 
     if (!order) {
       return new Response("Order not found", { status: 404 });
     }
 
-    let shopInfo = await prisma.shopInfo.findFirst();
-    if (!shopInfo) {
-      shopInfo = await prisma.shopInfo.create({
-        data: {
-          name: "Shop Name",
-          address: null,
-          phone: null,
-          email: null,
-          logo: null,
-          taxId: null,
-        },
-      });
-    }
+    const shopInfo = existingShopInfo ?? await prisma.shopInfo.create({
+      data: {
+        name: "Shop Name",
+        address: null,
+        phone: null,
+        email: null,
+        logo: null,
+        taxId: null,
+      },
+    });
 
     const groupedItems = order.items.reduce((acc: any, item: any) => {
       const key = `${item.menuItem.name}_${item.unitPrice}`;

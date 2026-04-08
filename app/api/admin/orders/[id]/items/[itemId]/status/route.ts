@@ -37,9 +37,7 @@ async function putHandler(
 
     const orderItem = await prisma.orderItem.findUnique({
       where: { id: itemId },
-      include: {
-        order: true,
-      },
+      select: { orderId: true },
     });
 
     if (!orderItem) {
@@ -57,12 +55,11 @@ async function putHandler(
     const updatedItem = await prisma.orderItem.update({
       where: { id: itemId },
       data: { status },
-      include: {
-        menuItem: {
-          include: {
-            category: true,
-          },
-        },
+      select: {
+        id: true,
+        status: true,
+        orderId: true,
+        menuItemId: true,
       },
     });
 

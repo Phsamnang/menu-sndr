@@ -3,22 +3,23 @@ import { prisma } from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/utils/api-response";
 
 async function updateOrderTotals(orderId: string) {
-  const result = await prisma.orderItem.aggregate({
-    where: { orderId },
-    _sum: { totalPrice: true },
-  });
-
-  const subtotal = result._sum.totalPrice || 0;
-
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    select: {
-      discountType: true,
-      discountValue: true,
-    },
-  });
+  const [result, order] = await Promise.all([
+    prisma.orderItem.aggregate({
+      where: { orderId },
+      _sum: { totalPrice: true },
+    }),
+    prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        discountType: true,
+        discountValue: true,
+      },
+    }),
+  ]);
 
   if (!order) return;
+
+  const subtotal = result._sum.totalPrice || 0;
 
   let discountAmount = 0;
   if (order.discountType && order.discountValue) {
@@ -91,9 +92,11 @@ export async function POST(
     // Check if order exists and is accessible
     const order = await prisma.order.findUnique({
       where: { id },
-      include: {
+      select: {
+        status: true,
+        tableId: true,
         table: {
-          include: { tableType: true },
+          select: { tableTypeId: true },
         },
       },
     });
@@ -113,9 +116,9 @@ export async function POST(
 
     const menuItem = await prisma.menuItem.findUnique({
       where: { id: menuItemId },
-      include: {
+      select: {
         prices: {
-          include: { tableType: true },
+          select: { tableTypeId: true, amount: true },
         },
       },
     });
@@ -166,6 +169,7 @@ export async function POST(
           orderId: id,
           menuItemId: menuItemId,
         },
+        select: { id: true, quantity: true },
       });
 
       if (existingItem) {
@@ -190,25 +194,9 @@ export async function POST(
       }
     }
 
-    const [updatedOrder] = await Promise.all([
-      prisma.order.findUnique({
-        where: { id },
-        include: {
-          items: {
-            include: {
-              menuItem: {
-                include: {
-                  category: true,
-                },
-              },
-            },
-          },
-        },
-      }),
-      updateOrderTotals(id),
-    ]);
+    await updateOrderTotals(id);
 
-    return successResponse(updatedOrder, "Item added to order successfully");
+    return successResponse({ orderId: id }, "Item added to order successfully");
   } catch (error: any) {
     console.error("Error adding item to order:", error);
     return errorResponse("ADD_ITEM_ERROR", "Failed to add item to order", 500, [

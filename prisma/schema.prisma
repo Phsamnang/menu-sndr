@@ -147,6 +147,8 @@ model Order {
   @@index([orderType])
   @@index([createdAt])
   @@index([servedBy])
+  @@index([status, createdAt(sort: Desc)])
+  @@index([status, completedAt])
 }
 
 model OrderItem {
@@ -167,6 +169,8 @@ model OrderItem {
   @@index([orderId])
   @@index([menuItemId])
   @@index([status])
+  @@index([orderId, menuItemId])
+  @@index([orderId, status])
 }
 
 model Role {
@@ -425,6 +429,7 @@ model Payment {
   @@index([status])
   @@index([method])
   @@index([createdAt])
+  @@index([status, method])
 }
 
 model Inventory {

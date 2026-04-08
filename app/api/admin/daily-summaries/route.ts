@@ -75,65 +75,48 @@ async function postHandler(request: AuthenticatedRequest) {
     const endOfDay = new Date(targetDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const [orders, expenses] = await Promise.all([
-      prisma.order.findMany({
+    const dateFilter = { gte: startOfDay, lte: endOfDay };
+
+    const [orderAgg, expenseAgg, topItemResult] = await Promise.all([
+      // Aggregate orders instead of fetching all rows
+      prisma.order.aggregate({
         where: {
-          createdAt: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
+          createdAt: dateFilter,
           status: { not: "cancelled" },
         },
-        include: {
-          items: {
-            select: {
-              menuItemId: true,
-              quantity: true,
-            },
-          },
-        },
+        _sum: { grandTotal: true },
+        _count: true,
       }),
-      prisma.expense.findMany({
+      // Aggregate expenses instead of fetching all rows
+      prisma.expense.aggregate({
+        where: { date: dateFilter },
+        _sum: { amountUSD: true },
+      }),
+      // Find top menu item with a single grouped query
+      prisma.orderItem.groupBy({
+        by: ["menuItemId"],
         where: {
-          date: {
-            gte: startOfDay,
-            lte: endOfDay,
+          order: {
+            createdAt: dateFilter,
+            status: { not: "cancelled" },
           },
         },
+        _sum: { quantity: true },
+        orderBy: { _sum: { quantity: "desc" } },
+        take: 1,
       }),
     ]);
 
-    const totalOrders = orders.length;
-    const totalRevenue = orders.reduce((sum, order) => sum + order.grandTotal, 0);
-    const totalExpenses = expenses.reduce(
-      (sum, expense) => sum + (expense.amountUSD || 0),
-      0
-    );
+    const totalOrders = orderAgg._count;
+    const totalRevenue = orderAgg._sum.grandTotal || 0;
+    const totalExpenses = expenseAgg._sum.amountUSD || 0;
     const netProfit = totalRevenue - totalExpenses;
     const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
-    // Find top menu item
-    const menuItemCounts: Record<string, number> = {};
-    orders.forEach((order) => {
-      if (order.items) {
-        order.items.forEach((item: any) => {
-          const menuItemId = item.menuItemId;
-          if (menuItemId) {
-            menuItemCounts[menuItemId] = (menuItemCounts[menuItemId] || 0) + (item.quantity || 0);
-          }
-        });
-      }
-    });
-
     let topMenuItem = null;
-    const menuItemKeys = Object.keys(menuItemCounts);
-    if (menuItemKeys.length > 0) {
-      const topMenuItemId = menuItemKeys.reduce((a, b) =>
-        menuItemCounts[a] > menuItemCounts[b] ? a : b
-      );
-      
+    if (topItemResult.length > 0) {
       topMenuItem = await prisma.menuItem.findUnique({
-        where: { id: topMenuItemId },
+        where: { id: topItemResult[0].menuItemId },
         select: { name: true },
       });
     }

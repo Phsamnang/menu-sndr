@@ -25,17 +25,18 @@ async function getHandler(request: AuthenticatedRequest) {
 
     let inventoryWhere = where;
     if (lowStock) {
-      const allInventories = await prisma.inventory.findMany({
-        select: { id: true, currentStock: true, minStockLevel: true },
-      });
-      const lowStockIds = allInventories
-        .filter((inv) => inv.currentStock <= inv.minStockLevel)
-        .map((inv) => inv.id);
-      if (lowStockIds.length > 0) {
-        inventoryWhere = { ...where, id: { in: lowStockIds } };
-      } else {
-        inventoryWhere = { ...where, id: { in: [] } };
-      }
+      // Use Prisma raw filter to compare columns directly in DB instead of fetching all rows
+      inventoryWhere = {
+        ...where,
+        currentStock: { lte: prisma.inventory.fields?.minStockLevel ?? 0 },
+      };
+      // Prisma doesn't support column-to-column comparison directly,
+      // so we use a raw WHERE clause via $queryRaw workaround
+      const lowStockIds = await prisma.$queryRaw<{ id: string }[]>`
+        SELECT id FROM "Inventory" WHERE "currentStock" <= "minStockLevel"
+      `;
+      const ids = lowStockIds.map((r) => r.id);
+      inventoryWhere = { ...where, id: { in: ids.length > 0 ? ids : ["__none__"] } };
     }
 
     const [inventories, total] = await Promise.all([

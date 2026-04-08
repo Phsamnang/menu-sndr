@@ -24,7 +24,7 @@ export default function OrderDetailPage() {
     queryKey: ["orderDetail", orderId],
     queryFn: async () => {
       if (!orderId) return null;
-      const result = await apiClientJson<Order>(`/api/admin/orders/${orderId}`);
+      const result = await apiClientJson<Order>(`/api/admin/orders/${orderId}?slim=true`);
       if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch order");
       }
@@ -39,17 +39,16 @@ export default function OrderDetailPage() {
     return tableType.name || undefined;
   }, [orderData?.table?.tableType]);
 
+  // Fetch menu for ALL table types in parallel with order (no waterfall)
   const { data: menuData = [], isLoading: menuLoading } = useQuery<MenuItem[]>({
-    queryKey: ["menu", tableTypeName],
+    queryKey: ["menu-all"],
     queryFn: async () => {
-      if (!tableTypeName) return [];
-      const result = await apiClientJson<{ items: MenuItem[]; total: number }>(`/api/menu?tableType=${tableTypeName}`);
+      const result = await apiClientJson<{ items: MenuItem[]; total: number }>("/api/menu");
       if (!result.success || !result.data) {
         throw new Error(result.error?.message || "Failed to fetch menu");
       }
       return result.data.items;
     },
-    enabled: !!tableTypeName,
   });
 
   const { data: categories = [] } = useQuery<Category[]>({
