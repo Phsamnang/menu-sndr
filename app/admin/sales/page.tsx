@@ -217,13 +217,17 @@ export default function SalesManagementPage() {
         ),
       },
       {
-        accessorKey: "items",
+        accessorKey: "_count",
         header: "ចំនួនមុខម្ហូប",
-        cell: (info) => (
-          <span className="text-sm text-slate-600">
-            {(info.getValue() as Order["items"]).length}
-          </span>
-        ),
+        cell: (info) => {
+          const count = info.getValue() as { items: number } | undefined;
+          const items = (info.row.original as any).items;
+          return (
+            <span className="text-sm text-slate-600">
+              {count?.items ?? items?.length ?? 0}
+            </span>
+          );
+        },
       },
       {
         accessorKey: "subtotal",
