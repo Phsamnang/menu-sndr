@@ -265,25 +265,25 @@ export default function DeliveryPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-6 flex justify-between items-start">
+        <div className="mb-4 md:mb-6 flex justify-between items-start gap-2">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-1">
               ការដឹកជញ្ជូន
             </h1>
-            <p className="text-slate-600">
+            <p className="text-sm md:text-base text-slate-600">
               មើលនិងគ្រប់គ្រងមុខម្ហូបដែលរួចរាល់សម្រាប់ដឹក
             </p>
           </div>
           <Link
             href="/admin"
-            className="px-4 py-2 bg-slate-600 text-white rounded-lg"
+            className="px-3 py-1.5 md:px-4 md:py-2 bg-slate-600 text-white rounded-lg text-sm flex-shrink-0"
           >
             ត្រលប់
           </Link>
         </div>
 
         {/* Filters */}
-        <div className="mb-6 flex gap-2">
+        <div className="mb-4 md:mb-6 flex flex-wrap gap-2">
           <button
             onClick={() => setStatusFilter(null)}
             className={`px-4 py-2 rounded text-sm ${statusFilter === null ? "bg-primary text-white" : "bg-white border"}`}
@@ -303,43 +303,107 @@ export default function DeliveryPage() {
           ))}
         </div>
 
-        {/* Table */}
+        {/* Content */}
         {isLoading ? (
           <p className="text-center py-10">Loading...</p>
-        ) : (
-          <div className="bg-white rounded shadow">
-            <table className="w-full">
-              <thead>
-                {table.getHeaderGroups().map((hg) => (
-                  <tr key={hg.id}>
-                    {hg.headers.map((h) => (
-                      <th key={h.id} className="p-3 text-left">
-                        {flexRender(
-                          h.column.columnDef.header,
-                          h.getContext()
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-
-              <tbody>
-                {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="border-t">
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="p-3">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        ) : filteredItems.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-lg shadow text-slate-500">
+            មិនមានមុខម្ហូបទេ
           </div>
+        ) : (
+          <>
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {filteredItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-lg shadow p-3 flex gap-3 items-center"
+                >
+                  <div className="w-14 h-14 bg-slate-100 rounded overflow-hidden flex-shrink-0">
+                    {item.menuItem.image ? (
+                      <OptimizedImage
+                        src={item.menuItem.image}
+                        alt={item.menuItem.name}
+                        width={56}
+                        height={56}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-300 text-xs">
+                        No Img
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-slate-900 text-sm truncate">
+                        {item.menuItem.name}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        x{item.quantity}
+                      </span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded text-xs font-medium border ${getStatusColor(
+                          item.status
+                        )}`}
+                      >
+                        {getStatusLabel(item.status)}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      {item.order.table
+                        ? `តុ ${item.order.table.number} - ${item.order.table.tableType.displayName}`
+                        : "-"}{" "}
+                      · {item.order.orderNumber}
+                      {item.order.customerName && ` · ${item.order.customerName}`}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleMarkServed(item.order.id, item.id)}
+                    disabled={updateStatusMutation.isPending}
+                    className="px-3 py-2 btn-primary rounded-lg font-medium text-sm disabled:opacity-50 flex-shrink-0"
+                  >
+                    ដឹក
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block bg-white rounded shadow overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  {table.getHeaderGroups().map((hg) => (
+                    <tr key={hg.id}>
+                      {hg.headers.map((h) => (
+                        <th key={h.id} className="p-3 text-left">
+                          {flexRender(
+                            h.column.columnDef.header,
+                            h.getContext()
+                          )}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+
+                <tbody>
+                  {table.getRowModel().rows.map((row) => (
+                    <tr key={row.id} className="border-t">
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="p-3">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

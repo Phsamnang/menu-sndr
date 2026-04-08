@@ -291,45 +291,125 @@ export default function ChefPage() {
           ))}
         </div>
 
-        {/* Table */}
+        {/* Content */}
         {isLoading ? (
           <div className="text-center py-16 bg-white rounded-lg shadow">
             Loading...
           </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-slate-50">
-                {table.getHeaderGroups().map((hg) => (
-                  <tr key={hg.id}>
-                    {hg.headers.map((h) => (
-                      <th key={h.id} className="p-4 text-left text-sm">
-                        {flexRender(
-                          h.column.columnDef.header,
-                          h.getContext()
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-
-              <tbody>
-                {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="border-t hover:bg-slate-50">
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="p-4 text-sm">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        ) : filteredItems.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-lg shadow text-slate-500">
+            មិនមានមុខម្ហូបទេ
           </div>
+        ) : (
+          <>
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {filteredItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-lg shadow p-3 flex gap-3 items-center"
+                >
+                  <div className="w-14 h-14 bg-slate-100 rounded overflow-hidden flex-shrink-0">
+                    {item.menuItem.image ? (
+                      <OptimizedImage
+                        src={item.menuItem.image}
+                        alt={item.menuItem.name}
+                        width={56}
+                        height={56}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-300 text-xs">
+                        No Img
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-slate-900 text-sm truncate">
+                        {item.menuItem.name}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        x{item.quantity}
+                      </span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded text-xs font-medium border ${getStatusColor(
+                          item.status
+                        )}`}
+                      >
+                        {getStatusLabel(item.status)}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      {item.order.table
+                        ? `តុ ${item.order.table.number}`
+                        : "-"}{" "}
+                      · {item.order.orderNumber}
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    {item.status === "pending" && (
+                      <button
+                        onClick={() =>
+                          handleStatusChange(item.order.id, item.id, "preparing")
+                        }
+                        disabled={updateStatusMutation.isPending}
+                        className="px-3 py-2 btn-primary rounded-lg text-sm disabled:opacity-50"
+                      >
+                        ចាប់ផ្តើម
+                      </button>
+                    )}
+                    {item.status === "preparing" && (
+                      <button
+                        onClick={() =>
+                          handleStatusChange(item.order.id, item.id, "ready")
+                        }
+                        disabled={updateStatusMutation.isPending}
+                        className="px-3 py-2 btn-primary rounded-lg text-sm disabled:opacity-50"
+                      >
+                        រួចរាល់
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block bg-white rounded-lg shadow-md overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50">
+                  {table.getHeaderGroups().map((hg) => (
+                    <tr key={hg.id}>
+                      {hg.headers.map((h) => (
+                        <th key={h.id} className="p-4 text-left text-sm">
+                          {flexRender(
+                            h.column.columnDef.header,
+                            h.getContext()
+                          )}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+
+                <tbody>
+                  {table.getRowModel().rows.map((row) => (
+                    <tr key={row.id} className="border-t hover:bg-slate-50">
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="p-4 text-sm">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>
