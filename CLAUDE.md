@@ -19,9 +19,19 @@ npm run db:studio     # Open Prisma Studio GUI
 
 # Lint
 npm run lint          # ESLint via next lint
+
+# E2E tests (Playwright)
+npm run test:e2e         # Run all Playwright specs (boots dev server automatically)
+npm run test:e2e:ui      # Open Playwright UI mode for interactive debugging
+npm run test:e2e:report  # Open the last HTML report
 ```
 
-There are no automated tests in this project.
+E2E specs live in `e2e/`. The suite uses a global setup that logs in as the four
+seeded test users (`admin`, `chef`, `waiter`, `order`) and writes their JWTs to
+`e2e/.auth/{role}.json`. Tests use the role-based fixtures from
+`e2e/fixtures/auth.ts` (e.g. `adminPage`, `chefPage`). Tests run against the
+existing seeded Neon dev DB — make sure `npm run db:seed` has been run at least
+once.
 
 ## Architecture
 
@@ -29,7 +39,7 @@ This is a **Next.js 14 App Router** restaurant management system (POS) with a Po
 
 ### Auth
 
-Authentication uses a **custom JWT flow** — not NextAuth sessions. On login, the API returns a JWT stored in `localStorage` via `utils/token.ts`. The `AuthContext` (`contexts/AuthContext.tsx`) reads this token and exposes `useAuth()`. The axios client (`utils/axios-client.ts`) automatically attaches it as a `Bearer` token. On 401, it clears the token and redirects to `/login`.
+Authentication uses a **custom JWT flow** — not NextAuth sessions. On login, the API returns a JWT stored in `sessionStorage` (keys: `accessToken`, `user`) via `utils/token.ts`. The `AuthContext` (`contexts/AuthContext.tsx`) reads this token and exposes `useAuth()`. The axios client (`utils/axios-client.ts`) automatically attaches it as a `Bearer` token. On 401, it clears the token and redirects to `/login`.
 
 NextAuth is installed but unused for auth logic — the `SessionProvider` wrapper in `app/providers.tsx` exists only to suppress warnings.
 
@@ -50,7 +60,7 @@ Roles: `admin`, `order`, `chef`, `waiter`. The admin sidebar (`app/admin/layout.
 
 ### Real-Time Updates
 
-The delivery/chef view uses **Server-Sent Events (SSE)** — `app/api/delivery/items/stream/route.ts` polls Prisma every 2 seconds and streams diffs. The client hook is `hooks/useDeliveryStream.ts`. The token is passed as a query param (`?token=...`) because `EventSource` doesn't support custom headers.
+The delivery and chef views both use **Server-Sent Events (SSE)** — stream routes under `app/api/delivery/items/` and `app/api/chef/orders/` poll Prisma and stream diffs. The client hooks are `hooks/useDeliveryStream.ts` and `hooks/useChefStream.ts`. The token is passed as a query param (`?token=...`) because `EventSource` doesn't support custom headers.
 
 ### Key Domain Concepts
 
@@ -64,13 +74,19 @@ The delivery/chef view uses **Server-Sent Events (SSE)** — `app/api/delivery/i
 
 ```
 app/
-  admin/          # Protected admin pages (orders, menu, tables, sales, etc.)
+  admin/          # Protected admin pages (orders, menu, tables, sales, chef, delivery,
+                  # inventory, expenses, promotions, reservations, etc.)
     orders/[orderId]/  # POS order entry screen with menu grid + cart sidebar
+    chef/         # Kitchen queue view
+    delivery/     # Delivery/runner view
   api/admin/      # Admin API routes (require auth)
-  api/delivery/   # Delivery/chef queue (SSE stream)
+  api/chef/       # Chef queue + SSE stream
+  api/delivery/   # Delivery queue + SSE stream
   api/auth/       # Login endpoint
+  api/imagekit/   # ImageKit upload signing
   order/[orderId] # Customer-facing order view (no auth)
-services/         # Business logic, one file per domain entity
+services/         # Business logic, one file per domain entity (order, menu-item,
+                  # inventory, cash-session, promotion, reservation, etc.)
 lib/
   prisma.ts       # Singleton PrismaClient
   middleware.ts   # withAuth() HOC for API routes
@@ -78,9 +94,16 @@ lib/
 utils/
   api-response.ts # successResponse / errorResponse helpers
   axios-client.ts # Axios instance with auth interceptor
-  token.ts        # localStorage token helpers
+  api-client.ts   # Fetch-based client
+  token.ts        # sessionStorage token helpers
+  imagekit.ts     # ImageKit upload helpers
 contexts/
   AuthContext.tsx # JWT auth state
 hooks/
-  useDeliveryStream.ts  # SSE hook for delivery/chef queue
+  useDeliveryStream.ts  # SSE hook for delivery queue
+  useChefStream.ts      # SSE hook for chef/kitchen queue
 ```
+
+### Image Uploads
+
+Menu item and product images are uploaded to **ImageKit**. Server-side signing lives at `app/api/imagekit/` and helpers in `utils/imagekit.ts`.
