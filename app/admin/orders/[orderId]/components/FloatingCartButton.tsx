@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
 interface FloatingCartButtonProps {
   itemCount: number;
   subtotal: number;
@@ -15,61 +13,33 @@ export function FloatingCartButton({
   onClick,
   isVisible = true,
 }: FloatingCartButtonProps) {
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [prevCount, setPrevCount] = useState(itemCount);
-
-  useEffect(() => {
-    if (itemCount > prevCount) {
-      setIsAnimating(true);
-      const timer = setTimeout(() => setIsAnimating(false), 600);
-      return () => clearTimeout(timer);
-    }
-    setPrevCount(itemCount);
-  }, [itemCount, prevCount]);
-
   if (!isVisible || itemCount === 0) return null;
 
   return (
     <button
       onClick={onClick}
-      className="fixed bottom-6 right-4 xs:right-6 lg:hidden z-40 touch-manipulation"
+      className="fixed bottom-5 left-4 right-4 lg:hidden z-40 bg-primary text-white rounded-2xl py-3.5 px-5 flex items-center gap-3 shadow-xl shadow-primary/40 touch-manipulation animate-pop-in"
       aria-label="Open cart"
     >
-      <div className="relative">
-        {/* Main button */}
-        <div className="bg-primary hover:bg-primary/90 active:bg-primary/80 text-white rounded-full shadow-lg active:shadow-md transition-all p-4 xs:p-5 flex flex-col items-center justify-center gap-1 min-h-[56px] xs:min-h-[60px] min-w-[56px] xs:min-w-[60px]">
-          {/* Cart icon */}
-          <svg
-            className="w-6 h-6 xs:w-7 xs:h-7"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-            />
-          </svg>
-
-          {/* Item count badge */}
-          <span className="text-xs xs:text-sm font-bold leading-tight">
-            {itemCount}
-          </span>
-        </div>
-
-        {/* Animated pulse ring on new item */}
-        {isAnimating && (
-          <div className="absolute inset-0 rounded-full bg-primary animate-pulse" />
-        )}
-
-        {/* Price tooltip */}
-        <div className="absolute -top-12 xs:-top-14 right-0 bg-slate-900 text-white text-[10px] xs:text-xs font-semibold px-2 xs:px-3 py-1 xs:py-1.5 rounded-lg whitespace-nowrap shadow-lg pointer-events-none">
-          {subtotal.toLocaleString('km-KH')}៛
-          <div className="absolute top-full right-2 border-4 border-transparent border-t-slate-900" />
-        </div>
+      {/* Cart icon in frosted square */}
+      <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2}
+            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+          />
+        </svg>
       </div>
+
+      {/* Label + total */}
+      <div className="flex-1 text-left">
+        <div className="text-sm font-bold leading-tight">មើលកន្ត្រក់ ({itemCount} មុខ)</div>
+        <div className="text-xs opacity-85 leading-tight mt-0.5">{subtotal.toLocaleString('km-KH')}៛</div>
+      </div>
+
+      {/* Chevron */}
+      <svg className="w-4 h-4 opacity-80 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+      </svg>
     </button>
   );
 }

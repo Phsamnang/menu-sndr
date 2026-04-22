@@ -21,6 +21,7 @@ export default function MenuItemGrid({
   orderData,
 }: MenuItemGridProps) {
   const [qtys, setQtys] = useState<Record<string, number>>({});
+  const [adding, setAdding] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const addItemMutation = useMutation({
@@ -47,6 +48,8 @@ export default function MenuItemGrid({
         return;
       }
       const qty = getQty(item.id);
+      setAdding(item.id);
+      setTimeout(() => setAdding(null), 650);
       addItemMutation.mutate({ menuItemId: item.id, quantity: qty });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -71,17 +74,22 @@ export default function MenuItemGrid({
         const price = tableTypeName ? item.prices[tableTypeName] || 0 : 0;
         const isDisabled = orderData?.status === "completed" || price === 0;
         const qty = getQty(item.id);
+        const isAdding = adding === item.id;
 
         return (
           <div
             key={item.id}
-            className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+            className={`bg-white rounded-xl overflow-hidden flex flex-col transition-all duration-200 ${
+              isAdding
+                ? "shadow-md -translate-y-0.5 ring-2 ring-green-400/60"
+                : "shadow-sm hover:shadow-md hover:-translate-y-0.5"
+            }`}
           >
             {/* Image — tap to add */}
             <button
               onClick={() => addToCart(item)}
               disabled={isDisabled || addItemMutation.isPending}
-              className="group relative w-full aspect-[4/3] bg-slate-100 overflow-hidden block disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full aspect-[4/3] bg-slate-100 overflow-hidden block disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
             >
               {item.image ? (
                 <OptimizedImage
@@ -89,7 +97,7 @@ export default function MenuItemGrid({
                   alt={item.name}
                   width={240}
                   height={180}
-                  className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                   quality={80}
                 />
               ) : (
@@ -101,34 +109,47 @@ export default function MenuItemGrid({
                   </svg>
                 </div>
               )}
-              {/* Hover + pill */}
-              {!isDisabled && (
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold shadow">
+
+              {/* Centered + circle on hover */}
+              {!isDisabled && !isAdding && (
+                <div className="absolute inset-0 bg-black/[0.04] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-primary/40 animate-pop-in">
                     +
-                  </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Adding flash feedback */}
+              {isAdding && (
+                <div className="absolute inset-0 bg-green-500/75 flex items-center justify-center animate-fade-overlay">
+                  <div className="animate-check-pop">
+                    <svg width="28" height="28" fill="none" stroke="white" strokeWidth="3" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
                 </div>
               )}
             </button>
 
             {/* Info + qty */}
-            <div className="p-2.5 space-y-2">
+            <div className="p-2.5 flex-1 flex flex-col gap-1.5">
               <div>
-                <p className="text-xs font-medium text-slate-700 line-clamp-2 leading-snug min-h-[2.5em]">
+                <p className="text-xs font-semibold text-slate-700 line-clamp-2 leading-snug">
                   {item.name}
                 </p>
                 <p className="text-xs font-bold text-primary mt-0.5">
-                  {price.toLocaleString("km-KH")}៛
+                  {price.toLocaleString("km-KH")}
+                  <span className="text-[10px] font-semibold ml-0.5 text-primary/70">៛</span>
                 </p>
               </div>
 
-              {/* Qty row */}
+              {/* Qty stepper + add button */}
               <div className="flex items-center gap-1.5">
-                <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50 flex-1">
+                <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50 flex-1 h-[30px]">
                   <button
                     onClick={() => setQty(item.id, qty - 1)}
                     disabled={isDisabled || qty <= 1}
-                    className="w-7 h-7 flex items-center justify-center text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors touch-manipulation text-sm"
+                    className="w-7 h-full flex items-center justify-center text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors touch-manipulation text-sm"
                   >
                     −
                   </button>
@@ -140,13 +161,14 @@ export default function MenuItemGrid({
                       const v = parseInt(e.target.value);
                       if (!isNaN(v) && v >= 1) setQty(item.id, v);
                     }}
+                    onClick={(e) => e.stopPropagation()}
                     disabled={isDisabled}
-                    className="flex-1 h-7 text-center text-xs font-semibold text-slate-800 bg-transparent border-x border-slate-200 focus:outline-none focus:bg-white disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="flex-1 h-full text-center text-xs font-bold text-slate-800 bg-transparent border-x border-slate-200 focus:outline-none focus:bg-white disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none min-w-0"
                   />
                   <button
                     onClick={() => setQty(item.id, qty + 1)}
                     disabled={isDisabled}
-                    className="w-7 h-7 flex items-center justify-center text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors touch-manipulation text-sm"
+                    className="w-7 h-full flex items-center justify-center text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors touch-manipulation text-sm"
                   >
                     +
                   </button>
@@ -154,7 +176,7 @@ export default function MenuItemGrid({
                 <button
                   onClick={() => addToCart(item)}
                   disabled={isDisabled || addItemMutation.isPending}
-                  className="w-7 h-7 flex items-center justify-center bg-primary text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 active:scale-95 transition-all touch-manipulation flex-shrink-0"
+                  className="w-[30px] h-[30px] flex items-center justify-center bg-primary text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 active:scale-95 transition-all touch-manipulation flex-shrink-0 shadow-sm shadow-primary/30"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />

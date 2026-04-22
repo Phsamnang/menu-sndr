@@ -42,12 +42,21 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
+    const isLoginEndpoint = error.config?.url?.includes("/api/auth/login");
+
+    if (error.response?.status === 401 && !isLoginEndpoint) {
       removeToken();
       if (typeof window !== "undefined") {
         window.location.href = "/login";
       }
     }
+
+    // Surface the server's error message instead of Axios's generic one
+    const serverMessage = (error.response?.data as any)?.error?.message;
+    if (serverMessage) {
+      return Promise.reject(new Error(serverMessage));
+    }
+
     return Promise.reject(error);
   }
 );

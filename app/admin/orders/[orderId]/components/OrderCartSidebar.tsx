@@ -320,21 +320,28 @@ export default function OrderCartSidebar({
         style={{ touchAction: "pan-y" }}
       >
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            {onCloseSidebar && (
-              <button onClick={onCloseSidebar} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 touch-manipulation">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200 flex-shrink-0">
+          {onCloseSidebar && (
+            <button onClick={onCloseSidebar} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 touch-manipulation flex-shrink-0">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+          <div className="flex-1 min-w-0">
             <h2 className="text-sm font-bold text-slate-800">ការបញ្ជាទិញ</h2>
+            <p className="text-[10px] text-slate-400 mt-0.5 truncate">
+              {orderItems.length} មុខ
+              {orderData?.table && ` · តុ ${orderData.table.number} · ${orderData.table.tableType.displayName}`}
+            </p>
           </div>
-          {orderData?.table && (
-            <span className="px-3 py-1 border border-slate-300 rounded-lg text-xs font-medium text-slate-700">
-              តុ {orderData.table.number}
-            </span>
+          {orderItems.length > 0 && orderData?.status !== "completed" && (
+            <button
+              onClick={() => orderItems.forEach((i) => removeFromCart(i.id))}
+              className="text-[10px] text-slate-400 hover:text-red-500 transition-colors flex-shrink-0 touch-manipulation"
+            >
+              លុបទាំងអស់
+            </button>
           )}
         </div>
 
@@ -347,19 +354,6 @@ export default function OrderCartSidebar({
             placeholder="ឈ្មោះអតិថិជន..."
             className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-colors"
           />
-        </div>
-
-        {/* ── Items header ── */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 flex-shrink-0">
-          <span className="text-xs font-semibold text-slate-700">មុខម្ហូប</span>
-          {orderItems.length > 0 && orderData?.status !== "completed" && (
-            <button
-              onClick={() => orderItems.forEach((i) => removeFromCart(i.id))}
-              className="text-xs text-red-400 hover:text-red-600 transition-colors"
-            >
-              លុបទាំងអស់
-            </button>
-          )}
         </div>
 
         {/* ── Scrollable items ── */}
@@ -375,22 +369,22 @@ export default function OrderCartSidebar({
           ) : (
             <div className="p-3 space-y-2">
               {orderItems.map((item) => (
-                <div key={item.id} className="bg-slate-50 rounded-xl p-2.5 border border-slate-100">
-                  <div className="flex gap-2.5">
+                <div key={item.id} className="group bg-white rounded-xl p-2.5 border border-slate-200 hover:bg-slate-50 transition-colors">
+                  <div className="flex gap-2.5 items-flex-start">
                     {/* Thumbnail */}
-                    <div className="w-12 h-12 rounded-lg bg-slate-200 overflow-hidden flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-slate-200 overflow-hidden flex-shrink-0">
                       {item.menuItem.image ? (
                         <OptimizedImage
                           src={item.menuItem.image}
                           alt={item.menuItem.name}
-                          width={48}
-                          height={48}
+                          width={40}
+                          height={40}
                           className="w-full h-full object-cover"
                           quality={70}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                               d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
@@ -400,49 +394,47 @@ export default function OrderCartSidebar({
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-1 mb-1">
-                        <p className="text-xs font-semibold text-slate-800 line-clamp-2 leading-snug flex-1">
-                          {item.menuItem.name}
-                        </p>
-                        <button
-                          onClick={() => removeFromCart(item.id)}
-                          disabled={
-                            deleteItemMutation.isPending ||
-                            orderData?.status === "completed" ||
-                            (item.menuItem.isCook && item.status === "served")
-                          }
-                          className="flex-shrink-0 w-6 h-6 flex items-center justify-center text-slate-300 hover:text-red-500 disabled:opacity-30 transition-colors rounded touch-manipulation"
-                        >
-                          ×
-                        </button>
-                      </div>
+                      <p className="text-xs font-semibold text-slate-800 line-clamp-2 leading-snug mb-1">
+                        {item.menuItem.name}
+                      </p>
 
-                      {/* Status badge */}
-                      {item.status && item.status !== "pending" && (
-                        <span className={`inline-flex text-[10px] px-1.5 py-0.5 rounded-full font-medium mb-1 ${
-                          item.status === "preparing" ? "bg-primary/10 text-primary"
-                          : item.status === "ready" ? "bg-primary/10 text-primary"
-                          : item.status === "served" ? "bg-green-100 text-green-700"
-                          : "bg-slate-100 text-slate-600"
-                        }`}>
-                          {item.status === "preparing" ? "កំពុងរៀបចំ"
-                            : item.status === "ready" ? "រួចរាល់"
-                            : item.status === "served" ? "បានដឹក"
-                            : item.status}
-                        </span>
-                      )}
+                      {/* Status badge — always shown */}
+                      <span className={`inline-flex text-[10px] px-1.5 py-0.5 rounded font-semibold mb-1.5 ${
+                        item.status === "served"    ? "bg-green-100 text-green-700"
+                        : item.status === "ready"   ? "bg-green-500/10 text-green-700"
+                        : item.status === "preparing" ? "bg-primary/10 text-primary"
+                        : "bg-amber-500/10 text-amber-700"
+                      }`}>
+                        {item.status === "preparing" ? "កំពុងចម្អិន"
+                          : item.status === "ready"   ? "រួចរាល់"
+                          : item.status === "served"  ? "បានដឹក"
+                          : "រង់ចាំ"}
+                      </span>
 
-                      {/* Price + qty row */}
-                      <div className="flex items-center justify-between gap-1">
-                        <p className="text-xs font-bold text-primary">
-                          {item.unitPrice.toLocaleString("km-KH")}៛
-                        </p>
-                        <span className="text-xs text-slate-500">x{item.quantity}</span>
-                        <p className="text-xs font-bold text-slate-700">
+                      {/* Price row */}
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] text-slate-400">× {item.unitPrice.toLocaleString("km-KH")}៛</span>
+                        <span className="text-[10px] text-slate-400">· {item.quantity}ចំណុច</span>
+                        <span className="ml-auto text-xs font-bold text-slate-700">
                           {item.totalPrice.toLocaleString("km-KH")}៛
-                        </p>
+                        </span>
                       </div>
                     </div>
+
+                    {/* Remove — visible on hover */}
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      disabled={
+                        deleteItemMutation.isPending ||
+                        orderData?.status === "completed" ||
+                        (item.menuItem.isCook && item.status === "served")
+                      }
+                      className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-slate-300 hover:text-red-500 disabled:opacity-30 transition-all opacity-0 group-hover:opacity-100 touch-manipulation rounded"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -532,7 +524,7 @@ export default function OrderCartSidebar({
             </div>
           ) : (
             <div className="space-y-2">
-              {/* Hold / Discount / Print row */}
+              {/* Secondary actions */}
               <div className="flex gap-2">
                 <button
                   onClick={handleCancelOrder}
@@ -551,22 +543,44 @@ export default function OrderCartSidebar({
                 >
                   បញ្ចុះតម្លៃ
                 </button>
-                <button
-                  onClick={handlePrintInvoice}
-                  className="flex-1 py-2 border border-slate-300 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50 active:bg-slate-100 touch-manipulation transition-colors"
-                >
-                  បោះពុម្ព
-                </button>
               </div>
 
-              {/* Proceed Payment */}
-              <button
-                onClick={handlePlaceOrder}
-                disabled={!orderItems || orderItems.length === 0 || completePaymentMutation.isPending}
-                className="w-full py-3 btn-primary rounded-xl text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation transition-colors"
-              >
-                {completePaymentMutation.isPending ? "កំពុង..." : "ទូទាត់ប្រាក់"}
-              </button>
+              {/* Notice box */}
+              {orderItems.length > 0 && (
+                <div className="bg-primary/5 border border-primary/15 rounded-lg px-3 py-2 text-center">
+                  <p className="text-[10px] text-primary">ពិនិត្យម្ហូបម្ដងទៀតមុននឹងទូទាត់</p>
+                </div>
+              )}
+
+              {/* Print + Payment row */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handlePrintInvoice}
+                  className="w-[46px] h-[46px] flex-shrink-0 flex items-center justify-center bg-slate-100 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-200 active:bg-slate-300 touch-manipulation transition-colors"
+                  title="បោះពុម្ព"
+                >
+                  <svg className="w-4.5 h-4.5 w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={handlePlaceOrder}
+                  disabled={!orderItems || orderItems.length === 0 || completePaymentMutation.isPending}
+                  className="flex-1 h-[46px] btn-primary rounded-xl text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation transition-all flex items-center justify-center gap-2 shadow-md shadow-primary/25"
+                >
+                  {completePaymentMutation.isPending ? (
+                    "កំពុង..."
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      ទូទាត់ប្រាក់
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           )}
         </div>
