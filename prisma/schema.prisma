@@ -67,8 +67,8 @@ model MenuItem {
   name            String
   description     String
   image           String
-  categoryId      String
-  category        Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  categoryId      String?
+  category        Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   isCook          Boolean     @default(false)
   isAvailable     Boolean     @default(true)
   preparationTime Int?        // in minutes

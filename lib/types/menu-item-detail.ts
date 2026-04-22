@@ -5,7 +5,7 @@ export interface MenuItemDetail {
   name: string;
   description: string;
   image: string;
-  categoryId: string;
+  categoryId: string | null;
   categoryName?: string;
   isCook?: boolean;
   prices: Price[];

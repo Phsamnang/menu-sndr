@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 import Table, { TableColumn } from "@/components/Table";
 import { categoryService, Category } from "@/services/category.service";
 import CategoryModal from "./components/CategoryModal";
@@ -28,36 +29,27 @@ export default function CategoriesPage() {
     mutationFn: (data: typeof formData) => categoryService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("បានបន្ថែមប្រភេទម្ហូបដោយជោគជ័យ!");
       setIsModalOpen(false);
-      setFormData({
-        name: "",
-        displayName: "",
-        description: "",
-        sortOrder: 0,
-        isActive: true,
-      });
+      setFormData({ name: "", displayName: "", description: "", sortOrder: 0, isActive: true });
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "មិនអាចបន្ថែមប្រភេទម្ហូបបានទេ");
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: typeof formData;
-    }) => categoryService.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: typeof formData }) =>
+      categoryService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("បានកែប្រែប្រភេទម្ហូបដោយជោគជ័យ!");
       setIsModalOpen(false);
       setEditingCategory(null);
-      setFormData({
-        name: "",
-        displayName: "",
-        description: "",
-        sortOrder: 0,
-        isActive: true,
-      });
+      setFormData({ name: "", displayName: "", description: "", sortOrder: 0, isActive: true });
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "មិនអាចកែប្រែប្រភេទម្ហូបបានទេ");
     },
   });
 
@@ -65,6 +57,10 @@ export default function CategoriesPage() {
     mutationFn: (id: string) => categoryService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("បានលុបប្រភេទម្ហូបដោយជោគជ័យ!");
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "មិនអាចលុបប្រភេទម្ហូបនេះបានទេ");
     },
   });
 
@@ -151,9 +147,11 @@ export default function CategoriesPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (!confirm(`លុបប្រភេទ "${item.displayName}" មែនទេ?`)) return;
                       deleteMutation.mutate(item.id);
                     }}
-                    className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors"
+                    disabled={deleteMutation.isPending}
+                    className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
                   >
                     លុប
                   </button>
