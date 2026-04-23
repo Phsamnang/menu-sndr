@@ -5,9 +5,11 @@ import puppeteer from "puppeteer-core";
 import QRCode from "qrcode";
 
 async function getBrowser() {
+  const executablePath = await chromium.executablePath();
+  console.log("[invoice] chromium executablePath:", executablePath);
   return puppeteer.launch({
     args: chromium.args,
-    executablePath: await chromium.executablePath(),
+    executablePath,
     headless: true,
   });
 }

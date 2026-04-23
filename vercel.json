@@ -1,0 +1,9 @@
+{
+  "functions": {
+    "app/api/admin/orders/[id]/invoice-image/route.ts": {
+      "includeFiles": "node_modules/@sparticuz/chromium/bin/**",
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  }
+}
