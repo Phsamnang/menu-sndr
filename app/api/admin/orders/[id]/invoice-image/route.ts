@@ -1,30 +1,15 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { chromium, type Browser } from "playwright";
+import chromium from "@sparticuz/chromium";
+import puppeteer from "puppeteer-core";
 import QRCode from "qrcode";
 
-let sharedBrowser: Browser | null = null;
-
-async function getBrowser(): Promise<Browser> {
-  if (sharedBrowser && sharedBrowser.isConnected()) {
-    return sharedBrowser;
-  }
-
-  sharedBrowser = await chromium.launch({
+async function getBrowser() {
+  return puppeteer.launch({
+    args: chromium.args,
+    executablePath: await chromium.executablePath(),
     headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-      "--single-process",
-      "--no-zygote",
-      "--disable-extensions",
-      "--disable-software-rasterizer",
-    ],
   });
-
-  return sharedBrowser;
 }
 
 async function getHandler(
@@ -467,32 +452,24 @@ const invoiceHTML = `
     `;
 
     const browser = await getBrowser();
+    const page = await browser.newPage();
 
     try {
-      const page = await browser.newPage();
-
-      await page.setViewportSize({ width: 450, height: 800 });
-
+      await page.setViewport({ width: 450, height: 800 });
       await page.setContent(invoiceHTML, { waitUntil: "load" });
-
-      // Wait for font files to finish loading after the font CSS has been fetched
       await page.evaluate(() => document.fonts.ready);
 
-      const screenshot = await page.screenshot({
-        type: "png",
-        fullPage: true,
-      });
+      const screenshot = await page.screenshot({ type: "png", fullPage: true });
 
-      await page.close();
-
-      return new Response(screenshot as any, {
+      return new Response(screenshot, {
         headers: {
           "Content-Type": "image/png",
           "Content-Disposition": `inline; filename="invoice-${order.orderNumber}.png"`,
         },
       });
-    } catch (error) {
-      throw error;
+    } finally {
+      await page.close().catch(() => {});
+      await browser.close().catch(() => {});
     }
   } catch (error: any) {
     console.error("Error generating invoice image:", error);
