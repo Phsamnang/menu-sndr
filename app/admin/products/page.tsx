@@ -2,7 +2,6 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import Link from "next/link";
 import Table, { TableColumn } from "@/components/Table";
 import { productService, Product } from "@/services/product.service";
 import ProductModal from "./components/ProductModal";
@@ -173,12 +172,6 @@ export default function ProductsPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-slate-800">គ្រប់គ្រងផលិតផល</h1>
           <div className="flex gap-4">
-            <Link
-              href="/admin"
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
-            >
-              ត្រលប់
-            </Link>
             <button
               onClick={() => {
                 setEditingProduct(null);

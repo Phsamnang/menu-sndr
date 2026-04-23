@@ -155,10 +155,17 @@ async function deleteHandler(
 
     return successResponse(null, "Menu item deleted successfully");
   } catch (error: any) {
-    console.error("Error deleting menu item:", error);
     if (error?.code === "P2025") {
       return errorResponse("NOT_FOUND", "Menu item not found", 404);
     }
+    if (error?.code === "P2003") {
+      return errorResponse(
+        "IN_USE",
+        "This menu item has order history and cannot be deleted. Mark it unavailable instead.",
+        409
+      );
+    }
+    console.error("Error deleting menu item:", error);
     return errorResponse(
       "DELETE_MENU_ITEM_ERROR",
       "Failed to delete menu item",

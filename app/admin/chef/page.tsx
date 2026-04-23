@@ -9,7 +9,6 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import { useState, useMemo, useCallback } from "react";
-import Link from "next/link";
 import OptimizedImage from "@/components/OptimizedImage";
 import { apiClientJson } from "@/utils/api-client";
 import { useChefStream } from "@/hooks/useChefStream";
@@ -254,12 +253,6 @@ export default function ChefPage() {
             </p>
           </div>
 
-          <Link
-            href="/admin"
-            className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 text-sm"
-          >
-            ត្រលប់
-          </Link>
         </div>
 
         {/* Filters */}

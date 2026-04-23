@@ -2,7 +2,6 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import Link from "next/link";
 import toast from "react-hot-toast";
 import Table, { TableColumn } from "@/components/Table";
 import { categoryService, Category } from "@/services/category.service";
@@ -91,12 +90,6 @@ export default function CategoriesPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-slate-800">ប្រភេទម្ហូប</h1>
           <div className="flex gap-4">
-            <Link
-              href="/admin"
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
-            >
-              ត្រលប់
-            </Link>
             <button
               onClick={() => {
                 setEditingCategory(null);

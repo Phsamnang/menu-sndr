@@ -2,7 +2,6 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import Link from "next/link";
 import Table, { TableColumn } from "@/components/Table";
 import { inventoryService, Inventory } from "@/services/inventory.service";
 import { productService } from "@/services/product.service";
@@ -220,12 +219,6 @@ export default function InventoryPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-slate-800">ស្តុក</h1>
           <div className="flex gap-4">
-            <Link
-              href="/admin"
-              className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700"
-            >
-              ត្រលប់
-            </Link>
             <button
               onClick={() => {
                 setEditingInventory(null);

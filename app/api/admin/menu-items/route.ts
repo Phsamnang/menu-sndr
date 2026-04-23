@@ -70,7 +70,7 @@ async function getHandler(request: AuthenticatedRequest) {
 
     const formatted = menuItems.map((item: MenuItemWithRelations) => ({
       ...item,
-      categoryName: item.category.name,
+      categoryName: item.category?.name ?? null,
       prices: item.prices.map((p) => ({
         id: p.id,
         tableTypeId: p.tableTypeId,

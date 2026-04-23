@@ -88,6 +88,13 @@ async function postHandler(
     if (shouldCompleteOrder) {
       orderUpdateData.status = "completed";
       orderUpdateData.completedAt = new Date();
+      await prisma.orderItem.updateMany({
+        where: {
+          orderId: id,
+          status: { notIn: ["served", "cancelled"] },
+        },
+        data: { status: "served" },
+      });
     }
 
     const [payment, updatedOrder] = await Promise.all([

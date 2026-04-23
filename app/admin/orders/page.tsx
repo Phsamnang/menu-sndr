@@ -3,7 +3,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import toast from "react-hot-toast";
 import OptimizedImage from "@/components/OptimizedImage";
 import InvoicePrint from "@/components/InvoicePrint";
@@ -137,20 +136,49 @@ export default function OrdersPage() {
     }, {} as Record<string, TableItem[]>);
   }, [tables]);
 
-  const getTableStatusColor = (status: string) => {
-    switch (status) {
-      case "available":
-        return "bg-green-100 border-green-400 text-green-800";
-      case "occupied":
-        return "bg-red-100 border-red-400 text-red-800";
-      case "reserved":
-        return "bg-yellow-100 border-yellow-400 text-yellow-800";
-      case "maintenance":
-        return "bg-gray-100 border-gray-400 text-gray-800";
-      default:
-        return "bg-slate-100 border-slate-400 text-slate-800";
+  const [tableTypeFilter, setTableTypeFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "available" | "occupied" | "reserved" | "maintenance"
+  >("all");
+  const [tableSearch, setTableSearch] = useState<string>("");
+
+  const tableTypeOptions = useMemo(() => {
+    const order = Object.entries(tablesByType).map(([name, list]) => ({
+      name,
+      count: list.length,
+    }));
+    return order;
+  }, [tablesByType]);
+
+  const statusCounts = useMemo(() => {
+    const counts = {
+      all: tables.length,
+      available: 0,
+      occupied: 0,
+      reserved: 0,
+      maintenance: 0,
+    };
+    for (const t of tables) {
+      if (t.status in counts) {
+        (counts as any)[t.status]++;
+      }
     }
-  };
+    return counts;
+  }, [tables]);
+
+  const filteredTables = useMemo(() => {
+    const q = tableSearch.trim().toLowerCase();
+    return tables.filter((t) => {
+      if (tableTypeFilter !== "all" && t.tableType.displayName !== tableTypeFilter) return false;
+      if (statusFilter !== "all" && t.status !== statusFilter) return false;
+      if (q) {
+        const name = (t.name || "").toLowerCase();
+        const number = String(t.number || "").toLowerCase();
+        if (!name.includes(q) && !number.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [tables, tableTypeFilter, statusFilter, tableSearch]);
 
   const getTableStatusLabel = (status: string) => {
     switch (status) {
@@ -631,30 +659,121 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-2 xs:p-3 sm:p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-[#F4F6FB] p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2 xs:gap-3 sm:gap-4 mb-3 xs:mb-4 sm:mb-6 md:mb-8">
-          <h1 className="text-lg xs:text-xl sm:text-2xl md:text-3xl font-bold text-slate-800">
+        {/* Header */}
+        <div className="mb-5">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
             ជ្រើសរើសតុ
           </h1>
-          <Link
-            href="/admin"
-            className="px-3 xs:px-4 py-2 xs:py-2.5 btn-primary rounded-lg text-xs xs:text-sm md:text-base w-full xs:w-auto text-center touch-manipulation min-h-[44px] flex items-center justify-center"
-          >
-            ត្រលប់
-          </Link>
-        </div>
-
-        <div className="mb-3 xs:mb-4 sm:mb-6">
-          <p className="text-slate-600 text-xs xs:text-sm sm:text-base mb-2 xs:mb-3 sm:mb-4">
-            សូមជ្រើសរើសតុដើម្បីចាប់ផ្តើមការបញ្ជាទិញ
+          <p className="text-slate-500 text-sm mt-1">
+            សូមជ្រើសរើសតុដើម្បីចាប់ផ្ដើមការបញ្ជាទិញ
           </p>
         </div>
 
+        {/* Filters sheet */}
+        <div className="bg-white rounded-[20px] border border-[#E9ECEF] p-4 sm:p-5 mb-5">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+            {/* Table type dropdown */}
+            <div className="flex-shrink-0">
+              <label className="block text-[11px] font-semibold text-[#6C757D] uppercase tracking-[0.05em] mb-1.5">
+                ប្រភេទតុ
+              </label>
+              <div className="relative">
+                <select
+                  value={tableTypeFilter}
+                  onChange={(e) => setTableTypeFilter(e.target.value)}
+                  className="appearance-none w-full lg:w-56 px-4 py-2.5 pr-9 rounded-lg border border-[#DEE2E6] bg-white text-sm font-medium text-slate-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                >
+                  <option value="all">
+                    គ្រប់ប្រភេទ ({tables.length})
+                  </option>
+                  {tableTypeOptions.map((opt) => (
+                    <option key={opt.name} value={opt.name}>
+                      {opt.name} ({opt.count})
+                    </option>
+                  ))}
+                </select>
+                <svg
+                  className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="flex-1">
+              <label className="block text-[11px] font-semibold text-[#6C757D] uppercase tracking-[0.05em] mb-1.5">
+                ស្វែងរក
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={tableSearch}
+                  onChange={(e) => setTableSearch(e.target.value)}
+                  placeholder="ឈ្មោះតុ ឬលេខតុ..."
+                  className="w-full px-4 py-2.5 pl-10 rounded-lg border border-[#DEE2E6] bg-white text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+                <svg
+                  className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Status chips */}
+          <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-[#E9ECEF]">
+            {[
+              { key: "all" as const, label: "ទាំងអស់", color: "slate" },
+              { key: "available" as const, label: "អាចប្រើបាន", color: "green" },
+              { key: "occupied" as const, label: "កំពុងប្រើ", color: "red" },
+              { key: "reserved" as const, label: "កក់ទុក", color: "yellow" },
+              { key: "maintenance" as const, label: "ជួសជុល", color: "gray" },
+            ].map((chip) => {
+              const active = statusFilter === chip.key;
+              return (
+                <button
+                  key={chip.key}
+                  onClick={() => setStatusFilter(chip.key)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                    active
+                      ? "bg-primary border-primary text-white"
+                      : "bg-white border-[#DEE2E6] text-slate-600 hover:border-primary hover:text-primary"
+                  }`}
+                >
+                  {chip.label}
+                  <span
+                    className={`ml-0.5 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] ${
+                      active
+                        ? "bg-white/20 text-white"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {(statusCounts as any)[chip.key]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tables grid */}
         {tables.length === 0 ? (
-          <div className="text-center py-8 xs:py-10 sm:py-12 bg-white rounded-lg shadow-sm">
+          <div className="text-center py-16 bg-white rounded-[20px] border border-[#E9ECEF]">
             <svg
-              className="w-12 xs:w-14 sm:w-16 md:w-20 h-12 xs:h-14 sm:h-16 md:h-20 text-slate-300 mx-auto mb-3 xs:mb-4"
+              className="w-16 h-16 text-slate-300 mx-auto mb-3"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -666,69 +785,90 @@ export default function OrdersPage() {
                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
               />
             </svg>
-            <p className="text-slate-500 text-sm xs:text-base sm:text-lg md:text-xl">មិនមានតុទេ</p>
+            <p className="text-slate-500">មិនមានតុទេ</p>
+          </div>
+        ) : filteredTables.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-[20px] border border-[#E9ECEF]">
+            <p className="text-slate-500 text-sm">
+              រកមិនឃើញតុតាមលក្ខខណ្ឌនេះទេ
+            </p>
+            <button
+              onClick={() => {
+                setTableTypeFilter("all");
+                setStatusFilter("all");
+                setTableSearch("");
+              }}
+              className="mt-3 text-sm font-semibold text-primary hover:underline"
+            >
+              សម្អាតតម្រង
+            </button>
           </div>
         ) : (
-          <div className="space-y-3 xs:space-y-4 sm:space-y-6">
-            {Object.entries(tablesByType).map(([typeName, typeTables]) => (
-              <div key={typeName} className="space-y-1.5 xs:space-y-2 sm:space-y-3">
-                <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 px-0 xs:px-1 sm:px-2">
-                  <div className="h-0.5 w-6 xs:w-8 sm:w-12 bg-gradient-to-r from-slate-800 to-slate-600 rounded-full flex-shrink-0"></div>
-                  <h2 className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-slate-800 truncate">
-                    {typeName}
-                  </h2>
-                  <div className="flex-1 h-0.5 bg-gradient-to-r from-slate-300 to-transparent rounded-full min-w-0"></div>
-                  <span className="text-[11px] xs:text-xs sm:text-sm font-semibold text-slate-500 bg-slate-100 px-1.5 xs:px-2 sm:px-2.5 py-0.5 rounded-full flex-shrink-0">
-                    {typeTables.length}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 xs:gap-2 sm:gap-3 md:gap-4">
-                  {typeTables.map((table) => {
-                    const isAvailable = table.status === "available";
-                    const tableOrders = ordersByTable[table.id] || [];
-                    const hasActiveOrder = tableOrders.some(
-                      (o) => o.status === "new" || o.status === "on_process"
-                    );
-                    const canSelect = isAvailable || hasActiveOrder;
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            {filteredTables.map((table) => {
+              const isAvailable = table.status === "available";
+              const tableOrders = ordersByTable[table.id] || [];
+              const hasActiveOrder = tableOrders.some(
+                (o) => o.status === "new" || o.status === "on_process"
+              );
+              const isMaintenance = table.status === "maintenance";
 
-                    return (
-                      <button
-                        key={table.id}
-                        onClick={() => handleTableSelect(table)}
-                        disabled={!canSelect && table.status === "maintenance"}
-                        className={`rounded-lg shadow-md p-2 xs:p-3 sm:p-4 md:p-5 lg:p-6 transition-all border-2 touch-manipulation min-h-[70px] xs:min-h-[80px] sm:min-h-[100px] md:min-h-[120px] flex flex-col items-center justify-center ${canSelect || hasActiveOrder
-                          ? "hover:shadow-lg xs:hover:shadow-xl cursor-pointer active:scale-95 xs:hover:scale-105"
-                          : table.status === "maintenance"
-                            ? "opacity-75 cursor-not-allowed"
-                            : "hover:shadow-lg xs:hover:shadow-xl cursor-pointer active:scale-95 xs:hover:scale-105"
-                          } ${getTableStatusColor(table.status)}`}
-                      >
-                        <div className="text-center w-full">
-                          <h3
-                            className={`font-semibold mb-1 xs:mb-1.5 sm:mb-2 text-[11px] xs:text-xs sm:text-sm md:text-base leading-tight ${isAvailable ? "text-slate-900" : "text-slate-700"
-                              }`}
-                          >
-                            {table.name || `តុ ${table.number}`}
-                          </h3>
-                          <span
-                            className={`inline-block px-1.5 xs:px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] xs:text-[10px] sm:text-xs font-medium ${isAvailable
-                              ? "bg-green-200 text-green-800"
-                              : table.status === "occupied"
-                                ? "bg-red-200 text-red-800"
-                                : table.status === "reserved"
-                                  ? "bg-yellow-200 text-yellow-800"
-                                  : "bg-gray-200 text-gray-800"
-                              }`}
-                          >
-                            {getTableStatusLabel(table.status)}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+              return (
+                <button
+                  key={table.id}
+                  onClick={() => handleTableSelect(table)}
+                  disabled={isMaintenance}
+                  className={`group relative bg-white rounded-2xl border border-[#E9ECEF] p-4 text-left transition-all flex flex-col gap-3 ${
+                    isMaintenance
+                      ? "opacity-60 cursor-not-allowed"
+                      : "hover:border-primary hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
+                  }`}
+                >
+                  {/* Status stripe */}
+                  <span
+                    className={`absolute top-0 left-4 right-4 h-1 rounded-b-full ${
+                      isAvailable
+                        ? "bg-green-400"
+                        : table.status === "occupied"
+                        ? "bg-red-400"
+                        : table.status === "reserved"
+                        ? "bg-yellow-400"
+                        : "bg-slate-300"
+                    }`}
+                  />
+
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                        {table.tableType.displayName}
+                      </div>
+                      <h3 className="font-bold text-slate-900 text-base leading-tight mt-0.5 truncate">
+                        {table.name || `តុ ${table.number}`}
+                      </h3>
+                    </div>
+                    {hasActiveOrder && (
+                      <span className="flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold">
+                        ●
+                      </span>
+                    )}
+                  </div>
+
+                  <span
+                    className={`inline-flex items-center gap-1 self-start px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                      isAvailable
+                        ? "bg-green-100 text-green-700"
+                        : table.status === "occupied"
+                        ? "bg-red-100 text-red-700"
+                        : table.status === "reserved"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    ● {getTableStatusLabel(table.status)}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

@@ -147,6 +147,16 @@ async function putHandler(
     if (changeAmount !== undefined) updateData.changeAmount = changeAmount;
     if (notes !== undefined) updateData.notes = notes;
 
+    if (status === "completed") {
+      await prisma.orderItem.updateMany({
+        where: {
+          orderId: id,
+          status: { notIn: ["served", "cancelled"] },
+        },
+        data: { status: "served" },
+      });
+    }
+
     const [updatedOrder] = await Promise.all([
       prisma.order.update({
         where: { id },

@@ -2,7 +2,6 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import Link from "next/link";
 import Table, { TableColumn } from "@/components/Table";
 import {
   recipeItemService,
@@ -197,12 +196,6 @@ export default function RecipeItemsPage() {
             គ្រប់គ្រងរូបមន្ត
           </h1>
           <div className="flex gap-4">
-            <Link
-              href="/admin"
-              className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700"
-            >
-              ត្រលប់
-            </Link>
             <button
               onClick={() => {
                 setEditingItem(null);

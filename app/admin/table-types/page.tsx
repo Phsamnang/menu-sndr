@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import Link from "next/link";
+import toast from "react-hot-toast";
 import Table from "@/components/Table";
 import { tableTypeService, TableType } from "@/services/table-type.service";
 import TableTypeModal from "./components/TableTypeModal";
@@ -29,6 +29,10 @@ export default function TableTypesPage() {
       queryClient.invalidateQueries({ queryKey: ["tableTypes"] });
       setIsModalOpen(false);
       setFormData({ name: "", displayName: "", order: 0 });
+      toast.success("បានបន្ថែមប្រភេទតុដោយជោគជ័យ!");
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "មិនអាចបន្ថែមប្រភេទតុបានទេ");
     },
   });
 
@@ -45,6 +49,10 @@ export default function TableTypesPage() {
       setIsModalOpen(false);
       setEditingType(null);
       setFormData({ name: "", displayName: "", order: 0 });
+      toast.success("បានកែប្រែប្រភេទតុដោយជោគជ័យ!");
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "មិនអាចកែប្រែប្រភេទតុបានទេ");
     },
   });
 
@@ -52,6 +60,10 @@ export default function TableTypesPage() {
     mutationFn: (id: string) => tableTypeService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tableTypes"] });
+      toast.success("បានលុបប្រភេទតុដោយជោគជ័យ!");
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "មិនអាចលុបប្រភេទតុនេះបានទេ");
     },
   });
 
@@ -80,12 +92,6 @@ export default function TableTypesPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-slate-800">ប្រភេទតុ</h1>
           <div className="flex gap-4">
-            <Link
-              href="/admin"
-              className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700"
-            >
-              ត្រលប់
-            </Link>
             <button
               onClick={() => {
                 setEditingType(null);
@@ -137,9 +143,11 @@ export default function TableTypesPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (!confirm(`លុបប្រភេទតុ "${item.displayName}" មែនទេ?`)) return;
                       deleteMutation.mutate(item.id);
                     }}
-                    className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors"
+                    disabled={deleteMutation.isPending}
+                    className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
                   >
                     លុប
                   </button>

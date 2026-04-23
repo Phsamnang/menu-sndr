@@ -8,16 +8,12 @@ import {
   flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
-import Link from "next/link";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { orderService, Order } from "@/services/order.service";
 import {
   FaDollarSign,
   FaShoppingCart,
   FaChartLine,
-  FaCalendarAlt,
-  FaChevronLeft,
-  FaChevronRight,
   FaMoneyBillWave,
   FaCreditCard,
   FaUniversity,
@@ -34,27 +30,31 @@ interface PaymentMethodStat {
 
 const METHOD_CONFIG: Record<
   string,
-  { label: string; icon: React.ReactNode; color: string }
+  { label: string; icon: React.ReactNode; bg: string; text: string }
 > = {
   cash: {
     label: "សាច់ប្រាក់",
-    icon: <FaMoneyBillWave className="text-2xl text-green-600" />,
-    color: "border-green-500",
+    icon: <FaMoneyBillWave />,
+    bg: "bg-green-50",
+    text: "text-green-600",
   },
   card: {
     label: "កាត",
-    icon: <FaCreditCard className="text-2xl text-blue-600" />,
-    color: "border-blue-500",
+    icon: <FaCreditCard />,
+    bg: "bg-blue-50",
+    text: "text-blue-600",
   },
   bank_transfer: {
     label: "ផ្ទេរប្រាក់",
-    icon: <FaUniversity className="text-2xl text-purple-600" />,
-    color: "border-purple-500",
+    icon: <FaUniversity />,
+    bg: "bg-purple-50",
+    text: "text-purple-600",
   },
   mobile_payment: {
     label: "ទូរស័ព្ទ",
-    icon: <FaMobileAlt className="text-2xl text-orange-600" />,
-    color: "border-orange-500",
+    icon: <FaMobileAlt />,
+    bg: "bg-orange-50",
+    text: "text-orange-600",
   },
 };
 
@@ -74,7 +74,6 @@ export default function SalesManagementPage() {
     setIsClient(true);
   }, []);
 
-  // Ensure endDate is not before startDate
   useEffect(() => {
     if (endDate < startDate) {
       setEndDate(startDate);
@@ -117,9 +116,7 @@ export default function SalesManagementPage() {
       }>(
         `/api/admin/payments/stats?startDate=${startOfDay.toISOString()}&endDate=${endOfDay.toISOString()}`
       );
-      if (!result.success || !result.data) {
-        return [];
-      }
+      if (!result.success || !result.data) return [];
       return result.data.items;
     },
   });
@@ -132,26 +129,13 @@ export default function SalesManagementPage() {
       (sum, order) => sum + (order.discountAmount || 0),
       0
     );
-    const totalSubtotal = orders.reduce(
-      (sum, order) => sum + order.subtotal,
-      0
-    );
-
-    return {
-      totalOrders,
-      totalIncome,
-      averageOrderValue,
-      totalDiscount,
-      totalSubtotal,
-    };
+    const totalSubtotal = orders.reduce((sum, order) => sum + order.subtotal, 0);
+    return { totalOrders, totalIncome, averageOrderValue, totalDiscount, totalSubtotal };
   }, [orders]);
 
   const formatDate = (dateString: string) => {
-    if (!isClient) {
-      return dateString;
-    }
-    const date = new Date(dateString);
-    return date.toLocaleDateString("km-KH", {
+    if (!isClient) return dateString;
+    return new Date(dateString).toLocaleDateString("km-KH", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -160,11 +144,8 @@ export default function SalesManagementPage() {
 
   const formatTime = useCallback(
     (dateString: string) => {
-      if (!isClient) {
-        return dateString;
-      }
-      const date = new Date(dateString);
-      return date.toLocaleTimeString("km-KH", {
+      if (!isClient) return dateString;
+      return new Date(dateString).toLocaleTimeString("km-KH", {
         hour: "2-digit",
         minute: "2-digit",
       });
@@ -172,14 +153,13 @@ export default function SalesManagementPage() {
     [isClient]
   );
 
-  // Define columns for TanStack Table
   const columns = useMemo<ColumnDef<Order>[]>(
     () => [
       {
         accessorKey: "orderNumber",
         header: "លេខការបញ្ជាទិញ",
         cell: (info) => (
-          <span className="text-sm font-medium text-slate-900">
+          <span className="font-medium text-slate-800">
             #{info.getValue() as string}
           </span>
         ),
@@ -188,12 +168,10 @@ export default function SalesManagementPage() {
         accessorKey: "table",
         header: "តុ",
         cell: (info) => {
-          const table = info.getValue() as Order["table"];
+          const t = info.getValue() as Order["table"];
           return (
-            <span className="text-sm text-slate-600">
-              {table
-                ? `តុ ${table.number}${table.name ? ` - ${table.name}` : ""}`
-                : "-"}
+            <span className="text-[#6C757D]">
+              {t ? `តុ ${t.number}${t.name ? ` - ${t.name}` : ""}` : "-"}
             </span>
           );
         },
@@ -202,7 +180,7 @@ export default function SalesManagementPage() {
         accessorKey: "customerName",
         header: "អតិថិជន",
         cell: (info) => (
-          <span className="text-sm text-slate-600">
+          <span className="text-[#6C757D]">
             {(info.getValue() as string) || "-"}
           </span>
         ),
@@ -211,7 +189,7 @@ export default function SalesManagementPage() {
         accessorKey: "createdAt",
         header: "ពេលវេលា",
         cell: (info) => (
-          <span className="text-sm text-slate-600">
+          <span className="text-[#6C757D]">
             {info.getValue() ? formatTime(info.getValue() as string) : "-"}
           </span>
         ),
@@ -223,7 +201,7 @@ export default function SalesManagementPage() {
           const count = info.getValue() as { items: number } | undefined;
           const items = (info.row.original as any).items;
           return (
-            <span className="text-sm text-slate-600">
+            <span className="text-[#6C757D]">
               {count?.items ?? items?.length ?? 0}
             </span>
           );
@@ -231,9 +209,9 @@ export default function SalesManagementPage() {
       },
       {
         accessorKey: "subtotal",
-        header: "សរុបមុនបញ្ចុះតម្លៃ",
+        header: "សរុបមុនបញ្ចុះ",
         cell: (info) => (
-          <span className="text-sm text-slate-600">
+          <span className="text-[#6C757D]">
             {(info.getValue() as number).toLocaleString("km-KH")}៛
           </span>
         ),
@@ -244,7 +222,7 @@ export default function SalesManagementPage() {
         cell: (info) => {
           const amount = info.getValue() as number;
           return (
-            <span className="text-sm text-red-600">
+            <span className="text-red-500">
               {amount > 0 ? `-${amount.toLocaleString("km-KH")}៛` : "-"}
             </span>
           );
@@ -254,7 +232,7 @@ export default function SalesManagementPage() {
         accessorKey: "total",
         header: "សរុប",
         cell: (info) => (
-          <span className="text-sm font-bold text-green-600">
+          <span className="font-semibold text-green-600">
             {(info.getValue() as number).toLocaleString("km-KH")}៛
           </span>
         ),
@@ -263,191 +241,144 @@ export default function SalesManagementPage() {
     [formatTime]
   );
 
-  // Set up TanStack Table with pagination
   const table = useReactTable({
     data: orders,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
+    initialState: { pagination: { pageSize: 10 } },
   });
 
+  const statCards = [
+    {
+      label: "ចំនួនការបញ្ជាទិញ",
+      value: statistics.totalOrders.toString(),
+      sub: "ការបញ្ជាទិញ",
+      icon: <FaShoppingCart />,
+      bg: "bg-primary/10",
+      text: "text-primary",
+    },
+    {
+      label: "ចំណូលសរុប",
+      value: `${statistics.totalIncome.toLocaleString("km-KH")}៛`,
+      sub: "ចំណូល",
+      icon: <FaDollarSign />,
+      bg: "bg-green-50",
+      text: "text-green-600",
+    },
+    {
+      label: "តម្លៃមធ្យម",
+      value: `${statistics.averageOrderValue.toLocaleString("km-KH", { maximumFractionDigits: 0 })}៛`,
+      sub: "ក្នុងមួយការបញ្ជាទិញ",
+      icon: <FaChartLine />,
+      bg: "bg-blue-50",
+      text: "text-blue-600",
+    },
+    {
+      label: "សរុបមុនបញ្ចុះតម្លៃ",
+      value: `${statistics.totalSubtotal.toLocaleString("km-KH")}៛`,
+      sub: `បញ្ចុះ: ${statistics.totalDiscount.toLocaleString("km-KH")}៛`,
+      icon: <FaChartLine />,
+      bg: "bg-orange-50",
+      text: "text-orange-500",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-slate-800">គ្រប់គ្រងការលក់</h1>
-          <Link
-            href="/admin"
-            className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700"
-          >
-            ត្រលប់
-          </Link>
+    <div className="min-h-screen bg-[#F4F6FB] p-6">
+      <div className="max-w-7xl mx-auto space-y-5">
+
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">គ្រប់គ្រងការលក់</h1>
+          <p className="text-sm text-[#6C757D] mt-0.5">ទិន្នន័យការលក់ និងការទូទាត់</p>
         </div>
 
-        <div className="mb-6 bg-white rounded-lg shadow-md p-6">
-          <label className="block text-sm font-medium text-slate-700 mb-4">
-            <FaCalendarAlt className="inline mr-2" />
+        {/* Date filter */}
+        <div className="bg-white rounded-[20px] border border-[#E9ECEF] px-6 py-5">
+          <p className="text-[11px] font-semibold text-[#6C757D] uppercase tracking-[0.05em] mb-4">
             ជ្រើសរើសចន្លោះកាលបរិច្ឆេទ
-          </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          </p>
+          <div className="flex flex-wrap gap-4 items-end">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-2">
-                ពីកាលបរិច្ឆេទ
-              </label>
+              <label className="block text-xs font-medium text-slate-600 mb-1.5">ពីកាលបរិច្ឆេទ</label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 max={endDate}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                className="px-3 py-2 border border-[#E9ECEF] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
-              <p className="text-xs text-slate-500 mt-1">
-                {isClient ? formatDate(startDate) : startDate}
-              </p>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-2">
-                ដល់កាលបរិច្ឆេទ
-              </label>
+              <label className="block text-xs font-medium text-slate-600 mb-1.5">ដល់កាលបរិច្ឆេទ</label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 min={startDate}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                className="px-3 py-2 border border-[#E9ECEF] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
-              <p className="text-xs text-slate-500 mt-1">
-                {isClient ? formatDate(endDate) : endDate}
-              </p>
             </div>
-          </div>
-          {startDate === endDate ? (
-            <p className="text-sm text-slate-600 mt-3">
-              កាលបរិច្ឆេទ: {isClient ? formatDate(startDate) : startDate}
+            <p className="text-sm text-[#6C757D] pb-2">
+              {startDate === endDate
+                ? isClient ? formatDate(startDate) : startDate
+                : `${isClient ? formatDate(startDate) : startDate} ដល់ ${isClient ? formatDate(endDate) : endDate}`}
             </p>
-          ) : (
-            <p className="text-sm text-slate-600 mt-3">
-              ចន្លោះកាលបរិច្ឆេទ: {isClient ? formatDate(startDate) : startDate}{" "}
-              ដល់ {isClient ? formatDate(endDate) : endDate}
-            </p>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-primary-color">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600 mb-1">
-                  ចំនួនការបញ្ជាទិញ
-                </p>
-                <p className="text-3xl font-bold text-slate-900">
-                  {statistics.totalOrders}
-                </p>
-                <p className="text-xs text-slate-500 mt-1">ការបញ្ជាទិញ</p>
-              </div>
-              <div className="icon-primary">
-                <FaShoppingCart className="text-2xl" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-primary">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600 mb-1">
-                  ចំណូលសរុប
-                </p>
-                <p className="text-3xl font-bold text-primary">
-                  {statistics.totalIncome.toLocaleString("km-KH")}៛
-                </p>
-                <p className="text-xs text-slate-500 mt-1">ចំណូល</p>
-              </div>
-              <div className="bg-primary/10 p-3 rounded-full">
-                <FaDollarSign className="text-2xl text-primary" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-primary">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600 mb-1">
-                  តម្លៃមធ្យម
-                </p>
-                <p className="text-3xl font-bold text-primary">
-                  {statistics.averageOrderValue.toLocaleString("km-KH", {
-                    maximumFractionDigits: 0,
-                  })}
-                  ៛
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  ក្នុងមួយការបញ្ជាទិញ
-                </p>
-              </div>
-              <div className="bg-primary/10 p-3 rounded-full">
-                <FaChartLine className="text-2xl text-primary" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-primary">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600 mb-1">
-                  សរុបមុនបញ្ចុះតម្លៃ
-                </p>
-                <p className="text-3xl font-bold text-primary">
-                  {statistics.totalSubtotal.toLocaleString("km-KH")}៛
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  បញ្ចុះតម្លៃ:{" "}
-                  {statistics.totalDiscount.toLocaleString("km-KH")}៛
-                </p>
-              </div>
-              <div className="bg-primary/10 p-3 rounded-full">
-                <FaChartLine className="text-2xl text-primary" />
-              </div>
-            </div>
           </div>
         </div>
 
+        {/* Stat cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {statCards.map((card) => (
+            <div
+              key={card.label}
+              className="bg-white rounded-[20px] border border-[#E9ECEF] px-5 py-5 flex items-start justify-between gap-3"
+            >
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold text-[#6C757D] uppercase tracking-[0.05em] mb-1">
+                  {card.label}
+                </p>
+                <p className={`text-2xl font-bold truncate ${card.text}`}>
+                  {card.value}
+                </p>
+                <p className="text-xs text-[#6C757D] mt-0.5">{card.sub}</p>
+              </div>
+              <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg ${card.bg} ${card.text}`}>
+                {card.icon}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Payment method stats */}
         {paymentStats.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-slate-800 mb-4">
+          <div className="bg-white rounded-[20px] border border-[#E9ECEF] px-6 py-5">
+            <p className="text-[11px] font-semibold text-[#6C757D] uppercase tracking-[0.05em] mb-4">
               តាមវិធីសាស្ត្រទូទាត់
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            </p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {paymentStats.map((stat) => {
                 const config = METHOD_CONFIG[stat.method] || {
                   label: stat.method,
-                  icon: <FaDollarSign className="text-2xl text-slate-600" />,
-                  color: "border-slate-500",
+                  icon: <FaDollarSign />,
+                  bg: "bg-slate-50",
+                  text: "text-slate-600",
                 };
                 return (
                   <div
                     key={stat.method}
-                    className={`bg-white rounded-lg shadow-md p-6 border-l-4 ${config.color}`}
+                    className="flex items-center gap-3 bg-[#F4F6FB] rounded-[14px] px-4 py-3"
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-slate-600 mb-1">
-                          {config.label}
-                        </p>
-                        <p className="text-2xl font-bold text-slate-900">
-                          {stat.totalAmount.toLocaleString("km-KH")}៛
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {stat.count} ការទូទាត់
-                        </p>
-                      </div>
-                      <div className="bg-slate-50 p-3 rounded-full">
-                        {config.icon}
-                      </div>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0 ${config.bg} ${config.text}`}>
+                      {config.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-[#6C757D] truncate">{config.label}</p>
+                      <p className="text-sm font-bold text-slate-800 truncate">
+                        {stat.totalAmount.toLocaleString("km-KH")}៛
+                      </p>
+                      <p className="text-[11px] text-[#6C757D]">{stat.count} ការទូទាត់</p>
                     </div>
                   </div>
                 );
@@ -456,83 +387,80 @@ export default function SalesManagementPage() {
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200">
-            <h2 className="text-xl font-bold text-slate-800">
-              បញ្ជីការបញ្ជាទិញ ({statistics.totalOrders})
-            </h2>
+        {/* Orders table */}
+        <div className="bg-white rounded-[20px] border border-[#E9ECEF] overflow-hidden">
+          {/* Sheet header */}
+          <div className="px-[22px] py-4 bg-[#F4F6FB] border-b border-[#E9ECEF] flex items-center justify-between">
+            <p className="text-[11px] font-semibold text-[#6C757D] uppercase tracking-[0.05em]">
+              បញ្ជីការបញ្ជាទិញ
+            </p>
+            <span className="text-xs font-medium text-[#6C757D] bg-white border border-[#E9ECEF] rounded-full px-2.5 py-0.5">
+              {statistics.totalOrders}
+            </span>
           </div>
 
           {isLoading ? (
-            <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-slate-800"></div>
-              <p className="text-slate-600 mt-4">កំពុងផ្ទុក...</p>
+            <div className="flex flex-col items-center justify-center py-16 text-[#6C757D]">
+              <div className="w-8 h-8 rounded-full border-4 border-[#E9ECEF] border-t-primary animate-spin mb-3" />
+              <span className="text-sm">កំពុងផ្ទុក...</span>
             </div>
           ) : orders.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-slate-500">
-                មិនមានការបញ្ជាទិញសម្រាប់ចន្លោះកាលបរិច្ឆេទនេះ
-              </p>
+            <div className="py-16 text-center text-sm text-[#6C757D]">
+              មិនមានការបញ្ជាទិញសម្រាប់ចន្លោះកាលបរិច្ឆេទនេះ
             </div>
           ) : (
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-slate-50">
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <tr key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => (
+                  <thead>
+                    {table.getHeaderGroups().map((hg) => (
+                      <tr key={hg.id} className="bg-[#F4F6FB]">
+                        {hg.headers.map((header) => (
                           <th
                             key={header.id}
-                            className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider"
+                            className="px-[22px] py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-[0.05em] whitespace-nowrap"
                           >
                             {header.isPlaceholder
                               ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
+                              : flexRender(header.column.columnDef.header, header.getContext())}
                           </th>
                         ))}
                       </tr>
                     ))}
                   </thead>
-                  <tbody className="bg-white divide-y divide-slate-200">
+                  <tbody>
                     {table.getRowModel().rows.map((row) => (
                       <tr
                         key={row.id}
                         onClick={() => setSelectedOrderId(row.original.id)}
-                        className="hover:bg-slate-50 cursor-pointer transition-colors"
+                        className="border-t border-[#E9ECEF] hover:bg-[#FAFBFD] cursor-pointer transition-colors"
                       >
                         {row.getVisibleCells().map((cell) => (
                           <td
                             key={cell.id}
-                            className="px-6 py-4 whitespace-nowrap"
+                            className="px-[22px] py-3.5 text-[13.5px] whitespace-nowrap"
                           >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </td>
                         ))}
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="bg-slate-50">
-                    <tr>
+                  <tfoot>
+                    <tr className="border-t-2 border-[#E9ECEF] bg-[#F4F6FB]">
                       <td
                         colSpan={5}
-                        className="px-6 py-4 text-right text-sm font-bold text-slate-900"
+                        className="px-[22px] py-3.5 text-right text-[13px] font-semibold text-slate-700"
                       >
-                        សរុបទាំងអស់:
+                        សរុបទាំងអស់
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
+                      <td className="px-[22px] py-3.5 text-[13px] font-semibold text-slate-800 whitespace-nowrap">
                         {statistics.totalSubtotal.toLocaleString("km-KH")}៛
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-red-600">
+                      <td className="px-[22px] py-3.5 text-[13px] font-semibold text-red-500 whitespace-nowrap">
                         -{statistics.totalDiscount.toLocaleString("km-KH")}៛
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
+                      <td className="px-[22px] py-3.5 text-[13px] font-semibold text-green-600 whitespace-nowrap">
                         {statistics.totalIncome.toLocaleString("km-KH")}៛
                       </td>
                     </tr>
@@ -540,77 +468,54 @@ export default function SalesManagementPage() {
                 </table>
               </div>
 
-              {/* Pagination Controls */}
-              <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-slate-600">
-                    ទំព័រ {table.getState().pagination.pageIndex + 1} នៃ{" "}
-                    {table.getPageCount()}
+              {/* Pagination */}
+              {table.getPageCount() > 1 && (
+                <div className="px-[22px] py-4 border-t border-[#E9ECEF] flex items-center justify-between">
+                  <span className="text-[13px] text-[#6C757D]">
+                    ទំព័រ {table.getState().pagination.pageIndex + 1} នៃ {table.getPageCount()}
+                    <span className="ml-2 text-[12px]">({orders.length} ការបញ្ជាទិញ)</span>
                   </span>
-                  <span className="text-sm text-slate-500">
-                    (សរុប {orders.length} ការបញ្ជាទិញ)
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                    className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
-                  >
-                    <FaChevronLeft className="w-3 h-3" />
-                    មុន
-                  </button>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => table.previousPage()}
+                      disabled={!table.getCanPreviousPage()}
+                      className="px-3 py-1.5 text-[13px] font-medium text-slate-600 bg-white border border-[#E9ECEF] rounded-lg hover:bg-[#F4F6FB] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      ‹ មុន
+                    </button>
                     {Array.from({ length: table.getPageCount() }, (_, i) => i)
-                      .filter((pageIndex) => {
-                        const currentPage =
-                          table.getState().pagination.pageIndex;
-                        const totalPages = table.getPageCount();
-                        // Show first page, last page, current page, and pages around current
-                        return (
-                          pageIndex === 0 ||
-                          pageIndex === totalPages - 1 ||
-                          (pageIndex >= currentPage - 1 &&
-                            pageIndex <= currentPage + 1)
-                        );
+                      .filter((pi) => {
+                        const cur = table.getState().pagination.pageIndex;
+                        const tot = table.getPageCount();
+                        return pi === 0 || pi === tot - 1 || (pi >= cur - 1 && pi <= cur + 1);
                       })
-                      .map((pageIndex, index, array) => {
-                        // Add ellipsis if there's a gap
-                        const showEllipsisBefore =
-                          index > 0 && array[index - 1] !== pageIndex - 1;
-                        return (
-                          <div
-                            key={pageIndex}
-                            className="flex items-center gap-1"
+                      .map((pi, idx, arr) => (
+                        <div key={pi} className="flex items-center gap-1.5">
+                          {idx > 0 && arr[idx - 1] !== pi - 1 && (
+                            <span className="text-[#6C757D] text-sm">…</span>
+                          )}
+                          <button
+                            onClick={() => table.setPageIndex(pi)}
+                            className={`w-8 h-8 text-[13px] font-medium rounded-lg transition-colors ${
+                              table.getState().pagination.pageIndex === pi
+                                ? "bg-primary text-white"
+                                : "bg-white text-slate-600 border border-[#E9ECEF] hover:bg-[#F4F6FB]"
+                            }`}
                           >
-                            {showEllipsisBefore && (
-                              <span className="px-2 text-slate-500">...</span>
-                            )}
-                            <button
-                              onClick={() => table.setPageIndex(pageIndex)}
-                              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                                table.getState().pagination.pageIndex ===
-                                pageIndex
-                                  ? "bg-primary text-white"
-                                  : "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50"
-                              }`}
-                            >
-                              {pageIndex + 1}
-                            </button>
-                          </div>
-                        );
-                      })}
+                            {pi + 1}
+                          </button>
+                        </div>
+                      ))}
+                    <button
+                      onClick={() => table.nextPage()}
+                      disabled={!table.getCanNextPage()}
+                      className="px-3 py-1.5 text-[13px] font-medium text-slate-600 bg-white border border-[#E9ECEF] rounded-lg hover:bg-[#F4F6FB] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      បន្ទាប់ ›
+                    </button>
                   </div>
-                  <button
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                    className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
-                  >
-                    បន្ទាប់
-                    <FaChevronRight className="w-3 h-3" />
-                  </button>
                 </div>
-              </div>
+              )}
             </>
           )}
         </div>
