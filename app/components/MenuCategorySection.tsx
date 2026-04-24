@@ -2,31 +2,31 @@
 
 import { MenuItem } from "@/services/menu.service";
 import { MenuItemCard } from "./MenuItemCard";
-import { Badge } from "@/components/ui/badge";
 
 interface MenuCategorySectionProps {
   category: string;
+  displayName?: string;
   items: MenuItem[];
   selectedTableType: string | null;
+  colorIndex?: number;
 }
 
 export function MenuCategorySection({
   category,
+  displayName,
   items,
   selectedTableType,
 }: MenuCategorySectionProps) {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-3 px-4 sm:px-6 lg:px-8">
-        <div className="h-1 w-12 bg-gradient-to-r from-slate-800 to-slate-600 rounded-full"></div>
-        <h2 className="text-lg sm:text-xl font-bold text-slate-800 capitalize">
-          {category}
+    <section className="space-y-3">
+      <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900">
+          {displayName || category}
         </h2>
-        <div className="flex-1 h-1 bg-gradient-to-r from-slate-300 to-transparent rounded-full"></div>
-        <Badge variant="secondary">{items.length}</Badge>
+        <span className="text-xs text-gray-400 font-medium">{items.length} មុខ</span>
       </div>
-      <div className="overflow-x-auto scrollbar-hide">
-        <div className="flex gap-3 sm:gap-4 px-4 sm:px-6 lg:px-8 pb-2">
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
           {items.map((item) => (
             <MenuItemCard
               key={item.id}
@@ -36,7 +36,6 @@ export function MenuCategorySection({
           ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 }
-

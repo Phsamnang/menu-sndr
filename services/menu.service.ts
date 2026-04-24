@@ -6,7 +6,8 @@ export interface MenuItem {
   name: string;
   description: string;
   image: string;
-  category: "food" | "drink";
+  category: string;
+  categoryDisplayName: string | null;
   prices: {
     [tableType: string]: number;
   };

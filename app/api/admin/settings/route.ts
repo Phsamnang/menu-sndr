@@ -89,6 +89,45 @@ async function postHandler(request: AuthenticatedRequest) {
   }
 }
 
+async function patchHandler(request: AuthenticatedRequest) {
+  try {
+    const body = await request.json();
+    const { key, value, type, category, description, isPublic } = body;
+
+    if (!key || value === undefined) {
+      return errorResponse("VALIDATION_ERROR", "key and value are required", 400, []);
+    }
+
+    const setting = await prisma.settings.upsert({
+      where: { key },
+      update: {
+        value,
+        ...(type !== undefined && { type }),
+        ...(isPublic !== undefined && { isPublic }),
+        ...(description !== undefined && { description }),
+        updatedBy: request.user?.userId || null,
+      },
+      create: {
+        key,
+        value,
+        type: type || "string",
+        category: category || "general",
+        description: description || null,
+        isPublic: isPublic ?? false,
+        updatedBy: request.user?.userId || null,
+      },
+    });
+
+    return successResponse(setting, "Setting saved successfully");
+  } catch (error: any) {
+    console.error("Error upserting setting:", error);
+    return errorResponse("UPSERT_SETTING_ERROR", "Failed to save setting", 500, [
+      { message: error?.message || String(error) },
+    ]);
+  }
+}
+
 export const GET = withAuth(getHandler, ["admin"]);
 export const POST = withAuth(postHandler, ["admin"]);
+export const PATCH = withAuth(patchHandler, ["admin"]);
 

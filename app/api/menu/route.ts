@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
       description: item.description,
       image: item.image,
       category: item.category?.name ?? null,
+      categoryDisplayName: item.category?.displayName ?? null,
       prices: item.prices.reduce(
         (acc, price) => {
           acc[price.tableType.name] = price.amount;
