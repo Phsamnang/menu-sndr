@@ -12,7 +12,6 @@ interface UserModalProps {
   };
   roles: Role[];
   isSubmitting: boolean;
-  error: string | null;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
   onFormDataChange: (data: {
@@ -29,7 +28,6 @@ export default function UserModal({
   formData,
   roles,
   isSubmitting,
-  error,
   onClose,
   onSubmit,
   onFormDataChange,
@@ -110,11 +108,6 @@ export default function UserModal({
             <span className="text-sm font-medium">សកម្ម</span>
           </label>
         </div>
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            {error}
-          </div>
-        )}
         <div className="flex gap-4">
           <button
             type="submit"

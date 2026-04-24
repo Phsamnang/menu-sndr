@@ -6,6 +6,7 @@ export interface TableType {
   name: string;
   displayName: string;
   order: number;
+  isActive?: boolean;
 }
 
 export const tableTypeService = {
@@ -25,6 +26,7 @@ export const tableTypeService = {
     name: string;
     displayName: string;
     order: number;
+    isActive?: boolean;
   }): Promise<TableType> => {
     const response = await axiosInstance.post<ApiResponse<TableType>>(
       "/api/admin/table-types",
@@ -39,7 +41,7 @@ export const tableTypeService = {
 
   update: async (
     id: string,
-    data: { name: string; displayName: string; order: number }
+    data: { name: string; displayName: string; order: number; isActive?: boolean }
   ): Promise<TableType> => {
     const response = await axiosInstance.put<ApiResponse<TableType>>(
       `/api/admin/table-types/${id}`,

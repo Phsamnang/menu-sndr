@@ -23,7 +23,7 @@ async function getHandler(request: NextRequest) {
 async function postHandler(request: AuthenticatedRequest) {
   try {
     const body = await request.json();
-    const { name, displayName, order } = body;
+    const { name, displayName, order, isActive } = body;
 
     if (!name || !displayName) {
       return errorResponse(
@@ -38,7 +38,12 @@ async function postHandler(request: AuthenticatedRequest) {
     }
 
     const tableType = await prisma.tableType.create({
-      data: { name, displayName, order: order || 0 },
+      data: {
+        name,
+        displayName,
+        order: order || 0,
+        ...(typeof isActive === "boolean" ? { isActive } : {}),
+      },
     });
 
     return successResponse(tableType, "Table type created successfully", 201);
