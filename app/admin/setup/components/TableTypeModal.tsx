@@ -4,7 +4,7 @@ import { TableType } from "@/services/table-type.service";
 interface TableTypeModalProps {
   isOpen: boolean;
   editingType: TableType | null;
-  formData: { name: string; displayName: string; order: number };
+  formData: { name: string; displayName: string; order: number; isActive: boolean };
   isSubmitting: boolean;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -12,6 +12,7 @@ interface TableTypeModalProps {
     name: string;
     displayName: string;
     order: number;
+    isActive: boolean;
   }) => void;
 }
 
@@ -70,6 +71,19 @@ export default function TableTypeModal({
             required
           />
         </div>
+        <div className="mb-4">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={formData.isActive}
+              onChange={(e) =>
+                onFormDataChange({ ...formData, isActive: e.target.checked })
+              }
+              className="w-4 h-4"
+            />
+            <span className="text-sm font-medium">សកម្ម</span>
+          </label>
+        </div>
         <div className="flex gap-4">
           <button
             type="submit"
@@ -94,4 +108,3 @@ export default function TableTypeModal({
     </Modal>
   );
 }
-

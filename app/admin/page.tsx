@@ -39,9 +39,7 @@ export default function AdminPage() {
 
   const menuItems: MenuItem[] = [
     { href: "/admin/orders", title: "លក់", icon: "💳", allowedRoles: ["admin", "order"] },
-    { href: "/admin/categories", title: "មីនុយ", icon: "📋", allowedRoles: ["admin"] },
-    { href: "/admin/menu-items", title: "មុខម្ហូប", icon: "🍽️", allowedRoles: ["admin"] },
-    { href: "/admin/tables", title: "តុ", icon: "🪑", allowedRoles: ["admin"] },
+    { href: "/admin/setup", title: "ការកំណត់", icon: "⚙️", allowedRoles: ["admin"] },
     { href: "/admin/sales", title: "ការលក់", icon: "📊", allowedRoles: ["admin"] },
     { href: "/admin/chef", title: "ចម្អិន", icon: "👨‍🍳", allowedRoles: ["admin", "chef"] },
   ];

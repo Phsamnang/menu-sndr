@@ -2,7 +2,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import Table, { TableColumn } from "@/components/Table";
+import toast from "react-hot-toast";
+import Table from "@/components/Table";
 import { userService, roleService, User, Role } from "@/services/user.service";
 import UserModal from "./components/UserModal";
 
@@ -31,6 +32,7 @@ export default function UsersPage() {
     mutationFn: (data: typeof formData) => userService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast.success("បានបន្ថែមអ្នកប្រើប្រាស់ដោយជោគជ័យ!");
       setIsModalOpen(false);
       setFormData({
         username: "",
@@ -39,6 +41,9 @@ export default function UsersPage() {
         isActive: true,
       });
     },
+    onError: (err: any) => {
+      toast.error(err?.message || "មិនអាចបន្ថែមអ្នកប្រើប្រាស់បានទេ");
+    },
   });
 
   const updateMutation = useMutation({
@@ -46,6 +51,7 @@ export default function UsersPage() {
       userService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast.success("បានកែប្រែអ្នកប្រើប្រាស់ដោយជោគជ័យ!");
       setIsModalOpen(false);
       setEditingUser(null);
       setFormData({
@@ -55,12 +61,19 @@ export default function UsersPage() {
         isActive: true,
       });
     },
+    onError: (err: any) => {
+      toast.error(err?.message || "មិនអាចកែប្រែអ្នកប្រើប្រាស់បានទេ");
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => userService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast.success("បានលុបអ្នកប្រើប្រាស់ដោយជោគជ័យ!");
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "មិនអាចលុបអ្នកប្រើប្រាស់នេះបានទេ");
     },
   });
 
@@ -86,7 +99,7 @@ export default function UsersPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-slate-800">អ្នកប្រើប្រាស់</h1>
           <div className="flex gap-4">
@@ -160,14 +173,15 @@ export default function UsersPage() {
                     onClick={(e) => {
                       e.stopPropagation();
                       if (
-                        confirm(
-                          `តើអ្នកពិតជាចង់លុបអ្នកប្រើប្រាស់ "${item.username}" ឬ?`
+                        !confirm(
+                          `លុបអ្នកប្រើប្រាស់ "${item.username}" មែនទេ?`
                         )
-                      ) {
-                        deleteMutation.mutate(item.id);
-                      }
+                      )
+                        return;
+                      deleteMutation.mutate(item.id);
                     }}
-                    className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors"
+                    disabled={deleteMutation.isPending}
+                    className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
                   >
                     លុប
                   </button>
@@ -186,9 +200,6 @@ export default function UsersPage() {
           formData={formData}
           roles={roles}
           isSubmitting={createMutation.isPending || updateMutation.isPending}
-          error={
-            createMutation.error?.message || updateMutation.error?.message || null
-          }
           onClose={() => {
             setIsModalOpen(false);
             setEditingUser(null);

@@ -10,7 +10,7 @@ async function putHandler(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, displayName, order } = body;
+    const { name, displayName, order, isActive } = body;
 
     if (!name || !displayName) {
       return errorResponse(
@@ -26,7 +26,12 @@ async function putHandler(
 
     const tableType = await prisma.tableType.update({
       where: { id },
-      data: { name, displayName, order },
+      data: {
+        name,
+        displayName,
+        order,
+        ...(typeof isActive === "boolean" ? { isActive } : {}),
+      },
     });
 
     return successResponse(tableType, "Table type updated successfully");

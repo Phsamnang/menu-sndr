@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import Table, { TableColumn } from "@/components/Table";
 import {
   menuItemService,
@@ -13,12 +14,12 @@ import {
 } from "@/services/menu-item.service";
 import { categoryService } from "@/services/category.service";
 import { tableTypeService } from "@/services/table-type.service";
-import Pagination from "./components/Pagination";
-import MenuItemModal from "./components/MenuItemModal";
+import Pagination from "./Pagination";
+import MenuItemModal from "./MenuItemModal";
 
 const ITEMS_PER_PAGE = 10;
 
-export default function MenuItemsPage() {
+export default function MenuItemsTab() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -61,9 +62,13 @@ export default function MenuItemsPage() {
     }) => menuItemService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menuItems"] });
+      toast.success("បានបន្ថែមមុខម្ហូបដោយជោគជ័យ!");
       setIsModalOpen(false);
       setCurrentPage(1);
       setEditingItem(null);
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "មិនអាចបន្ថែមមុខម្ហូបបានទេ");
     },
   });
 
@@ -84,9 +89,13 @@ export default function MenuItemsPage() {
     }) => menuItemService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menuItems"] });
+      toast.success("បានកែប្រែមុខម្ហូបដោយជោគជ័យ!");
       setIsModalOpen(false);
       setEditingItem(null);
       setCurrentPage(1);
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "មិនអាចកែប្រែមុខម្ហូបបានទេ");
     },
   });
 
@@ -94,6 +103,10 @@ export default function MenuItemsPage() {
     mutationFn: (id: string) => menuItemService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menuItems"] });
+      toast.success("បានលុបមុខម្ហូបដោយជោគជ័យ!");
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "មិនអាចលុបមុខម្ហូបនេះបានទេ");
     },
   });
 
@@ -185,9 +198,11 @@ export default function MenuItemsPage() {
           <button
             onClick={(e) => {
               e.stopPropagation();
+              if (!confirm(`លុបមុខម្ហូប "${item.name}" មែនទេ?`)) return;
               deleteMutation.mutate(item.id);
             }}
-            className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors"
+            disabled={deleteMutation.isPending}
+            className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
           >
             លុប
           </button>
@@ -197,85 +212,80 @@ export default function MenuItemsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-slate-800">មុខម្ហូប</h1>
-          <div className="flex gap-4">
-            <button
-              onClick={() => {
-                setEditingItem(null);
-                setIsModalOpen(true);
-              }}
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
-            >
-              បន្ថែមមុខម្ហូប
-            </button>
-          </div>
-        </div>
-
-        <div className="mb-4 flex gap-4">
-          <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">ស្វែងរក</label>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="ស្វែងរកតាមឈ្មោះ, ពិពណ៌នា, ឬប្រភេទ..."
-              className="w-full px-4 py-2 border rounded-lg bg-white"
-            />
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">
-              ចម្រាញ់តាមប្រភេទ
-            </label>
-            <select
-              value={selectedCategory}
-              onChange={(e) => {
-                setSelectedCategory(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full px-4 py-2 border rounded-lg bg-white"
-            >
-              <option value="">ទាំងអស់</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.displayName}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <Table
-          columns={columns}
-          data={menuItems}
-          loading={isLoading}
-          emptyMessage="រកមិនឃើញមុខម្ហូបទេ។"
-        />
-        {!isLoading && menuItemsData && pagination && (
-          <Pagination
-            pagination={pagination}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
-          />
-        )}
-
-        <MenuItemModal
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
+    <div>
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => {
             setEditingItem(null);
+            setIsModalOpen(true);
           }}
-          editingItem={editingItem}
-          categories={categories}
-          tableTypes={tableTypes}
-          onSubmit={handleSubmit}
-        />
+          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+        >
+          បន្ថែមមុខម្ហូប
+        </button>
       </div>
+
+      <div className="mb-4 flex gap-4">
+        <div className="flex-1">
+          <label className="block text-sm font-medium mb-2">ស្វែងរក</label>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            placeholder="ស្វែងរកតាមឈ្មោះ, ពិពណ៌នា, ឬប្រភេទ..."
+            className="w-full px-4 py-2 border rounded-lg bg-white"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="block text-sm font-medium mb-2">
+            ចម្រាញ់តាមប្រភេទ
+          </label>
+          <select
+            value={selectedCategory}
+            onChange={(e) => {
+              setSelectedCategory(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full px-4 py-2 border rounded-lg bg-white"
+          >
+            <option value="">ទាំងអស់</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.displayName}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <Table
+        columns={columns}
+        data={menuItems}
+        loading={isLoading}
+        emptyMessage="រកមិនឃើញមុខម្ហូបទេ។"
+      />
+      {!isLoading && menuItemsData && pagination && (
+        <Pagination
+          pagination={pagination}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
+      <MenuItemModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingItem(null);
+        }}
+        editingItem={editingItem}
+        categories={categories}
+        tableTypes={tableTypes}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 }
