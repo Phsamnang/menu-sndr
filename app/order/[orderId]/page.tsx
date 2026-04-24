@@ -11,6 +11,15 @@ import { FloatingCartButton } from "@/app/admin/orders/[orderId]/components/Floa
 import { CartBottomSheet } from "@/app/admin/orders/[orderId]/components/CartBottomSheet";
 import { type Category, type MenuItem } from "@/lib/types";
 
+const CATEGORY_PILL_PALETTE = [
+  { inactive: "bg-amber-50 text-amber-700 border-amber-200 hover:border-amber-400", active: "bg-amber-500 text-white border-amber-500" },
+  { inactive: "bg-rose-50 text-rose-700 border-rose-200 hover:border-rose-400", active: "bg-rose-500 text-white border-rose-500" },
+  { inactive: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:border-emerald-400", active: "bg-emerald-500 text-white border-emerald-500" },
+  { inactive: "bg-sky-50 text-sky-700 border-sky-200 hover:border-sky-400", active: "bg-sky-500 text-white border-sky-500" },
+  { inactive: "bg-violet-50 text-violet-700 border-violet-200 hover:border-violet-400", active: "bg-violet-500 text-white border-violet-500" },
+  { inactive: "bg-teal-50 text-teal-700 border-teal-200 hover:border-teal-400", active: "bg-teal-500 text-white border-teal-500" },
+];
+
 export default function CustomerOrderPage() {
   const params = useParams();
   const orderId = params.orderId as string;
@@ -18,6 +27,7 @@ export default function CustomerOrderPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
   const [showMobileCart, setShowMobileCart] = useState<boolean>(false);
+  const [cartPulseKey, setCartPulseKey] = useState(0);
 
   const { data: orderData, isLoading } = useQuery<Order | null>({
     queryKey: ["customerOrder", orderId],
@@ -62,6 +72,14 @@ export default function CustomerOrderPage() {
   });
 
   const orderItems = useMemo(() => orderData?.items || [], [orderData?.items]);
+
+  const cartItemCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const item of orderItems) {
+      counts[item.menuItemId] = (counts[item.menuItemId] ?? 0) + item.quantity;
+    }
+    return counts;
+  }, [orderItems]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 300);
@@ -171,16 +189,16 @@ export default function CustomerOrderPage() {
             >
               ទាំងអស់
             </button>
-            {categoriesList.map((catName) => {
+            {categoriesList.map((catName, idx) => {
               const category = categories.find((c) => c.name === catName);
+              const palette = CATEGORY_PILL_PALETTE[idx % CATEGORY_PILL_PALETTE.length];
+              const isActive = selectedCategory === catName;
               return (
                 <button
                   key={catName}
                   onClick={() => setSelectedCategory(catName)}
                   className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors touch-manipulation border ${
-                    selectedCategory === catName
-                      ? "bg-primary text-white border-primary"
-                      : "bg-white text-slate-600 border-slate-300 hover:border-primary/40"
+                    isActive ? palette.active : palette.inactive
                   }`}
                 >
                   {category?.displayName || catName}
@@ -219,6 +237,8 @@ export default function CustomerOrderPage() {
               tableTypeName={tableTypeName}
               orderId={orderId}
               orderData={orderData}
+              cartItemCounts={cartItemCounts}
+              onItemAdded={() => setCartPulseKey((k) => k + 1)}
             />
           )}
         </div>
@@ -241,6 +261,7 @@ export default function CustomerOrderPage() {
         subtotal={subtotal}
         onClick={() => setShowMobileCart(true)}
         isVisible={!showMobileCart}
+        pulseKey={cartPulseKey}
       />
 
       {/* Mobile cart bottom sheet */}

@@ -1,10 +1,13 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
+
 interface FloatingCartButtonProps {
   itemCount: number;
   subtotal: number;
   onClick: () => void;
   isVisible?: boolean;
+  pulseKey?: number;
 }
 
 export function FloatingCartButton({
@@ -12,13 +15,27 @@ export function FloatingCartButton({
   subtotal,
   onClick,
   isVisible = true,
+  pulseKey,
 }: FloatingCartButtonProps) {
+  const [pulsing, setPulsing] = useState(false);
+  const initialPulseKey = useRef(pulseKey);
+
+  useEffect(() => {
+    if (pulseKey === undefined) return;
+    if (pulseKey === initialPulseKey.current) return;
+    setPulsing(true);
+    const t = setTimeout(() => setPulsing(false), 800);
+    return () => clearTimeout(t);
+  }, [pulseKey]);
+
   if (!isVisible || itemCount === 0) return null;
 
   return (
     <button
       onClick={onClick}
-      className="fixed bottom-5 left-4 right-4 lg:hidden z-40 bg-primary text-white rounded-2xl py-3.5 px-5 flex items-center gap-3 shadow-xl shadow-primary/40 touch-manipulation animate-pop-in"
+      className={`fixed bottom-5 left-4 right-4 lg:hidden z-40 bg-primary text-white rounded-2xl py-3.5 px-5 flex items-center gap-3 shadow-xl shadow-primary/40 touch-manipulation animate-pop-in ${
+        pulsing ? 'animate-cart-pulse' : ''
+      }`}
       aria-label="Open cart"
     >
       {/* Cart icon in frosted square */}

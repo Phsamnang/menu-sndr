@@ -2,30 +2,37 @@
 
 import OptimizedImage from "@/components/OptimizedImage";
 import { MenuItem } from "@/services/menu.service";
-import { Card, CardContent } from "@/components/ui/card";
 
 interface MenuItemCardProps {
   item: MenuItem;
   selectedTableType: string | null;
+  featured?: boolean;
 }
 
-export function MenuItemCard({ item, selectedTableType }: MenuItemCardProps) {
+export function MenuItemCard({
+  item,
+  selectedTableType,
+  featured = false,
+}: MenuItemCardProps) {
+  const price = selectedTableType ? item.prices[selectedTableType] : undefined;
+
   return (
-    <Card className="group flex-shrink-0 w-48 sm:w-56 cursor-pointer hover:shadow-lg transition-shadow">
-      <div className="relative h-32 sm:h-36 w-full bg-slate-100 overflow-hidden rounded-t-lg">
+    <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group cursor-pointer">
+      {/* Image */}
+      <div className="relative aspect-square overflow-hidden bg-gray-100">
         {item.image ? (
           <OptimizedImage
             src={item.image}
             alt={item.name}
-            width={224}
-            height={144}
+            width={260}
+            height={260}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            quality={90}
+            quality={85}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-slate-200">
+          <div className="w-full h-full flex items-center justify-center bg-gray-100">
             <svg
-              className="w-10 h-10 text-slate-300"
+              className="w-10 h-10 text-gray-300"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -39,32 +46,34 @@ export function MenuItemCard({ item, selectedTableType }: MenuItemCardProps) {
             </svg>
           </div>
         )}
+        {featured && (
+          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-primary text-white text-[10px] font-bold shadow-sm">
+            ★ ពិសេស
+          </div>
+        )}
       </div>
-      <CardContent className="p-3">
-        <h3 className="text-sm font-bold text-slate-800 mb-1 line-clamp-2">
+
+      {/* Info */}
+      <div className="p-3">
+        <h3 className="font-bold text-gray-900 text-sm leading-tight line-clamp-2">
           {item.name}
         </h3>
         {item.description && (
-          <p className="text-xs text-slate-600 mb-2 line-clamp-2">
+          <p className="text-[11px] text-gray-400 mt-1 line-clamp-2 leading-relaxed">
             {item.description}
           </p>
         )}
-        {selectedTableType ? (
-          <div>
-            <span className="text-base sm:text-lg font-extrabold text-slate-900">
-              {item.prices[selectedTableType]?.toLocaleString("km-KH") || "0"}
+        <div className="mt-2.5">
+          {price !== undefined && price > 0 ? (
+            <span className="text-primary font-bold text-sm">
+              {price.toLocaleString("km-KH")}
+              <span className="text-xs font-semibold ml-0.5">៛</span>
             </span>
-            <span className="text-xs sm:text-sm font-semibold text-slate-600 ml-1">
-              ៛
-            </span>
-          </div>
-        ) : (
-          <p className="text-xs font-medium text-slate-400 italic">
-            ជ្រើសរើសប្រភេទតុ
-          </p>
-        )}
-      </CardContent>
-    </Card>
+          ) : price === 0 ? null : (
+            <span className="text-gray-400 text-[11px]">ជ្រើសរើសប្រភេទតុ</span>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
-

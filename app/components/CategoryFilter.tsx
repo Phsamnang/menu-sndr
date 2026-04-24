@@ -1,46 +1,46 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-
 interface CategoryFilterProps {
   categories: string[];
+  categoryDisplayNames?: Record<string, string>;
   selectedCategory: string | null;
   onSelect: (category: string | null) => void;
 }
 
 export function CategoryFilter({
   categories,
+  categoryDisplayNames = {},
   selectedCategory,
   onSelect,
 }: CategoryFilterProps) {
   return (
-    <div>
-      <p className="text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wide">
-        ប្រភេទមុខម្ហូប
-      </p>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          onClick={() => onSelect(null)}
-          variant={selectedCategory === null ? "default" : "outline"}
-          size="sm"
-          className="transition-all duration-200"
-        >
-          ទាំងអស់
-        </Button>
-        {categories.map((category) => (
-          <Button
+    <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
+      <button
+        onClick={() => onSelect(null)}
+        className={`flex-shrink-0 px-5 py-2 rounded-full text-sm font-semibold transition-all border ${
+          selectedCategory === null
+            ? "bg-primary text-white border-primary shadow-sm"
+            : "bg-white text-gray-600 border-gray-200 hover:border-primary/40 hover:text-primary"
+        }`}
+      >
+        ទាំងអស់
+      </button>
+      {categories.map((category) => {
+        const isActive = selectedCategory === category;
+        return (
+          <button
             key={category}
-            onClick={() => onSelect(category)}
-            variant={selectedCategory === category ? "default" : "outline"}
-            size="sm"
-            className="transition-all duration-200"
+            onClick={() => onSelect(isActive ? null : category)}
+            className={`flex-shrink-0 px-5 py-2 rounded-full text-sm font-semibold transition-all border ${
+              isActive
+                ? "bg-primary text-white border-primary shadow-sm"
+                : "bg-white text-gray-600 border-gray-200 hover:border-primary/40 hover:text-primary"
+            }`}
           >
-            {category}
-          </Button>
-        ))}
-      </div>
+            {categoryDisplayNames[category] || category}
+          </button>
+        );
+      })}
     </div>
   );
 }
-
