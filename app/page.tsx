@@ -7,35 +7,15 @@ import { menuService, MenuItem } from "@/services/menu.service";
 import { tableTypeService, TableType } from "@/services/table-type.service";
 import { Header } from "./components/Header";
 import { CategoryFilter } from "./components/CategoryFilter";
+import { FeaturedItems } from "./components/FeaturedItems";
 import { MenuCategorySection } from "./components/MenuCategorySection";
 import { MenuItemCard } from "./components/MenuItemCard";
+import { Footer } from "./components/Footer";
 import { LoadingState } from "./components/LoadingState";
 import { ErrorState } from "./components/ErrorState";
 import { EmptyState } from "./components/EmptyState";
 
-const PROMO_BANNERS = [
-  {
-    id: 1,
-    title: "ម្ហូបថ្ងៃនេះ",
-    subtitle: "ទទួលបានមុខម្ហូបស្រស់ថ្មីប្រចាំថ្ងៃ",
-    bg: "from-primary to-blue-400",
-    emoji: "🍽️",
-  },
-  {
-    id: 2,
-    title: "ភេសជ្ជៈត្រជាក់",
-    subtitle: "ផឹកស្រស់ ស្ត្រី ក្តៅ",
-    bg: "from-sky-500 to-cyan-400",
-    emoji: "🥤",
-  },
-  {
-    id: 3,
-    title: "មុខម្ហូបពិសេស",
-    subtitle: "ជ្រើសរើសតាមចិត្ត",
-    bg: "from-rose-500 to-orange-400",
-    emoji: "⭐",
-  },
-];
+const FEATURED_LIMIT = 8;
 
 function HomeContent() {
   const router = useRouter();
@@ -114,6 +94,16 @@ function HomeContent() {
     }, {} as Record<string, MenuItem[]>);
   }, [menuData]);
 
+  const featuredItems = useMemo(() => {
+    const picks: MenuItem[] = [];
+    for (const cat of categories) {
+      const items = menuByCategory[cat];
+      if (items && items.length > 0) picks.push(items[0]);
+      if (picks.length >= FEATURED_LIMIT) break;
+    }
+    return picks;
+  }, [categories, menuByCategory]);
+
   const filteredFlat = useMemo(() => {
     if (!isSearching) return [];
     const q = debouncedSearch.toLowerCase();
@@ -137,7 +127,7 @@ function HomeContent() {
   );
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50 flex flex-col">
       <Header
         tableTypes={sortedTableTypes}
         selectedTableType={selectedTableType}
@@ -147,7 +137,7 @@ function HomeContent() {
         heroImageUrl={heroSetting?.value}
       />
 
-      {/* Category filter — sticky */}
+      {/* Sticky compact category filter (in-page nav while scrolling) */}
       {categories.length > 0 && !isSearching && (
         <div className="sticky top-14 z-10 bg-white border-b border-gray-100 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -161,7 +151,7 @@ function HomeContent() {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto py-5 sm:py-6">
+      <div className="flex-1 max-w-7xl mx-auto w-full py-5 sm:py-6">
         {isLoading ? (
           <LoadingState />
         ) : error ? (
@@ -194,30 +184,15 @@ function HomeContent() {
           <EmptyState />
         ) : (
           <div className="space-y-7 sm:space-y-9">
-            {/* Promo banners */}
-            {!selectedCategory && (
-              <div className="px-4 sm:px-6 lg:px-8">
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
-                  {PROMO_BANNERS.map((banner) => (
-                    <div
-                      key={banner.id}
-                      className={`flex-shrink-0 w-56 sm:w-64 rounded-2xl bg-gradient-to-br ${banner.bg} p-4 flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity`}
-                    >
-                      <span className="text-3xl">{banner.emoji}</span>
-                      <div>
-                        <p className="text-white font-bold text-sm leading-tight">
-                          {banner.title}
-                        </p>
-                        <p className="text-white/80 text-xs mt-0.5 leading-tight">
-                          {banner.subtitle}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {/* Featured / popular items */}
+            {!selectedCategory && featuredItems.length > 0 && (
+              <FeaturedItems
+                items={featuredItems}
+                selectedTableType={selectedTableType}
+              />
             )}
 
+            {/* Category sections */}
             {Object.entries(displayCategories).map(([category, items]) => (
               <MenuCategorySection
                 key={category}
@@ -231,6 +206,8 @@ function HomeContent() {
           </div>
         )}
       </div>
+
+      <Footer />
     </main>
   );
 }
